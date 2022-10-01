@@ -29,7 +29,7 @@ filef = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_145/band1003.out"
 fileg = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_140/band1003.out"
 fileh = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_135/band1003.out"
 filei = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_130/band1003.out"
-
+# random comments
 # Geometry.bandProcess(filea)
 # Geometry.bandProcess(fileb)
 Geometry.bandProcess(filec)
