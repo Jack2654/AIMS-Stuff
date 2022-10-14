@@ -67,8 +67,55 @@ def bandProcess(filepath: object) -> object:
             j += 1
     #print("min of",str(min),"found at",minVal)
     #print("previous",prev)
-    print("diff", str(float(min)-float(prev)))
+    #print("diff", str(float(min)-float(prev)))
+    print(minVal)
 
+def bandGap(filepath: object) -> object:
+    min = 5.0
+    max = 0.0
+    minVal = "idk"
+    maxVal = "idk either"
+    with open(filepath, "r") as f:
+        lv = []
+        for ln in f:
+            lv.append(ln)
+        j = 1
+        for x in lv:
+            #print("Start of k-point", j)
+            temp = x.split()
+            i = 0
+            for y in temp:
+                if 0 < i < 4:
+                    p = 1
+                    #print("coord: ", y)
+                if (i % 2) == 0 and y == "0.00000":
+                    start = i-7
+                    break
+                i += 1
+            i = 0
+            for y in temp:
+                if start < i < start + 17:
+                    if (i % 2) == 0:
+                        t = y
+                    else:
+                        p = 0
+                        #print(t,y)
+                    if i == start + 8:
+                        if float(y) < float(min):
+                            min = y
+                            minVal = str(j)
+                            prev = temp[start+10]
+                    if i == start + 14:
+                        if float(y) > float(max):
+                            max = y
+                            maxVal = str(j)
+                i += 1
+            j += 1
+    #print("min of",str(min),"found at",minVal)
+    #print("max of",str(max),"found at",maxVal)
+    #print("previous",prev)
+    #print("diff", str(float(min)-float(prev)))
+    print(float(max)-float(min))
 
 # This function combines two geometry files which share a common atom by centering both files around that atom and
 # then writing all the atoms to a new file

@@ -20,22 +20,34 @@ a = 160
 #Geometry.angleOOP(fileW, fileW, 6, 7, 15, b, a, False, True)
 #Geometry.angleOOP(fileW, fileW, 9, 10, 14, b, a, False, False)
 
-filea = "../../FHI-aims/AgBi-Perovskites/ideal/out/160/160_180/band1003.out"
-fileb = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_165/band1003.out"
-filec = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_160/band1003.out"
-filed = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_155/band1003.out"
-filee = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_150/band1003.out"
-filef = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_145/band1003.out"
-fileg = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_140/band1003.out"
-fileh = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_135/band1003.out"
-filei = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_130/band1003.out"
+filea = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_130/band1003.out"
+fileb = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_135/band1003.out"
+filec = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_140/band1003.out"
+filed = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_145/band1003.out"
+filee = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_150/band1003.out"
+filef = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_155/band1003.out"
+fileg = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_160/band1003.out"
+fileh = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_165/band1003.out"
+filei = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/150/bands2/150_170/band1003.out"
+
+
 # random comments
-# Geometry.bandProcess(filea)
-# Geometry.bandProcess(fileb)
-Geometry.bandProcess(filec)
-Geometry.bandProcess(filed)
-# Geometry.bandProcess(filee)
-# Geometry.bandProcess(filef)
-# Geometry.bandProcess(fileg)
-# Geometry.bandProcess(fileh)
+#Geometry.bandProcess(filea)
+#Geometry.bandProcess(fileb)
+#Geometry.bandProcess(filec)
+#Geometry.bandProcess(filed)
+#Geometry.bandProcess(filee)
+#Geometry.bandProcess(filef)
+#Geometry.bandProcess(fileg)
+#Geometry.bandProcess(fileh)
 #Geometry.bandProcess(filei)
+
+Geometry.bandGap(filea)
+Geometry.bandGap(fileb)
+Geometry.bandGap(filec)
+Geometry.bandGap(filed)
+Geometry.bandGap(filee)
+Geometry.bandGap(filef)
+Geometry.bandGap(fileg)
+Geometry.bandGap(fileh)
+Geometry.bandGap(filei)
