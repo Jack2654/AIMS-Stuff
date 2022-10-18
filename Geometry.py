@@ -30,7 +30,7 @@ def constrain(filepath, target, atoms, flag):
 
 
 # This function outputs the spin splitting observed in the given band file
-def bandProcess(filepath: object) -> object:
+def bandProcess(filepath: object, boo) -> object:
     min = 5.0
     minVal = "idk"
     with open(filepath, "r") as f:
@@ -67,8 +67,10 @@ def bandProcess(filepath: object) -> object:
             j += 1
     #print("min of",str(min),"found at",minVal)
     #print("previous",prev)
-    #print("diff", str(float(min)-float(prev)))
-    print(minVal)
+    if boo:
+        print(str(float(prev)-float(min)))
+    else:
+        print(minVal)
 
 def bandGap(filepath: object) -> object:
     min = 5.0
