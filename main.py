@@ -6,7 +6,15 @@ import Rotation
 import Geometry
 import m353
 
-#m353.manyEuler()
+Geometry.angleInfo("../../FHI-aims/TlBi-Perovskites/setup/vtight1/geometry.in", 1, 9, 3, True)
+print()
+Geometry.angleInfo("../../FHI-aims/TlBi-Perovskites/setup/vtight1/geometry.in", 4, 10, 2, True)
+print()
+Geometry.angleInfo("../../FHI-aims/TlBi-Perovskites/setup/vtight1/geometry.in", 1, 8, 4, False)
+print()
+Geometry.angleInfo("../../FHI-aims/TlBi-Perovskites/setup/vtight1/geometry.in", 3, 12, 2, False)
+
+
 
 theta = pi / 12
 axis = np.array([1, 0, 0])
@@ -40,15 +48,15 @@ fileO = "../../FHI-aims/AgBi-Perovskites/ideal/out/150c/150_"
 for i in range(9):
     fileplus = fileI + str((a - 20)+(5*i))
     fileplus += "/band1001.out"
-    Geometry.bandProcess(fileplus, True)
+    #Geometry.bandProcess(fileplus, True)
 for i in range(9):
     fileplus = fileI + str((a - 20)+(5*i))
     fileplus += "/band1001.out"
-    Geometry.bandProcess(fileplus, False)
+    #Geometry.bandProcess(fileplus, False)
 for i in range(9):
     fileplus = fileI + str((a - 20)+(5*i))
     fileplus += "/band1001.out"
-    Geometry.bandGap(fileplus)
+    #Geometry.bandGap(fileplus)
 
 # random comments
 #Geometry.bandProcess(filea)

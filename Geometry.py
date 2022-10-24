@@ -227,6 +227,13 @@ def addCsOOP(file, writefile, val):
         f.write("atom " + str(val) + " " + str(-val) + " 2.56524642500000 Cs\n")
         f.write("atom " + str(val) + " " + str(-val) + " -2.56524642500000 Cs\n")
 
+def betweenTotal(p1, p2, p3):
+    v1 = p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]
+    v2 = p3[0] - p2[0], p3[1] - p2[1], p3[2] - p2[2]
+    u1 = v1 / np.linalg.norm(v1)
+    u2 = v2 / np.linalg.norm(v2)
+    dot_product = np.dot(u1, u2)
+    return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
 def between(p1, p2, p3):
     v1 = p1[0] - p2[0], p1[1] - p2[1]
@@ -236,6 +243,21 @@ def between(p1, p2, p3):
     dot_product = np.dot(u1, u2)
     return (np.arccos(dot_product))*360/(2*math.pi)
 
+def betweenOutV(p1, p2, p3):
+    v1 = p1[1] - p2[1], p1[2] - p2[2]
+    v2 = p3[1] - p2[1], p3[2] - p2[2]
+    u1 = v1 / np.linalg.norm(v1)
+    u2 = v2 / np.linalg.norm(v2)
+    dot_product = np.dot(u1, u2)
+    return (np.arccos(dot_product)) * 360 / (2 * math.pi)
+
+def betweenOutH(p1, p2, p3):
+    v1 = p1[0] - p2[0], p1[2] - p2[2]
+    v2 = p3[0] - p2[0], p3[2] - p2[2]
+    u1 = v1 / np.linalg.norm(v1)
+    u2 = v2 / np.linalg.norm(v2)
+    dot_product = np.dot(u1, u2)
+    return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
 # Alters the position of p2 to be a specific angle with p1 and p3. Varies in the coord direction
 def angle(filename, target, p1, p2, p3, full, angle, coord):
@@ -519,3 +541,31 @@ def charge(filename, target, atoms, charges):
                     if j == temp[3]:
                         f.write("initial_charge " + str(charges[x]) + "\n")
                     x += 1
+
+
+# outputs delta beta, delta beta in plane, and delta beta out of plane in that order
+def angleInfo(filename, p1, p2, p3, vert):
+    with open(filename, "r") as f:
+        lv = [0,0,0]
+        i = 1
+        for ln in f:
+            if ln.startswith("atom"):
+                if (i == p1):
+                    lv[0] = ln
+                if (i == p2):
+                    lv[1] = ln
+                if (i == p3):
+                    lv[2] = ln
+                i += 1
+        t1 = lv[0].split()
+        t2 = lv[1].split()
+        t3 = lv[2].split()
+        a1 = float(t1[1]), float(t1[2]), float(t1[3])
+        a2 = float(t2[1]), float(t2[2]), float(t2[3])
+        a3 = float(t3[1]), float(t3[2]), float(t3[3])
+        print(betweenTotal(a1, a2, a3))
+        print(between(a1, a2, a3))
+        if vert:
+            print(betweenOutV(a1, a2, a3))
+        else:
+            print(betweenOutH(a1, a2, a3))
