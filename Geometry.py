@@ -569,3 +569,83 @@ def angleInfo(filename, p1, p2, p3, vert):
             print(betweenOutV(a1, a2, a3))
         else:
             print(betweenOutH(a1, a2, a3))
+
+def printBands(filestart, bandnum):
+    a = 150
+    for i in range(4):
+        print(a)
+        print("band gap")
+        for i in range(9):
+            fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
+            fileplus += "/band100" + str(bandnum) + ".out"
+            bandProcess(fileplus, True)
+        print("k point")
+        for i in range(9):
+            fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
+            fileplus += "/band100" + str(bandnum) + ".out"
+            bandProcess(fileplus, False)
+        print("band width")
+        for i in range(9):
+            fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
+            fileplus += "/band100" + str(bandnum) + ".out"
+            bandGap(fileplus)
+        a += 10
+
+def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
+    with open(readfile, "r") as f:
+        lv = []
+        at = []
+        for ln in f:
+            if ln.startswith("lattice"):
+                lv.append(ln)
+            elif ln.startswith("atom"):
+                at.append(ln)
+    with open(writefile, "w") as f:
+        f.writelines(lv)
+        temp = lv[0].split()
+        Cs_loc = float(temp[1]) / 4
+        for i in at:
+            temp = i.split()
+            if float(temp[3]) < 2.5 and float(temp[3]) > -2.5:
+                f.write(i)
+            if temp[4] == "Ag":
+                temp[4] = "I"
+                temp[3] = str(float(temp[3]) + Ag_height)
+                f.write(' '.join(temp))
+                f.write("\n")
+                temp[3] = str(float(temp[3]) - 2 * Ag_height)
+                f.write(' '.join(temp))
+                f.write("\n")
+            if temp[4] == "Bi":
+                temp[4] = "I"
+                temp[3] = str(float(temp[3]) + Bi_height)
+                f.write(' '.join(temp))
+                f.write("\n")
+                temp[3] = str(float(temp[3]) - 2 * Bi_height)
+                f.write(' '.join(temp))
+                f.write("\n")
+        Cs = ["atom", str(Cs_loc), str(Cs_loc), str(Cs_height), "Cs"]
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        Cs[2] = str(-float(Cs[2]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
