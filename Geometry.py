@@ -30,8 +30,9 @@ def constrain(filepath, target, atoms, flag):
 
 
 # This function outputs the spin splitting observed in the given band file
-def bandProcess(filepath: object, boo) -> object:
+def bandProcess(filepath: object, boo, bandlength) -> object:
     min = 5.0
+    prev = 0
     minVal = "idk"
     with open(filepath, "r") as f:
         lv = []
@@ -62,7 +63,12 @@ def bandProcess(filepath: object, boo) -> object:
                         if float(y) < float(min):
                             min = y
                             minVal = str(j)
-                            prev = temp[start+10]
+                            prev = float(temp[start + 10])
+                        elif (float(y) == float(min)):
+                            if(float(temp[start+10])>prev):
+                                min = y
+                                minVal = str(j)
+                                prev = float(temp[start+10])
                 i += 1
             j += 1
     #print("min of",str(min),"found at",minVal)
@@ -70,7 +76,18 @@ def bandProcess(filepath: object, boo) -> object:
     if boo:
         print(str(float(prev)-float(min)))
     else:
-        print(minVal)
+        if float(minVal) >= 150:
+            minVal = 300 - float(minVal)
+            working = float(minVal) / 300
+            working *= bandlength
+            print(working)
+        elif float(minVal) < 150:
+            working = float(minVal) / 300
+            working *= bandlength
+            print(working)
+        else:
+            print("sumn strange afoot")
+
 
 def bandGap(filepath: object) -> object:
     min = 5.0
@@ -119,6 +136,7 @@ def bandGap(filepath: object) -> object:
     #print("diff", str(float(min)-float(prev)))
     print(float(max)-float(min))
 
+
 # This function combines two geometry files which share a common atom by centering both files around that atom and
 # then writing all the atoms to a new file
 def combine(file1, file2, writefile, index1, index2):
@@ -151,6 +169,7 @@ def addLattice(filename, writefile, original, radians):
         f.write("lattice_vector "+str(other)+" "+str(new)+" 0"+"\n")
         f.write("lattice_vector 0 0 50 \n")
         f.writelines(lv)
+
 
 # This function rotates a file and then adds it to a given file
 def rotAdd(file1, file2, radians, axis, node1, node2, target):
@@ -227,6 +246,7 @@ def addCsOOP(file, writefile, val):
         f.write("atom " + str(val) + " " + str(-val) + " 2.56524642500000 Cs\n")
         f.write("atom " + str(val) + " " + str(-val) + " -2.56524642500000 Cs\n")
 
+
 def betweenTotal(p1, p2, p3):
     v1 = p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]
     v2 = p3[0] - p2[0], p3[1] - p2[1], p3[2] - p2[2]
@@ -234,6 +254,7 @@ def betweenTotal(p1, p2, p3):
     u2 = v2 / np.linalg.norm(v2)
     dot_product = np.dot(u1, u2)
     return (np.arccos(dot_product)) * 360 / (2 * math.pi)
+
 
 def between(p1, p2, p3):
     v1 = p1[0] - p2[0], p1[1] - p2[1]
@@ -243,6 +264,7 @@ def between(p1, p2, p3):
     dot_product = np.dot(u1, u2)
     return (np.arccos(dot_product))*360/(2*math.pi)
 
+
 def betweenOutV(p1, p2, p3):
     v1 = p1[1] - p2[1], p1[2] - p2[2]
     v2 = p3[1] - p2[1], p3[2] - p2[2]
@@ -251,6 +273,7 @@ def betweenOutV(p1, p2, p3):
     dot_product = np.dot(u1, u2)
     return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
+
 def betweenOutH(p1, p2, p3):
     v1 = p1[0] - p2[0], p1[2] - p2[2]
     v2 = p3[0] - p2[0], p3[2] - p2[2]
@@ -258,6 +281,7 @@ def betweenOutH(p1, p2, p3):
     u2 = v2 / np.linalg.norm(v2)
     dot_product = np.dot(u1, u2)
     return (np.arccos(dot_product)) * 360 / (2 * math.pi)
+
 
 # Alters the position of p2 to be a specific angle with p1 and p3. Varies in the coord direction
 def angle(filename, target, p1, p2, p3, full, angle, coord):
@@ -451,7 +475,7 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
         if limit:
             while diff > 0.00000000005:
                 delta = delta / 1.01
-                #print(diff)
+                # print(diff)
                 count += 1
 
                 temp1 = pt2[0], pt2[1] + delta
@@ -472,7 +496,7 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
                         if a1 < a2:
                             diff = a1
                             pt2 = temp1
-                            if(pt2[1] > -0.1):
+                            if pt2[1] > -0.1:
                                 delta = delta / 1.01
                                 pt2 = pt2[0], pt2[1] - delta
                         else:
@@ -570,21 +594,21 @@ def angleInfo(filename, p1, p2, p3, vert):
         else:
             print(betweenOutH(a1, a2, a3))
 
-def printBands(filestart, bandnum):
+def printBands(filestart, bandnum, bandlength):
     a = 150
-    for i in range(4):
+    for i in range(3):
         print(a)
         print("band gap")
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"
-            bandProcess(fileplus, True)
-        print("k point")
+            bandProcess(fileplus, True, bandlength)
+        #print("k0")
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"
-            bandProcess(fileplus, False)
-        print("band width")
+            bandProcess(fileplus, False, bandlength)
+        #print("band width")
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"

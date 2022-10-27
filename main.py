@@ -39,13 +39,13 @@ a = 160
 #Geometry.angleOOP(fileW, fileW, 6, 7, 15, b, a, False, True)
 #Geometry.angleOOP(fileW, fileW, 9, 10, 14, b, a, False, False)
 
-fstart = "../../FHI-aims/AgBi-Perovskites/ideal/out/final_OOP/"
+fstart = "../../FHI-aims/AgBi-Perovskites/ideal/out/final_vert/"
 
-Geometry.printBands(fstart, 3)
+squirt = 1/math.sqrt(2)
+#Geometry.printBands(fstart, 3, squirt)
+#Geometry.printBands(fstart, 4, squirt)
 
-#Geometry.bandProcess("../../FHI-aims/AgBi-Perovskites/ideal/out/180/180_160/band1003.out", True)
-#Geometry.bandProcess("../../FHI-aims/AgBi-Perovskites/ideal/out/final_OOP/180/180_160/band1003.out", True)
+#Geometry.angleInfo("../../FHI-aims/AgBi-Perovskites/ideal/tilting/180/bands/180_180/geometry.in", 3, 25, 1, True)
 
-source = "../../FHI-aims/AgBi-Perovskites/ideal/out/170c/170_190/geometry.in"
-destination = "../../FHI-aims/AgBi-Perovskites/ideal/out/final_vert/170/170_190/geometry.in"
-#Geometry.make_I_vert(source, destination, 3.05375019, 3.134558619, 3)
+f1 = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/final_IP/180/180_180/geometry.in"
+f2 = "../../FHI-aims/AgBi-Perovskites/ideal/tilting/final_IP/180/180_185/geometry.in"
