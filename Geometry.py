@@ -40,15 +40,15 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
             lv.append(ln)
         j = 1
         for x in lv:
-            #print("Start of k-point", j)
+            # print("Start of k-point", j)
             temp = x.split()
             i = 0
             for y in temp:
                 if 0 < i < 4:
                     p = 1
-                    #print("coord: ", y)
+                    # print("coord: ", y)
                 if (i % 2) == 0 and y == "0.00000":
-                    start = i-7
+                    start = i - 7
                     break
                 i += 1
             i = 0
@@ -58,23 +58,23 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
                         t = y
                     else:
                         p = 0
-                        #print(t,y)
+                        # print(t,y)
                     if i == start + 8:
                         if float(y) < float(min):
                             min = y
                             minVal = str(j)
                             prev = float(temp[start + 10])
                         elif (float(y) == float(min)):
-                            if(float(temp[start+10])>prev):
+                            if (float(temp[start + 10]) > prev):
                                 min = y
                                 minVal = str(j)
-                                prev = float(temp[start+10])
+                                prev = float(temp[start + 10])
                 i += 1
             j += 1
-    #print("min of",str(min),"found at",minVal)
-    #print("previous",prev)
+    # print("min of",str(min),"found at",minVal)
+    # print("previous",prev)
     if boo:
-        print(str(float(prev)-float(min)))
+        print(str(float(prev) - float(min)))
     else:
         if float(minVal) >= 150:
             minVal = 300 - float(minVal)
@@ -100,15 +100,15 @@ def bandGap(filepath: object) -> object:
             lv.append(ln)
         j = 1
         for x in lv:
-            #print("Start of k-point", j)
+            # print("Start of k-point", j)
             temp = x.split()
             i = 0
             for y in temp:
                 if 0 < i < 4:
                     p = 1
-                    #print("coord: ", y)
+                    # print("coord: ", y)
                 if (i % 2) == 0 and y == "0.00000":
-                    start = i-7
+                    start = i - 7
                     break
                 i += 1
             i = 0
@@ -118,23 +118,23 @@ def bandGap(filepath: object) -> object:
                         t = y
                     else:
                         p = 0
-                        #print(t,y)
+                        # print(t,y)
                     if i == start + 8:
                         if float(y) < float(min):
                             min = y
                             minVal = str(j)
-                            prev = temp[start+10]
+                            prev = temp[start + 10]
                     if i == start + 14:
                         if float(y) > float(max):
                             max = y
                             maxVal = str(j)
                 i += 1
             j += 1
-    #print("min of",str(min),"found at",minVal)
-    #print("max of",str(max),"found at",maxVal)
-    #print("previous",prev)
-    #print("diff", str(float(min)-float(prev)))
-    print(float(max)-float(min))
+    # print("min of",str(min),"found at",minVal)
+    # print("max of",str(max),"found at",maxVal)
+    # print("previous",prev)
+    # print("diff", str(float(min)-float(prev)))
+    print(float(max) - float(min))
 
 
 # This function combines two geometry files which share a common atom by centering both files around that atom and
@@ -165,22 +165,22 @@ def addLattice(filename, writefile, original, radians):
     new = original * abs(math.cos(radians))
     other = 0 * abs(math.cos(radians))
     with open(writefile, "w") as f:
-        f.write("lattice_vector "+str(new)+" "+str(other)+" "+"0"+"\n")
-        f.write("lattice_vector "+str(other)+" "+str(new)+" 0"+"\n")
+        f.write("lattice_vector " + str(new) + " " + str(other) + " " + "0" + "\n")
+        f.write("lattice_vector " + str(other) + " " + str(new) + " 0" + "\n")
         f.write("lattice_vector 0 0 50 \n")
         f.writelines(lv)
 
 
 # This function rotates a file and then adds it to a given file
 def rotAdd(file1, file2, radians, axis, node1, node2, target):
-    rotFile = str(file2+"rot")
+    rotFile = str(file2 + "rot")
     Rotation.rotate(file2, rotFile, radians, axis)
     combine(file1, rotFile, target, node1, node2)
-    #addLattice(target, target, 11.77316030, radians / 2)
+    # addLattice(target, target, 11.77316030, radians / 2)
     os.remove(rotFile)
 
 
-def addCs(file,writefile):
+def addCsInit(file, writefile):
     with open(file, "r") as f:
         lv = []
         i = -2
@@ -215,10 +215,10 @@ def addCs(file,writefile):
         f.writelines(lv)
         print(x1)
         print(y1)
-        x_one = (float(x1) + float(x2))/2
-        x_two = (float(x3) + float(x4))/2
-        y_one = (float(y1) + float(y2))/2
-        y_two = (float(y3) + float(y4))/2
+        x_one = (float(x1) + float(x2)) / 2
+        x_two = (float(x3) + float(x4)) / 2
+        y_one = (float(y1) + float(y2)) / 2
+        y_two = (float(y3) + float(y4)) / 2
         f.write("atom " + str(y_one) + " " + str(x_one) + " 2.57797604083 Cs\n")
         f.write("atom " + str(y_one) + " " + str(x_two) + " 2.57797604083 Cs\n")
         f.write("atom " + str(y_two) + " " + str(x_one) + " 2.57797604083 Cs\n")
@@ -262,7 +262,9 @@ def between(p1, p2, p3):
     u1 = v1 / np.linalg.norm(v1)
     u2 = v2 / np.linalg.norm(v2)
     dot_product = np.dot(u1, u2)
-    return (np.arccos(dot_product))*360/(2*math.pi)
+    # print(u1, u2)
+    # print("dp", dot_product)
+    return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
 
 def betweenOutV(p1, p2, p3):
@@ -283,113 +285,8 @@ def betweenOutH(p1, p2, p3):
     return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
 
-# Alters the position of p2 to be a specific angle with p1 and p3. Varies in the coord direction
-def angle(filename, target, p1, p2, p3, full, angle, coord):
-    with open(filename, "r") as f:
-        lv = []
-        for ln in f:
-            lv.append(ln)
-    with open(target, "w") as f:
-        i = -2
-        l = 0
-        for x in lv:
-            if not(x.startswith("lattice") or x.startswith("atom")):
-                continue
-            if i == p1:
-                t1 = x.split()
-                f.write(x)
-            elif x.startswith("lattice"):
-                l += 1
-                f.write(x)
-                if coord == 1 and l == 1:
-                    lat = x.split()
-                if coord == 2 and l == 2:
-                    lat = x.split()
-                if coord == 3 and l == 3:
-                    lat = x.split()
-            elif i == p2:
-                t2 = x.split()
-            elif i == p3:
-                t3 = x.split()
-                f.write(x)
-            else:
-                f.write(x)
-            i += 1
-        pt1 = float(t1[1]), float(t1[2]), float(t1[3])
-        pt2 = float(t2[1]), float(t2[2]), float(t2[3])
-        if full:
-            pt3 = float(t3[1]), float(t3[2]), float(t3[3])
-        else:
-            pt3 = float(t3[1]) - float(lat[1]), float(t3[2]) - float(lat[2]), float(t3[3]) - float(lat[3])
-        diff = 1
-        delta = .3
-        y = 0
-        if coord == 2 and angle < between(pt1, pt2, pt3):
-            down = True
-        elif coord == 1 and angle > between(pt1, pt2, pt3):
-            down = True
-        elif coord == 3:
-            print("unfinished code, results bad")
-        else:
-            down = False
-        limit = False
-        if angle > 180:
-            d = angle - 180
-            angle = 180 - d
-            limit = True
-        while diff > 0.00000000005:
-            if coord == 2:
-                temp1 = pt2[0] + delta, pt2[1]
-                temp2 = pt2[0] - delta, pt2[1]
-            elif coord == 1:
-                temp1 = pt2[0], pt2[1] + delta
-                temp2 = pt2[0], pt2[1] - delta
-            a1 = abs(between(pt1, temp1, pt3) - angle)
-            a2 = abs(between(pt1, temp2, pt3) - angle)
-            if y == 0:
-                if down:
-                    diff = a2
-                    pt2 = temp2
-                else:
-                    diff = a1
-                    pt2 = temp1
-            else:
-                if limit:
-                    if not down and coord == 2:
-                        if temp2[0] < pt1[0]:
-                            pt2 = temp1
-                            diff = a1
-                        else:
-                            diff = min(a1, a2)
-                            if a1 < a2:
-                                pt2 = temp1
-                            else:
-                                pt2 = temp2
-                    elif down and coord == 1:
-                        if temp1[1] > pt1[1]:
-                            pt2 = temp2
-                            diff = a2
-                        else:
-                            diff = min(a1, a2)
-                            if a1 < a2:
-                                pt2 = temp1
-                            else:
-                                pt2 = temp2
-                    else:
-                        print("bruh moment")
-                else:
-                    diff = min(a1, a2)
-                    if a1 < a2:
-                        pt2 = temp1
-                    else:
-                        pt2 = temp2
-            y += 1
-            delta = delta / 2
-        print(between(pt1, pt2, pt3))
-        f.write("atom " + str(pt2[0]) + " " + str(pt2[1]) + " " + str(t2[3]) + " " + str(t2[4]) + "\n")
-
-
-def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
+# Alters the position of p2 to be a specific angle with p1 and p3. Varies in the direction specified by vert
+def angle(filename, target, p1, p2, p3, base, angle, full, vert):
     # note there is a known bug where if calculating where angle > base but angle < 180,
     # it will find the solution where angle = 360 - angle
     # one workaround is just slightly messing with the delta initial value,
@@ -406,84 +303,86 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
         f.writelines(lats)
         f.write("\n")
         i = 1
-        for x in at:            # This for loop pulls the atoms that the angle is being changed between
-            if i == p1:         # And writes all atoms except the one that needs to move to the output file
+        for x in at:  # This for loop pulls the atoms that the angle is being changed between
+            if i == p1:
                 t1 = x.split()
-                f.write(x)
             elif i == p2:
                 t2 = x.split()
             elif i == p3:
                 t3 = x.split()
-                f.write(x)
-            else:
-                f.write(x)
             i += 1
 
-
-        if vert:                                # This if-else clause sets up the atoms depending on whether it
-            pt1 = float(t1[2]), float(t1[3])    # is the x or y coordinate that is being used for angle calculations
-            pt2 = float(t2[2]), float(t2[3])    # notice it pulling the corresponding lattice vector as well
-            lat = lats[1].split()               # to be used in the case of "non-full" calculations
+        if vert:
+            pt1 = float(t1[2]), float(t1[1])  # is the x or y coordinate that is being used for angle calculations
+            pt2 = float(t2[2]), float(t2[1])
+            lat = lats[1].split()  # to be used in the case of "non-full" calculations
+            if full:
+                pt3 = float(t3[2]), float(t3[1])
+                down = True
+            else:
+                pt3 = float(t3[2]) - float(lat[2]), float(t3[1]) - float(lat[1])
+                down = True
         else:
-            pt1 = float(t1[1]), float(t1[3])
-            pt2 = float(t2[1]), float(t2[3])
+            pt1 = float(t1[1]), float(t1[2])
+            pt2 = float(t2[1]), float(t2[2])
             lat = lats[0].split()
+            if full:
+                pt3 = float(t3[1]), float(t3[2])
+                down = False
+            else:
+                pt3 = float(t3[1]) - float(lat[1]), float(t3[2]) - float(lat[2])
+                down = False
 
-        if full and vert:
-            pt3 = float(t3[2]), float(t3[3])
-            down = False
-        elif full:
-            pt3 = float(t3[1]), float(t3[3])
-            down = True
-        elif vert:
-            pt3 = float(t3[2]) - float(lat[2]), float(t3[3]) - float(lat[3])
-            down = False
-        elif not vert:
-            pt3 = float(t3[1]) - float(lat[1]), float(t3[3]) - float(lat[3])
-            down = True
-        else:
-            print("bruh")
+        diff = 10
+        delta = 1
 
-        diff = 1
-        delta = .5
-
-        # Does this have a use?
         limit = False
-        if angle > 180:
-            angle = 360 - angle
-            limit = True
-            print("Limit = True")
+        caution = False
+        if angle > base:
+            caution = True
             if down:
                 down = False
             else:
                 down = True
-        elif angle > base:
-            if down:
-                down = False
-            else:
-                down = True
+            if angle > 180:
+                angle = 360 - angle
+                limit = True
+                print("Limit = True")
 
-        if down:
+        if down and (not caution or limit):
             pt2 = pt2[0], pt2[1] - delta
             diff = abs(between(pt1, pt2, pt3) - angle)
-        else:
+        elif not down and (not caution or limit):
             pt2 = pt2[0], pt2[1] + delta
             diff = abs(between(pt1, pt2, pt3) - angle)
         delta = delta / 2
 
-        count = 0
+        count = 1
+
+        debug = False
+
+        div = 2
+
+        if debug:
+            print(pt1)
+            print(down)
+
         if limit:
-            while diff > 0.00000000005:
+            while diff > 0.0000000000005:
                 delta = delta / 1.01
-                # print(diff)
+
+                if debug:
+                    print()
+                    print(diff)
+                    print(delta)
+                    print(pt2)
                 count += 1
 
                 temp1 = pt2[0], pt2[1] + delta
                 temp2 = pt2[0], pt2[1] - delta
 
-
-                if count == 30000:
-                    print("broke due to count == 3000")
+                if count == 3000:
+                    print("broke due to count == 30000")
                     break
 
                 a1 = abs(between(pt1, temp1, pt3) - angle)
@@ -496,9 +395,10 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
                         if a1 < a2:
                             diff = a1
                             pt2 = temp1
-                            if pt2[1] > -0.1:
+                            if abs(pt2[1] - pt1[1]) < 0.1:
                                 delta = delta / 1.01
                                 pt2 = pt2[0], pt2[1] - delta
+                                diff = abs(between(pt1, pt2, pt3) - angle)
                         else:
                             diff = a2
                             pt2 = temp2
@@ -513,33 +413,239 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
                         else:
                             diff = a2
                             pt2 = temp2
-                            if (pt2[1] < 0.1):
+                            if abs(pt2[1] - pt1[1]) < 0.1:
                                 delta = delta / 1.01
                                 pt2 = pt2[0], pt2[1] + delta
+                                diff = abs(between(pt1, pt2, pt3) - angle)
+
                 else:
                     print("bruh moment")
 
         else:
             while diff > 0.00000000005:
+
+                if count == 200000:
+                    print("breaking from max steps reached")
+                    break
+
+                if (count % 1000) == 0:
+                    delta = 0.5
+                    div = 1.5
+
                 temp1 = pt2[0], pt2[1] + delta
                 temp2 = pt2[0], pt2[1] - delta
 
                 a1 = abs(between(pt1, temp1, pt3) - angle)
                 a2 = abs(between(pt1, temp2, pt3) - angle)
+                if debug:
+                    print()
+                    print("diff:", diff)
+                    print("delta:", delta)
+                    print("temp1:", temp1)
+                    print("temp2:", temp2)
+                    print("a1:", a1)
+                    print("a2:", a2)
 
-                if a1 < a2:
-                    diff = a1
-                    pt2 = temp1
-                else:
-                    diff = a2
-                    pt2 = temp2
-                delta = delta / 2
+                if a1 < a2 and a1 < diff:
+                    if not caution or (down and temp1[1] >= pt1[1] - 0.1) or (not down and temp1[1] <= pt1[1] + 0.1):
+                        diff = a1
+                        pt2 = temp1
+                elif a2 < diff:
+                    if not caution or (not down and temp2[1] <= pt1[1] + 0.1) or (down and temp2[1] >= pt1[1] - 0.1):
+                        diff = a2
+                        pt2 = temp2
+                delta = delta / div
+                count += 1
 
         print(between(pt1, pt2, pt3))
+        i = 1
+        for x in at:  # This for prints out the atoms in the same order they were originally in
+            if i == p2:
+                if vert:
+                    f.write("atom " + str(pt2[1]) + " " + str(pt2[0]) + " " + str(t2[3]) + " " + str(t2[4]) + "\n")
+                else:
+                    f.write("atom " + str(pt2[0]) + " " + str(pt2[1]) + " " + str(t2[3]) + " " + str(t2[4]) + "\n")
+            else:
+                f.write(x)
+            i += 1
+
+
+def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
+    with open(filename, "r") as f:
+        lats = []
+        at = []
+        for ln in f:
+            if ln.startswith("lattice"):
+                lats.append(ln)
+            elif ln.startswith("atom"):
+                at.append(ln)
+    with open(target, "w") as f:
+        f.writelines(lats)
+        f.write("\n")
+        i = 1
+        for x in at:  # This for loop pulls the atoms that the angle is being changed between
+            if i == p1:
+                t1 = x.split()
+            elif i == p2:
+                t2 = x.split()
+            elif i == p3:
+                t3 = x.split()
+            i += 1
+
         if vert:
-            f.write("atom " + str(t2[1]) + " " + str(pt2[0]) + " " + str(pt2[1]) + " " + str(t2[4]) + "\n")
+            pt1 = float(t1[2]), float(t1[3])  # is the x or y coordinate that is being used for angle calculations
+            pt2 = float(t2[2]), float(t2[3])
+            lat = lats[1].split()  # to be used in the case of "non-full" calculations
+            if full:
+                pt3 = float(t3[2]), float(t3[3])
+                down = False
+            else:
+                pt3 = float(t3[2]) - float(lat[2]), float(t3[3]) - float(lat[3])
+                down = False
         else:
-            f.write("atom " + str(pt2[0]) + " " + str(t2[2]) + " " + str(pt2[1]) + " " + str(t2[4]) + "\n")
+            pt1 = float(t1[1]), float(t1[3])
+            pt2 = float(t2[1]), float(t2[3])
+            lat = lats[0].split()
+            if full:
+                pt3 = float(t3[1]), float(t3[3])
+                down = True
+            else:
+                pt3 = float(t3[1]) - float(lat[1]), float(t3[3]) - float(lat[3])
+                down = True
+
+        diff = 10
+        delta = 1
+
+        limit = False
+        caution = False
+        if angle > base:
+            caution = True
+            if down:
+                down = False
+            else:
+                down = True
+            if angle > 180:
+                angle = 360 - angle
+                limit = True
+                print("Limit = True")
+
+        if down and (not caution or limit):
+            pt2 = pt2[0], pt2[1] - delta
+            diff = abs(between(pt1, pt2, pt3) - angle)
+        elif not down and (not caution or limit):
+            pt2 = pt2[0], pt2[1] + delta
+            diff = abs(between(pt1, pt2, pt3) - angle)
+        delta = delta / 2
+
+        count = 1
+        div = 2
+        debug = False
+
+        if debug:
+            print(pt1)
+            print(down)
+
+        if limit:
+            while diff > 0.0000000000005:
+                delta = delta / 1.01
+
+                if debug:
+                    print()
+                    print(diff)
+                    print(delta)
+                    print(pt2)
+                count += 1
+
+                temp1 = pt2[0], pt2[1] + delta
+                temp2 = pt2[0], pt2[1] - delta
+
+                if count == 30000:
+                    print("broke due to count == 30000")
+                    break
+
+                a1 = abs(between(pt1, temp1, pt3) - angle)
+                a2 = abs(between(pt1, temp2, pt3) - angle)
+
+                if down:
+                    if temp1[1] > pt1[1]:
+                        continue
+                    else:
+                        if a1 < a2:
+                            diff = a1
+                            pt2 = temp1
+                            if abs(pt2[1] - pt1[1]) < 0.1:
+                                delta = delta / 1.01
+                                pt2 = pt2[0], pt2[1] - delta
+                                diff = abs(between(pt1, pt2, pt3) - angle)
+                        else:
+                            diff = a2
+                            pt2 = temp2
+
+                elif not down:
+                    if temp2[1] < pt1[1]:
+                        continue
+                    else:
+                        if a1 < a2:
+                            diff = a1
+                            pt2 = temp1
+                        else:
+                            diff = a2
+                            pt2 = temp2
+                            if abs(pt2[1] - pt1[1]) < 0.1:
+                                delta = delta / 1.01
+                                pt2 = pt2[0], pt2[1] + delta
+                                diff = abs(between(pt1, pt2, pt3) - angle)
+
+                else:
+                    print("bruh moment")
+
+        else:
+            while diff > 0.00000000005:
+
+                if count == 200000:
+                    print("breaking from max steps reached")
+                    break
+
+                if (count % 1000) == 0:
+                    delta = 0.5
+                    div = 1.5
+
+                temp1 = pt2[0], pt2[1] + delta
+                temp2 = pt2[0], pt2[1] - delta
+
+                a1 = abs(between(pt1, temp1, pt3) - angle)
+                a2 = abs(between(pt1, temp2, pt3) - angle)
+                if debug:
+                    print()
+                    print("diff:", diff)
+                    print("delta:", delta)
+                    print("temp1:", temp1)
+                    print("temp2:", temp2)
+                    print("a1:", a1)
+                    print("a2:", a2)
+
+                if a1 < a2 and a1 < diff:
+                    if not caution or (down and temp1[1] >= pt1[1] - 0.1) or (not down and temp1[1] <= pt1[1] + 0.1):
+                        diff = a1
+                        pt2 = temp1
+                elif a2 < diff:
+                    if not caution or (not down and temp2[1] <= pt1[1] + 0.1) or (down and temp2[1] >= pt1[1] - 0.1):
+                        diff = a2
+                        pt2 = temp2
+                delta = delta / div
+                count += 1
+
+        print(between(pt1, pt2, pt3))
+        i = 1
+        for x in at:  # This for prints out the atoms in the same order they were originally in
+            if i == p2:
+                if vert:
+                    f.write("atom " + str(t2[1]) + " " + str(pt2[0]) + " " + str(pt2[1]) + " " + str(t2[4]) + "\n")
+                else:
+                    f.write("atom " + str(pt2[0]) + " " + str(t2[2]) + " " + str(pt2[1]) + " " + str(t2[4]) + "\n")
+            else:
+                f.write(x)
+            i += 1
 
 
 def charge(filename, target, atoms, charges):
@@ -570,7 +676,7 @@ def charge(filename, target, atoms, charges):
 # outputs delta beta, delta beta in plane, and delta beta out of plane in that order
 def angleInfo(filename, p1, p2, p3, vert):
     with open(filename, "r") as f:
-        lv = [0,0,0]
+        lv = [0, 0, 0]
         i = 1
         for ln in f:
             if ln.startswith("atom"):
@@ -594,26 +700,28 @@ def angleInfo(filename, p1, p2, p3, vert):
         else:
             print(betweenOutH(a1, a2, a3))
 
+
 def printBands(filestart, bandnum, bandlength):
     a = 150
-    for i in range(3):
+    for i in range(1):
         print(a)
         print("band gap")
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"
             bandProcess(fileplus, True, bandlength)
-        #print("k0")
+        print()  # k0 value
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"
             bandProcess(fileplus, False, bandlength)
-        #print("band width")
+        print()  # band width value
         for i in range(9):
             fileplus = filestart + str(a) + "/" + str(a) + "_" + str((a - 20) + (5 * i))
             fileplus += "/band100" + str(bandnum) + ".out"
             bandGap(fileplus)
-        a += 10
+        a -= 10
+
 
 def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
     with open(readfile, "r") as f:
@@ -673,3 +781,101 @@ def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
         Cs[3] = str(-float(Cs[3]))
         f.write(' '.join(Cs))
         f.write("\n")
+
+
+def addCs(readfile, writefile, Cs_height):
+    with open(readfile, "r") as f:
+        lv = []
+        at = []
+        for ln in f:
+            if ln.startswith("lattice"):
+                lv.append(ln)
+            elif ln.startswith("atom"):
+                at.append(ln)
+    with open(writefile, "w") as f:
+        f.writelines(lv)
+        for i in at:
+            temp = i.split()
+            if temp[4] != "Cs":
+                f.write(i)
+                f.write("\n")
+        temp = lv[0].split()
+        Cs_loc = float(temp[1]) / 4
+        Cs = ["atom", str(Cs_loc), str(Cs_loc), str(Cs_height), "Cs"]
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        Cs[2] = str(-float(Cs[2]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[1] = str(-float(Cs[1]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+        Cs[3] = str(-float(Cs[3]))
+        f.write(' '.join(Cs))
+        f.write("\n")
+
+
+def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
+    with open(readfile, "r") as f:
+        lv = []
+        at = []
+        extra = 0
+        i = 1
+        for ln in f:
+            if ln.startswith("lattice_vector"):
+                lv.append(ln)
+            if ln.startswith("atom"):
+                if i == center:
+                    cent = ln
+                elif (i == a) or (i == b) or (i == c) or (i == d) or (i == e):
+                    at.append(ln)
+                elif i == eff:
+                    extra = ln
+                i += 1
+        if not full:
+            lat = lv[1].split()
+            extra = extra.split()
+            extra[1] = str(float(extra[1]) + float(lat[1]))
+            extra[2] = str(float(extra[2]) + float(lat[2]))
+            extra[3] = str(float(extra[3]) + float(lat[3]))
+            extra = ' '.join(extra)
+        at.append(extra)
+
+        distances = []
+        print(at)
+        for x in at:
+            distances.append(distance(cent, x))
+
+        avg = 0
+        for x in distances:
+            avg += x
+        avg = avg / 6
+        avg2 = avg**2
+
+        result = 0
+        for x in distances:
+            result += ((x-avg)**2)/avg2
+
+        print(result/6)
+
+
+def distance(a, b):
+    a = a.split()
+    b = b.split()
+    a_num = float(a[1]), float(a[2]), float(a[3])
+    b_num = float(b[1]), float(b[2]), float(b[3])
+    result = ((a_num[0] - b_num[0]) ** 2) + ((a_num[1] - b_num[1]) ** 2) + ((a_num[2] - b_num[2]) ** 2)
+    return math.sqrt(result)
