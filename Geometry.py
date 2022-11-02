@@ -542,8 +542,10 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
         debug = False
 
         if debug:
-            print(pt1)
-            print(down)
+            print("pt1:", pt1)
+            print("pt2:", pt2)
+            print("pt3:", pt3)
+            print("down?", down)
 
         if limit:
             while diff > 0.0000000000005:
@@ -602,7 +604,7 @@ def angleOOP(filename, target, p1, p2, p3, base, angle, full, vert):
         else:
             while diff > 0.00000000005:
 
-                if count == 200000:
+                if count == 20000:
                     print("breaking from max steps reached")
                     break
 
@@ -723,7 +725,7 @@ def printBands(filestart, bandnum, bandlength):
         a -= 10
 
 
-def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
+def make_I_vert(readfile, writefile, M_height, Bi_height, Cs_height):
     with open(readfile, "r") as f:
         lv = []
         at = []
@@ -734,18 +736,18 @@ def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
                 at.append(ln)
     with open(writefile, "w") as f:
         f.writelines(lv)
-        temp = lv[0].split()
-        Cs_loc = float(temp[1]) / 4
+        # temp = lv[0].split()
+        # Cs_loc = float(temp[1]) / 4
         for i in at:
             temp = i.split()
-            if float(temp[3]) < 2.5 and float(temp[3]) > -2.5:
+            if (2.5 > float(temp[3]) > -2.5) or temp[4] == "Cs":
                 f.write(i)
-            if temp[4] == "Ag":
+            if temp[4] == "Tl":
                 temp[4] = "I"
-                temp[3] = str(float(temp[3]) + Ag_height)
+                temp[3] = str(float(temp[3]) + M_height)
                 f.write(' '.join(temp))
                 f.write("\n")
-                temp[3] = str(float(temp[3]) - 2 * Ag_height)
+                temp[3] = str(float(temp[3]) - 2 * M_height)
                 f.write(' '.join(temp))
                 f.write("\n")
             if temp[4] == "Bi":
@@ -756,31 +758,31 @@ def make_I_vert(readfile, writefile, Ag_height, Bi_height, Cs_height):
                 temp[3] = str(float(temp[3]) - 2 * Bi_height)
                 f.write(' '.join(temp))
                 f.write("\n")
-        Cs = ["atom", str(Cs_loc), str(Cs_loc), str(Cs_height), "Cs"]
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[3] = str(-float(Cs[3]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[1] = str(-float(Cs[1]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[3] = str(-float(Cs[3]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[1] = str(-float(Cs[1]))
-        Cs[2] = str(-float(Cs[2]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[3] = str(-float(Cs[3]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[1] = str(-float(Cs[1]))
-        f.write(' '.join(Cs))
-        f.write("\n")
-        Cs[3] = str(-float(Cs[3]))
-        f.write(' '.join(Cs))
-        f.write("\n")
+        # Cs = ["atom", str(Cs_loc), str(Cs_loc), str(Cs_height), "Cs"]
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[3] = str(-float(Cs[3]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[1] = str(-float(Cs[1]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[3] = str(-float(Cs[3]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[1] = str(-float(Cs[1]))
+        # Cs[2] = str(-float(Cs[2]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[3] = str(-float(Cs[3]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[1] = str(-float(Cs[1]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
+        # Cs[3] = str(-float(Cs[3]))
+        # f.write(' '.join(Cs))
+        # f.write("\n")
 
 
 def addCs(readfile, writefile, Cs_height):
@@ -855,7 +857,7 @@ def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
         at.append(extra)
 
         distances = []
-        print(at)
+        #print(at)
         for x in at:
             distances.append(distance(cent, x))
 
@@ -863,13 +865,96 @@ def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
         for x in distances:
             avg += x
         avg = avg / 6
-        avg2 = avg**2
+        avg2 = avg ** 2
 
         result = 0
         for x in distances:
-            result += ((x-avg)**2)/avg2
+            result += ((x - avg) ** 2) / avg2
 
-        print(result/6)
+        print(result / 6)
+
+
+def sigma_square_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
+    with open(readfile, "r") as f:
+        lv = []
+        at = []
+        extra = 0
+        i = 1
+        for ln in f:
+            if ln.startswith("lattice_vector"):
+                lv.append(ln)
+            if ln.startswith("atom"):
+                if i == center:
+                    center = ln
+                elif i == x1:
+                    x1 = ln
+                elif i == x2:
+                    x2 = ln
+                elif i == y1:
+                    y1 = ln
+                elif i == y2:
+                    y2 = ln
+                elif i == z1:
+                    z1 = ln
+                elif i == z2:
+                    z2 = ln
+                i += 1
+        if not full:
+            lat = lv[1].split()
+            y2 = y2.split()
+            y2[1] = str(float(y2[1]) + float(lat[1]))
+            y2[2] = str(float(y2[2]) + float(lat[2]))
+            y2[3] = str(float(y2[3]) + float(lat[3]))
+            y2 = ' '.join(y2)
+
+        angles = []
+        angles.append(tri_angle(x1, center, y1))
+        angles.append(tri_angle(x1, center, y2))
+        angles.append(tri_angle(x1, center, z1))
+        angles.append(tri_angle(x1, center, z2))
+
+        angles.append(tri_angle(y2, center, x2))
+        angles.append(tri_angle(y2, center, z1))
+        angles.append(tri_angle(y2, center, z2))
+
+        angles.append(tri_angle(x2, center, y1))
+        angles.append(tri_angle(x2, center, z1))
+        angles.append(tri_angle(x2, center, z2))
+
+        angles.append(tri_angle(y1, center, z1))
+        angles.append(tri_angle(y1, center, z2))
+
+        # print(angles)
+
+        avg = 0
+        for x in angles:
+            avg += x
+        avg = avg / 12
+
+        result = 0
+        for x in angles:
+            result += ((x - avg)**2)
+
+        print(result / 12)
+
+
+def tri_angle(t1, t2, t3):
+    t1 = t1.split()
+    t2 = t2.split()
+    t3 = t3.split()
+
+    p1 = float(t1[1]), float(t1[2]), float(t1[3])
+    p2 = float(t2[1]), float(t2[2]), float(t2[3])
+    p3 = float(t3[1]), float(t3[2]), float(t3[3])
+
+    v1 = p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]
+    v2 = p3[0] - p2[0], p3[1] - p2[1], p3[2] - p2[2]
+    u1 = v1 / np.linalg.norm(v1)
+    u2 = v2 / np.linalg.norm(v2)
+    dot_product = np.dot(u1, u2)
+    # print(u1, u2)
+    # print("dp", dot_product)
+    return (np.arccos(dot_product)) * 360 / (2 * math.pi)
 
 
 def distance(a, b):
