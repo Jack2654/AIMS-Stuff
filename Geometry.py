@@ -704,7 +704,7 @@ def angleInfo(filename, p1, p2, p3, vert):
 
 
 def printBands(filestart, bandnum, bandlength):
-    a = 150
+    a = 180
     for i in range(1):
         print(a)
         print("band gap")
@@ -830,7 +830,7 @@ def addCs(readfile, writefile, Cs_height):
         f.write("\n")
 
 
-def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
+def delta_d_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
     with open(readfile, "r") as f:
         lv = []
         at = []
@@ -842,9 +842,9 @@ def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
             if ln.startswith("atom"):
                 if i == center:
                     cent = ln
-                elif (i == a) or (i == b) or (i == c) or (i == d) or (i == e):
+                elif (i == x1) or (i == x2) or (i == y1) or (i == z1) or (i == z2):
                     at.append(ln)
-                elif i == eff:
+                elif i == y2:
                     extra = ln
                 i += 1
         if not full:
@@ -857,7 +857,7 @@ def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
         at.append(extra)
 
         distances = []
-        #print(at)
+        # print(at)
         for x in at:
             distances.append(distance(cent, x))
 
@@ -874,7 +874,7 @@ def delta_d_calc(readfile, center, a, b, c, d, e, eff, full):
         print(result / 6)
 
 
-def sigma_square_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
+def old_sigma_square_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
     with open(readfile, "r") as f:
         lv = []
         at = []
@@ -924,8 +924,6 @@ def sigma_square_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
         angles.append(tri_angle(y1, center, z1))
         angles.append(tri_angle(y1, center, z2))
 
-        # print(angles)
-
         avg = 0
         for x in angles:
             avg += x
@@ -933,9 +931,58 @@ def sigma_square_calc(readfile, center, x1, x2, y1, y2, z1, z2, full):
 
         result = 0
         for x in angles:
-            result += ((x - avg)**2)
+            result += ((x - avg) ** 2)
 
         print(result / 12)
+
+
+def sigma_square_calc(readfile, xmin, xmax, ymin, ymax, center, bismuth):
+    with open(readfile, "r") as f:
+        at = []
+        lv = []
+        for ln in f:
+            if ln.startswith("atom"):
+                at.append(ln)
+            elif ln.startswith("lattice"):
+                lv.append(ln)
+
+    oct = []
+    for a in at:
+        temp = a.split()
+        if (xmin <= float(temp[1]) <= xmax) and (ymin <= float(temp[2]) <= ymax) and temp[4] == "I":
+            oct.append(a)
+        elif (xmin <= float(temp[1]) <= xmax) and (ymin <= float(temp[2]) <= ymax) and temp[4] == center:
+            center = a
+        if (-1 <= float(temp[1]) <= 1) and (float(temp[2]) <= -1):
+            possible = a.split()
+    if bismuth:
+        tempLV = lv[1].split()
+        new = (float(possible[1]) + float(tempLV[1]), float(possible[2]) + float(tempLV[2]),
+               float(possible[3]) + float(tempLV[3]))
+        temp = "atom " + str(new[0]) + " " + str(new[1]) + " " + str(new[2]) + " I"
+        oct.append(temp)
+
+    angles = []
+    i = 0
+    for x in oct:
+        j = 0
+        for y in oct:
+            if i < j:
+                temp = tri_angle(x, center, y)
+                if 45 < temp < 135:
+                    angles.append(temp)
+            j += 1
+        i += 1
+
+    if len(angles) != 12:
+        print("SAD!", len(angles))
+        print(angles)
+
+    result = 0
+    for x in angles:
+        result += ((x - 90) ** 2)
+
+    print(result / 12)
 
 
 def tri_angle(t1, t2, t3):
@@ -964,3 +1011,67 @@ def distance(a, b):
     b_num = float(b[1]), float(b[2]), float(b[3])
     result = ((a_num[0] - b_num[0]) ** 2) + ((a_num[1] - b_num[1]) ** 2) + ((a_num[2] - b_num[2]) ** 2)
     return math.sqrt(result)
+
+
+def centroid(readfile, xmin, xmax, ymin, ymax, center, bismuth):
+    with open(readfile, "r") as f:
+        at = []
+        lv = []
+        for ln in f:
+            if ln.startswith("atom"):
+                at.append(ln)
+            elif ln.startswith("lattice"):
+                lv.append(ln)
+    oct = []
+    for a in at:
+        temp = a.split()
+        if (xmin <= float(temp[1]) <= xmax) and (ymin <= float(temp[2]) <= ymax) and temp[4] == "I":
+            oct.append(a)
+        elif (xmin <= float(temp[1]) <= xmax) and (ymin <= float(temp[2]) <= ymax) and temp[4] == center:
+            center = a.split()
+        if (-1 <= float(temp[1]) <= 1) and (float(temp[2]) <= -1):
+            possible = a.split()
+    if bismuth:
+        tempLV = lv[1].split()
+        new = (float(possible[1]) + float(tempLV[1]), float(possible[2]) + float(tempLV[2]),
+               float(possible[3]) + float(tempLV[3]))
+        temp = "atom " + str(new[0]) + " " + str(new[1]) + " " + str(new[2]) + " I"
+        oct.append(temp)
+    x = 0.0
+    y = 0.0
+    z = 0.0
+    for o in oct:
+        # print(o)
+        temp = o.split()
+        x += float(temp[1])
+        y += float(temp[2])
+        z += float(temp[3])
+    # print(center)
+    x = float(center[1]) - (x / 6)
+    y = float(center[2]) - (y / 6)
+    z = float(center[3]) - (z / 6)
+    output = str(x) + ", " + str(y) + ", " + str(z)
+    if len(oct) != 6:
+        print("AHHHHHHHHHHHHHHHHH", len(oct))
+    print(output)
+
+
+def flipYandZ(readfile, writefile):
+    with open(readfile, "r") as f:
+        at = []
+        lv = []
+        for ln in f:
+            if ln.startswith("atom"):
+                at.append(ln)
+            elif ln.startswith("lattice"):
+                lv.append(ln)
+    with open(writefile, "w") as f:
+        for l in lv:
+            temp = l.split()
+            outp = "lattice_vector\t" + temp[1] + "\t" + temp[3] + "\t" + temp[2] + "\n"
+            f.write(outp)
+        for a in at:
+            temp = a.split()
+            outp = "atom\t" + temp[1] + "\t" + temp[3] + "\t" + temp[2] + "\t" + temp[4] + "\n"
+            f.write(outp)
+        print("Flipped Y and Z :)")
