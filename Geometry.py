@@ -29,7 +29,7 @@ def constrain(filepath, target, atoms, flag):
                         f.write("constrain_relaxation " + flag + "\n")
 
 
-# This function outputs the spin splitting observed in the given band file
+# This function outputs the spin splitting observed in the given band file, set to true for spin splitting
 def bandProcess(filepath: object, boo, bandlength) -> object:
     min = 5.0
     prev = 0
@@ -40,13 +40,13 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
             lv.append(ln)
         j = 1
         for x in lv:
-            # print("Start of k-point", j)
+            #print("Start of k-point", j)
             temp = x.split()
             i = 0
             for y in temp:
                 if 0 < i < 4:
                     p = 1
-                    # print("coord: ", y)
+                    #print("coord: ", y)
                 if (i % 2) == 0 and y == "0.00000":
                     start = i - 7
                     break
@@ -58,7 +58,7 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
                         t = y
                     else:
                         p = 0
-                        # print(t,y)
+                        #print(t,y)
                     if i == start + 8:
                         if float(y) < float(min):
                             min = y
@@ -71,8 +71,8 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
                                 prev = float(temp[start + 10])
                 i += 1
             j += 1
-    # print("min of",str(min),"found at",minVal)
-    # print("previous",prev)
+    #print("min of",str(min),"found at",minVal)
+    #print("previous",prev)
     if boo:
         print(str(float(prev) - float(min)))
     else:
@@ -100,13 +100,13 @@ def bandGap(filepath: object) -> object:
             lv.append(ln)
         j = 1
         for x in lv:
-            # print("Start of k-point", j)
+            print("Start of k-point", j)
             temp = x.split()
             i = 0
             for y in temp:
                 if 0 < i < 4:
                     p = 1
-                    # print("coord: ", y)
+                    print("coord: ", y)
                 if (i % 2) == 0 and y == "0.00000":
                     start = i - 7
                     break
@@ -118,7 +118,7 @@ def bandGap(filepath: object) -> object:
                         t = y
                     else:
                         p = 0
-                        # print(t,y)
+                        print(t,y)
                     if i == start + 8:
                         if float(y) < float(min):
                             min = y
@@ -130,10 +130,10 @@ def bandGap(filepath: object) -> object:
                             maxVal = str(j)
                 i += 1
             j += 1
-    # print("min of",str(min),"found at",minVal)
-    # print("max of",str(max),"found at",maxVal)
-    # print("previous",prev)
-    # print("diff", str(float(min)-float(prev)))
+    print("min of",str(min),"found at",minVal)
+    print("max of",str(max),"found at",maxVal)
+    print("previous",prev)
+    print("diff", str(float(min)-float(prev)))
     print(float(max) - float(min))
 
 

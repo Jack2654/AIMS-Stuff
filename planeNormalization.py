@@ -1,6 +1,7 @@
 import math
 from sympy import *
 import os.path
+import numpy as np
 
 
 # Basic cross product formula, a and b should be three element tuples
@@ -17,7 +18,6 @@ def dotProduct(a, b):
 # Brillouin zone. NOTE: this does not actually compute the brillouin zone, it merely uses an approximation by
 # checking in 26 distinct directions
 def scale(t, r, b1, b2, b3):
-    print("b1: ", b1, ", b2: ", b2, ", b3: ", b3)
     s = 1
     n = (-1, 0, 1)
     for x in range(3):
@@ -91,39 +91,82 @@ def form(filename):
 
 # Main function, input filepath of geometry.in file as well as the vector (t1,t2,t3) expressed in lattice real-space
 # of the desired band direction
-def generate(filename, target):
+def generate(filename, target, lattice_defined, debug, mag):
     # The form function returns a 9-element tuple containing the lattice vectors from the given geometry.in file
     lattice = form(filename)
     a = (lattice[0], lattice[1], lattice[2])
     b = (lattice[3], lattice[4], lattice[5])
     c = (lattice[6], lattice[7], lattice[8])
+    if debug and lattice_defined:
+        print("Real space lattice vectors")
+        print(a)
+        print(b)
+        print(c)
 
     # The vector (A1,A2,A3) is the target that the result will be parallel to
-    A1 = (target[0] * a[0] + target[1] * b[0] + target[2] * c[0])
-    A2 = (target[0] * a[1] + target[1] * b[1] + target[2] * c[1])
-    A3 = (target[0] * a[2] + target[1] * b[2] + target[2] * c[2])
+    if lattice_defined:
+        A1 = (target[0] * a[0] + target[1] * b[0] + target[2] * c[0])
+        A2 = (target[0] * a[1] + target[1] * b[1] + target[2] * c[1])
+        A3 = (target[0] * a[2] + target[1] * b[2] + target[2] * c[2])
+    else:
+        A1 = target[0]
+        A2 = target[1]
+        A3 = target[2]
     target_vector = (A1, A2, A3)
-    print("target: ", target_vector)
 
     # B1, B2, and B3 define the three reciprocal unit cell vectors. V is the volume of the unit cell.
     V = abs(dotProduct(a, crossProduct(b, c)))
     B1 = tuple((2 * math.pi / V) * x for x in crossProduct(b, c))
     B2 = tuple((2 * math.pi / V) * x for x in crossProduct(c, a))
     B3 = tuple((2 * math.pi / V) * x for x in crossProduct(a, b))
+    if debug:
+        print("target: ", target_vector)
+        print("reciprocal lattice vectors:")
+        print(B1)
+        print(B2)
+        print(B3)
 
     # M defines the augmented matrix consisting of B1, B2, and B3 as columns with (A1,A2,A3) as the augmented column.
     # We know this is full rank by definition. Thus, row reducing produces the desired result
     M = Matrix([[B1[0], B2[0], B3[0], A1], [B1[1], B2[1], B3[1], A2], [B1[2], B2[2], B3[2], A3]])
     M_rref = M.rref()
     result = (M_rref[0][3], M_rref[0][7], M_rref[0][11])
-    print("initial f vals: ", result)
+
     final = scale(target_vector, result, B1, B2, B3)
-    print("f vals are: " + str(final))
+    if debug:
+        print("initial f vals: ", result)
+        r_x = B1[0] * final[0] + B2[0] * final[1] + B3[0] * final[2]
+        r_y = B1[1] * final[0] + B2[1] * final[1] + B3[1] * final[2]
+        r_z = B1[2] * final[0] + B2[2] * final[1] + B3[2] * final[2]
+        print(A1)
+        print(A2)
+        print(A3)
+        print(r_x)
+        print(r_y)
+        print(r_z)
+    if mag != 0:
+        leng = math.sqrt(final[0]**2 + final[1]**2 + final[2]**2)
+        final = (mag*final[0]/leng, mag*final[1]/leng, mag*final[2]/leng)
+    print(str(final[0]) + " " + str(final[1]) + " " + str(final[2]))
     return final
 
 
-f = input("Enter filepath to desired geometry.in file: ")
-t1 = input("Enter x Coordinate in real lattice space: ")
-t2 = input("Enter y Coordinate in real lattice space: ")
-t3 = input("Enter z Coordinate in real lattice space: ")
-generate(f, (float(t1), float(t2), float(t3)))
+# f = input("Enter filepath to desired geometry.in file: ")
+# t1 = input("Enter x Coordinate in real lattice space: ")
+# t2 = input("Enter y Coordinate in real lattice space: ")
+# t3 = input("Enter z Coordinate in real lattice space: ")
+# generate(f, (float(t1), float(t2), float(t3)), True)
+file = "../../FHI-aims/CationDoping/Reg_Exp/geometry.in"
+generate(file, (1, 0, 0), True, False, 0.0)
+generate(file, (0, 1, 0), True, False, 0.0)
+generate(file, (1, 1, 0), True, False, 0.0)
+generate(file, (1, -1, 0), True, False, 0.0)
+print("scaled down:")
+generate(file, (1, 0, 0), True, False, 0.1)
+generate(file, (0, 1, 0), True, False, 0.1)
+generate(file, (1, 1, 0), True, False, 0.1)
+generate(file, (1, -1, 0), True, False, 0.1)
+
+
+# Note on verification of results: have verified reciprocal lattice vector protocol outputs same results as is found in
+# aims.out files

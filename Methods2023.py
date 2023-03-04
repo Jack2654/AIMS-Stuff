@@ -1,4 +1,5 @@
 import VectorToolkit as vt
+import aimstools
 
 
 def angle(p1, p2, p3):
@@ -54,7 +55,8 @@ def manyLocAngles(source, geometry, lat, mod, plus):  # this method finds the an
     lat0 = lats[0].split()
     lat1 = lats[1].split()
     lat2 = lats[2].split()
-    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(lat2[1]), float(lat2[2]), float(lat2[3])
+    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(
+        lat2[1]), float(lat2[2]), float(lat2[3])
     i = 0
     for x in pts:
         temp = x.split()
@@ -95,7 +97,8 @@ def manyAbsAngles(source, geometry, lat, mod,
     lat0 = lats[0].split()
     lat1 = lats[1].split()
     lat2 = lats[2].split()
-    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(lat2[1]), float(lat2[2]), float(lat2[3])
+    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(
+        lat2[1]), float(lat2[2]), float(lat2[3])
     i = 0
     for x in pts:
         temp = x.split()
@@ -141,7 +144,8 @@ def moveManyPoints(source, geo, lat, writefile, plus):
     lat0 = lats[0].split()
     lat1 = lats[1].split()
     lat2 = lats[2].split()
-    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(lat2[1]), float(lat2[2]), float(lat2[3])
+    lvals = float(lat0[1]), float(lat0[2]), float(lat0[3]), float(lat1[1]), float(lat1[2]), float(lat1[3]), float(
+        lat2[1]), float(lat2[2]), float(lat2[3])
 
     with open(writefile, "w") as f:
         f.writelines(lats)
@@ -165,5 +169,58 @@ def moveManyPoints(source, geo, lat, writefile, plus):
                     tempPT[0] -= lvals[3 * lat]
                     tempPT[1] -= lvals[3 * lat + 1]
                     tempPT[2] -= lvals[3 * lat + 2]
-                f.write(temp[0] + " " + str(tempPT[0]) + " " + str(tempPT[1]) + " " + str(tempPT[2]) + " " + temp[4] + "\n")
+                f.write(
+                    temp[0] + " " + str(tempPT[0]) + " " + str(tempPT[1]) + " " + str(tempPT[2]) + " " + temp[4] + "\n")
             i += 1
+
+
+def mullikenPlotter(filepath):
+    # these two lines are only necessary to make the jupyter notebooks run on binder
+    # We load the respective module
+    from aimstools.bandstructures import MullikenBandStructure as MBS
+    # import sys
+    # sys.path.insert(0, filepath)
+    # We initialize the MullikenBandStructure object from a directory.
+    # The bandmlkxxxx.out files can become very large, so reading them in can take up some time.
+    bs = MBS(filepath, soc=True)
+    import matplotlib.pyplot as plt
+
+    # We set up a figure and some axes
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+
+    # On the first one, we draw just the band structure, in this case with spin-orbit coupling:
+    contributions = ["Pb", "I"]
+    colors = ["red", "blue"]
+    ax1 = bs.plot(axes=ax1, color="royalblue", show_bandgap_vertices=False)
+    ax1.set_title("Band Structure with SOC")
+    plt.ylim([-3,3])
+
+    # On the second one, we draw the contribution of all species overlaid:
+    ax2 = bs.plot_contributions(contributions=contributions, labels=["Pb", "I"], colors=colors, mode="scatter", axes=ax2)
+    ax2.set_ylabel("")
+    ax2.set_yticks([])
+    ax2.set_title("Projection on scatter difference")
+    plt.ylim([-3, 3])
+
+    # On the third one, we draw the difference of the contributions as a gradient:
+    ax3 = bs.plot_contributions(contributions=contributions, labels=["Pb", "I"], colors=colors, mode="scatter", bands_alpha=0.4, axes=ax3)
+    ax3.set_ylabel("")
+    ax3.set_yticks([])
+    ax3.set_title("Projection on scatter difference")
+    plt.ylim([-3,3])
+    plt.show()
+#
+
+#
+
+
+
+def remove_stars(readfile, writefile):
+    with open(readfile, "r") as f:
+        lns = []
+        for ln in f:
+            lns.append(ln)
+    with open(writefile, "w") as f:
+        for ln in lns:
+            new = ln.replace("NaN", "0.0")
+            f.write(new.replace("*", "0"))
