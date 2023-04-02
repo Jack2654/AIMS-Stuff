@@ -1,0 +1,58 @@
+# Barycentric Lagrange Interpolation for f(x) = cos(x)
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+def a(x):
+    return (np.e ** x) / (np.cos(x))
+def b(x):
+    return ((1 + 16 * (x**2)) ** (-1))
+
+def barycentric_interp(n, eval_pts, f):
+    x_vals = []
+    weights = []
+    for j in range(n+1):
+        x_vals.append(np.cos(np.pi*j/n))
+        if (j == 0) or (j == n):
+            weights.append(((-1)**j) * 1/2)
+        else:
+            weights.append(((-1)**j))
+    eval_points = np.linspace(-1, 1, num=eval_pts)
+    numerator = np.zeros(len(eval_points))
+    denominator = np.zeros(len(eval_points))
+    for j in range(n+1):
+        x_diff = eval_points - x_vals[j]
+        weight_ratio = weights[j] / x_diff
+        numerator += weight_ratio * f(x_vals[j])
+        denominator += weight_ratio
+    all_eval = []
+    for k in range(len(numerator)):
+        all_eval.append(numerator[k] / denominator[k])
+    return (x_vals, eval_points, all_eval)
+
+def error_fn(x_vals, eval_points, all_eval, f):
+    max = 0
+    cur_err = 0
+    for k in range(1, len(eval_points)-1):
+        cur_err = f(eval_points[k]) - all_eval[k]
+        if abs(cur_err) > max:
+            max = abs(cur_err)
+    return max
+
+n_vals = []
+max_errors_a = []
+max_errors_b = []
+for n in range(1, 200):
+    n_vals.append(n)
+    x, e, al = barycentric_interp(n, 100, a)
+    max_errors_a.append(error_fn(x, e, al, a))
+    x, e, al = barycentric_interp(n, 100, b)
+    max_errors_b.append(error_fn(x, e, al, b))
+
+plt.plot(n_vals, max_errors_a, 'b', label='exp(x)/cos(x)')
+plt.plot(n_vals, max_errors_b, 'k', label='(1+16x^2)^(-1)')
+plt.legend()
+plt.xticks(np.arange(min(n_vals)-1, max(n_vals)+2, 50))
+plt.yscale("log")
+plt.xlabel("n")
+plt.ylabel("error")
+plt.title("Error convergence of 2 different functions using Barycentric Lagrange Interpolation")
