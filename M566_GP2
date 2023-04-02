@@ -1,4 +1,4 @@
-# Barycentric Lagrange Interpolation for f(x) = cos(x)
+# Barycentric Lagrange Interpolation
 import numpy as np
 import matplotlib.pyplot as plt
 import math
