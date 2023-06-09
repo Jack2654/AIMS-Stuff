@@ -91,6 +91,14 @@ def form(filename):
 
 # Main function, input filepath of geometry.in file as well as the vector (t1,t2,t3) expressed in lattice real-space
 # of the desired band direction
+# inputs:
+# filename: path to geometry.in file
+# target: 3 element tuple values either cartesian length values or units of lattice vectors based on lattice_defined var
+# lattice_defined: true or false, if true target is interpreted as multiples of lattice vectors
+        # if false target is interpreted as cartesian values (in angstroms)
+# debug determines whether debug information is printed
+# mag: if 0 the result is scaled to be in an approximation of the brillouin zone, otherwise the result will be scaled
+        # to have a magnitude as determined by this parameter
 def generate(filename, target, lattice_defined, debug, mag):
     # The form function returns a 9-element tuple containing the lattice vectors from the given geometry.in file
     lattice = form(filename)
@@ -156,17 +164,14 @@ def generate(filename, target, lattice_defined, debug, mag):
 # t2 = input("Enter y Coordinate in real lattice space: ")
 # t3 = input("Enter z Coordinate in real lattice space: ")
 # generate(f, (float(t1), float(t2), float(t3)), True)
-file = "../../FHI-aims/CationDoping/Reg_Exp/geometry.in"
-generate(file, (1, 0, 0), True, False, 0.0)
+# file = "../../FHI-aims/Yi_1_5_D/n_5/geometry.in"
+file = "../../FHI-aims/Yi_1_5_D/Calculations_for_Naidel/n_5/theoretical_bands/geometry.in.next_step"
 generate(file, (0, 1, 0), True, False, 0.0)
-generate(file, (1, 1, 0), True, False, 0.0)
-generate(file, (1, -1, 0), True, False, 0.0)
-print("scaled down:")
-generate(file, (1, 0, 0), True, False, 0.1)
-generate(file, (0, 1, 0), True, False, 0.1)
-generate(file, (1, 1, 0), True, False, 0.1)
-generate(file, (1, -1, 0), True, False, 0.1)
-
-
+generate(file, (1, 0, 1), True, False, 0.0)
+generate(file, (1, 0, 0), True, False, 0.0)
+generate(file, (0, 0, 1), True, False, 0.0)
+generate(file, (1, 0, 0.5), True, False, 0.0)
+generate(file, (-1, 0, 1), True, False, 0.0)
 # Note on verification of results: have verified reciprocal lattice vector protocol outputs same results as is found in
 # aims.out files
+# inputs (lattice): (0, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 1), (1, 0, 0.5), (-1, 0, 1)

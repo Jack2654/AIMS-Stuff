@@ -1,17 +1,5 @@
-import math
-
-from math import pi
-import Rotation
-import Geometry
-import numpy as np
-import matplotlib.pyplot as plt
-import SpinTextures as st
-import Methods2023 as m23
-import egr244
-import egr244 as dyna
-import egr224 as mecha
-import m566 as num
 import PlottingTools as pt
+import Geometry
 
 b = 150
 a = 170
@@ -39,13 +27,27 @@ geo1 = "../../FHI-aims/AgBi-Perovskites/ideal/out/bro_idk/180/180_200/band1001.o
 # m23.moveManyPoints(source2, write, 1, write, True)
 # mecha.Delt_Y_Transform("D", 12, 6, 14)
 
-geom_start_IP = "../../FHI-aims/AgBi-Perovskites/ideal/in_plane/final_IP/160/160_"
-geom_start_OOP = "../../FHI-aims/AgBi-Perovskites/ideal/out/final_OOP/160/160_"
-geom_start_exp = "../../FHI-aims/AgBi-Perovskites/RFiles/bandsNEW/band100"
-start = "../../FHI-aims/CationDoping/Final_Results/Doped_Relaxed/Zoom_new_control"
-color_dict = {"Pb": "b", "I": "r", "C": "k", "H": "k", "N": "k", "Br": "k"}
+start = "../../FHI-aims/CationDoping/New_Results/RR_Zoom"
+start2 = "../../FHI-aims/CationDoping/New_Results/DR_Zoom"
+fp = "../../FHI-aims/Yi_1_5_D/Results/Band_Results/n_3/theoretical"
+color_dict = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
 
-#m23.remove_stars(start, start)
-#m23.mullikenPlotter("../../FHI-aims/CationDoping/Final_Results/Doped_Experimental/Full_new_control/")
+pt.mulliken_plot(filepath=fp, energyshift=0, ymin=-2.1, ymax=2.1, color_dict=color_dict, debug=True)
+# pt.mulliken_plot(filepath=start2, energyshift=-2.10031361, ymin=-4.0, ymax=4.0, color_dict=color_dict)
 
-pt.mulliken_plot(start, start + "/out.png", "Pb", "I", 0.0, 2.1, 2.2, 0.0, color_dict, False)
+# file = "../../FHI-aims/CationDoping/Final_Results/Regular_Relaxed/Zoom/band100"
+# for i in range(4):
+#    file_plus = file + str(i + 1) + ".out"
+    #Geometry.bandProcess(file_plus, True, 0.0)
+
+#file = "../../FHI-aims/AgBi-Perovskites/ideal/out/final_OOP/180/180_"
+#for i in range(9):
+#    file_plus = file + str(160 + i * 5) + "/band1002.out"
+#    #print(file_plus)
+#    Geometry.bandProcess(file_plus, True, 0.0)
+
+
+# file1 = "../../FHI-aims/Yi_1_5_D/n_3_3/no_cation.in"
+# file2 = "../../FHI-aims/Yi_1_5_D/n_3_3/cation_two.in"
+# location = "../../FHI-aims/Yi_1_5_D/n_3_3/config_two.in"
+# Geometry.combine(file1, file2, location, 13, 2)
