@@ -1,7 +1,7 @@
 import math
 import os
 import numpy as np
-import Rotation
+import Basic
 
 
 # This function writes constrain relaxation flags on all types of atoms specified in the atom field using the flag
@@ -140,8 +140,8 @@ def bandGap(filepath: object) -> object:
 # This function combines two geometry files which share a common atom by centering both files around that atom and
 # then writing all the atoms to a new file
 def combine(file1, file2, writefile, index1, index2):
-    Rotation.recenter(file1, file1, index1, 0, 0, 0)
-    Rotation.recenter(file2, file2, index2, 0, 0, 0)
+    Basic.recenter(file1, file1, index1, 0, 0, 0)
+    Basic.recenter(file2, file2, index2, 0, 0, 0)
     with open(file1, "r") as f:
         lv = []
         for ln in f:
@@ -174,7 +174,7 @@ def addLattice(filename, writefile, original, radians):
 # This function rotates a file and then adds it to a given file
 def rotAdd(file1, file2, radians, axis, node1, node2, target):
     rotFile = str(file2 + "rot")
-    Rotation.rotate(file2, rotFile, radians, axis)
+    Basic.rotate(file2, rotFile, radians, axis)
     combine(file1, rotFile, target, node1, node2)
     # addLattice(target, target, 11.77316030, radians / 2)
     os.remove(rotFile)
