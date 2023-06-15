@@ -1,10 +1,12 @@
 # This file compiles basic functions for manipulating geometry.in files
 # In particular, the following functions exist here:
 #
-# -> atom(file, num):
-#               returns an array specifying an atom from the given file
 # -> atoms(file):
 #               returns an array with all given atoms in the file specified
+# -> atoms_trimmed(file):
+#               returns an array of arrays containing only the position information of each atom
+# -> lattice_vectors(file):
+#               returns an array of arrays of floats of the lattice vectors in the file specified
 # -> distance(fileA, a, fileB, b):
 #               returns the distance between points A and B in files A and B
 # -> recenter(file, writepath, index, x, y, z):
@@ -15,8 +17,8 @@
 #               literally no clue buster
 # -> rotate(filepath, writepath, theta, axis):
 #               rotates a geometry (about 0,0,0) about the given axis using the given theta
-# ->
-#
+# -> move(read, write, dist):
+#               moves a structure by an amount specified as (x,y,z) in dist
 #
 #
 #
@@ -30,17 +32,10 @@
 # imports:
 import math
 from scipy.spatial.transform import Rotation as R
+import VectorToolkit as vt
 
 
-def atom(file, num):
-    at = []
-    with open(file, "r") as f:
-        for line in f:
-            if "atom" in line:
-                at.append(line)
-    return at[num - 1]
-
-
+# functions:
 def atoms(file):
     at = []
     with open(file, "r") as f:
@@ -50,10 +45,32 @@ def atoms(file):
     return at
 
 
+def atoms_trimmed(file):
+    at = atoms(file)
+    ret = []
+    for a in at:
+        temp = a.split()
+        ret.append([float(x) for x in temp[1:4]])
+    return ret
+
+
+def lattice_vectors(file):
+    lv = []
+    with open(file, "r") as f:
+        for line in f:
+            if "lattice" in line:
+                lv.append(line)
+    ret = []
+    for lat in lv:
+        temp = lat.split()
+        ret.append([float(x) for x in temp[1:4]])
+    return ret
+
+
 def distance(fileA, a, fileB, b):
-    x1 = [float(x) for x in atom(fileA, a).split()[1:4]]
-    x2 = [float(x) for x in atom(fileB, b).split()[1:4]]
-    return math.sqrt(sum([(x1[x] - x2[x]) ** 2 for x in range(2)]))
+    x1 = atoms_trimmed(fileA)[a-1]
+    x2 = atoms_trimmed(fileB)[b-1]
+    return vt.dist(x1, x2)
 
 
 def recenter(filepath, writepath, index, x, y, z):
@@ -70,14 +87,14 @@ def recenter(filepath, writepath, index, x, y, z):
             j += 1
             if j == index:
                 temp = i.split()
-                t1 = float(temp[0])-x, float(temp[1])-y, float(temp[2])-z
+                t1 = float(temp[0]) - x, float(temp[1]) - y, float(temp[2]) - z
                 p1 = t1
     with open(writepath, "w") as f:
         f.writelines(st)
         for i in lv:
             temp = i.split()
             t1 = float(temp[0]), float(temp[1]), float(temp[2])
-            final = t1[0]-p1[0],t1[1]-p1[1],t1[2]-p1[2]
+            final = t1[0] - p1[0], t1[1] - p1[1], t1[2] - p1[2]
             f.write("atom " + str(final[0]) + " " + str(final[1]) + " " + str(final[2]) + " " + str(temp[3]) + "\n")
 
 
@@ -100,20 +117,28 @@ def rot(p1, theta, axis):
 
 
 def rotate(filepath, writepath, theta, axis):
-    with open(filepath, "r") as f:
-        lv = []
-        st = []
-        for ln in f:
-            if ln.startswith("atom"):
-                lv.append(ln[5:])
-            elif ln.startswith("lattice"):
-                st.append(ln)
+    at = atoms(filepath)
+    lv = lattice_vectors(filepath)
     with open(writepath, "w") as f:
-        f.writelines(st)
-        for i in lv:
-            temp = i.split()
+        f.writelines(lv)
+        for i in at:
+            temp = i[5:].split()
             p1 = float(temp[0]), float(temp[1]), float(temp[2])
             final = rot(p1, theta, axis)
-            f.write("atom "+str(final[0])+" "+str(final[1])+" "+str(final[2])+" "+str(temp[3])+"\n")
+            f.write("atom " + str(final[0]) + " " + str(final[1]) + " " + str(final[2]) + " " + str(temp[3]) + "\n")
 
 
+def move(read, write, dist):
+    lv = lattice_vectors(read)
+    at_full = atoms(read)
+    at = atoms_trimmed(read)
+    ret = []
+    for a in at:
+        temp = a[0] + dist[0], a[1] + dist[1], a[2] + dist[2]
+        ret.append(temp)
+    with open(write, "w") as f:
+        f.writelines(lv)
+        i = 0
+        for atm in ret:
+            f.write("atom " + str(atm[0]) + " " + str(atm[1]) + " " + str(atm[2]) + " " + at_full[i].split()[4] + "\n")
+            i += 1

@@ -7,18 +7,12 @@ import Basic
 # This function writes constrain relaxation flags on all types of atoms specified in the atom field using the flag
 # passed in
 def constrain(filepath, target, atoms, flag):
-    with open(filepath, "r") as f:
-        lv = []
-        st = []
-        for ln in f:
-            if ln.startswith("atom"):
-                lv.append(ln)
-            elif ln.startswith("lattice"):
-                st.append(ln)
+    at = Basic.atoms(filepath)
+    lv = Basic.lattice_vectors(filepath)
     with open(target, "w") as f:
-        for x in st:
+        for x in lv:
             f.write(x)
-        for i in lv:
+        for i in at:
             if i.startswith("constrain") or i.startswith("initial"):
                 f.write(i)
             else:

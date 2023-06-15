@@ -18,6 +18,10 @@ def vecNormalize(p1):
     return p1[0] / mag, p1[1] / mag, p1[2] / mag
 
 
+def dist(p1, p2):
+    return np.linalg.norm(np.array(p1) - np.array(p2))
+
+
 def vecDot(p1, p2):
     return p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2]
 
