@@ -1,7 +1,7 @@
 import math
 import os
 import numpy as np
-import Basic
+import BasicGeo
 
 
 # This function writes constrain relaxation flags on all types of atoms specified in the atom field using the flag

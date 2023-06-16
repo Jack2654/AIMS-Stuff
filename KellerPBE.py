@@ -1,27 +1,10 @@
 import os
-from PyAstronomy import pyasl
-import time
 import VectorToolkit as vt
-import Basic
+import BasicGeo
+import BasicFunc as bf
+import BasicControl
 from mins import Species
 from molmass import Formula
-
-
-def xyz_to_geo_s66x10(filepath, writepath):
-    with open(filepath, "r") as f:
-        at = []
-        i = 0
-        for ln in f:
-            if i > 1:
-                at.append(ln)
-            i += 1
-    with open(writepath, "w+") as f:
-        for atom in at:
-            sp = atom.split()
-            temp = "atom " + sp[1] + " " + sp[2] + " " + sp[3] + " " + sp[0] + "\n"
-            f.write(temp)
-    if not len(open(filepath, 'r').readlines()) == (len(open(writepath, 'r').readlines()) + 2):
-        print("ERROR: error in translating .xyz to .in for " + filepath)
 
 
 def turn_all_to_geo(directory):
@@ -33,72 +16,7 @@ def turn_all_to_geo(directory):
         read = directory + f
         write = "../../FHI-aims/KellerPBE/s66x10_in/" + f[:-4] + "/geometry.in"
         os.makedirs("../../FHI-aims/KellerPBE/s66x10_in/" + f[:-4])
-        xyz_to_geo_s66x10(read, write)
-
-
-def get_species_from_geo(filepath):
-    with open(filepath, "r") as f:
-        species = []
-        for ln in f:
-            species.append(ln.split()[4])
-    return set(species)
-
-
-def species_default_path(element, defaults_folder):
-    an = pyasl.AtomicNo()
-    number = f"{an.getAtomicNo(element):02}"
-    return defaults_folder + number + "_" + element + "_default"
-
-
-def list_of_defaults(filepath, defaul):
-    defaults = []
-    elements = get_species_from_geo(filepath)
-    for e in elements:
-        defaults.append(species_default_path(e, defaul))
-    return defaults
-
-
-def write_control(geometry, write, defaults):
-    defaults = list_of_defaults(geometry, defaults)
-    with open(write, "w") as f:
-        f.write("xc \t pbe \n relativistic \t atomic_zora scalar \n spin \t none \n check_stacksize \t .false. \n")
-        for default in defaults:
-            with open(default, "r") as g:
-                f.write(g.read())
-
-
-def write_all_controls(directory, defaults):
-    for direct in os.listdir(os.fsencode(directory)):
-        dir_name = os.fsdecode(direct)
-        geometry = directory + dir_name + "/geometry.in"
-        control = directory + dir_name + "/control.in"
-        write_control(geometry, control, defaults)
-
-
-def run_AIMS(directory):
-    temp = os.getcwd()
-    os.chdir(directory)
-    os.system("ulimit -s hard")
-    os.system("export TMPDIR=/tmp")
-    os.system("export OMP_NUM_THREADS=1")
-    os.system("/opt/homebrew/bin/orterun -N 8 /Users/jackmorgenstein/FHI-aims/Repository/builds/build_06_09_23/aims.230612.mpi.x > aims.out 2>&1")
-    os.chdir(temp)
-
-
-def run_all(base, ignore=False):
-    all_dir_b = os.listdir(os.fsencode(base))
-    all_dir = []
-    for x in all_dir_b:
-        all_dir.append(os.fsdecode(x))
-    all_dir.sort()
-    for direct in all_dir:
-        if os.path.isdir(base + direct):
-            dir_name = direct
-            directory = base + dir_name
-            if not os.path.exists(directory + "/aims.out") or ignore:
-                current = time.time()
-                run_AIMS(directory)
-                print("Completed calculation for " + dir_name + " in " + str(time.time() - current) + " seconds")
+        BasicGeo.xyz_to_geo(read, write)
 
 
 def create_min_s_defaults(filepath):
@@ -238,10 +156,10 @@ def generate_structure(base, pointer):
         if not f'{i:.2f}' == "1.00":
             factor = i - 1
             dist = [factor * y for y in pointer]
-            Basic.move(base + base[-3:-1] + "_B.in", base + "temp.in", dist)
+            BasicGeo.move(base + base[-3:-1] + "_B.in", base + "temp.in", dist)
             with open(base + base[-3:-1] + f'_{i:.2f}.in', "w") as f:
-                f.writelines(Basic.atoms(base + base[-3:-1] + "_A.in"))
-                f.writelines(Basic.atoms(base + "temp.in"))
+                f.writelines(BasicGeo.atoms(base + base[-3:-1] + "_A.in"))
+                f.writelines(BasicGeo.atoms(base + "temp.in"))
         i += 0.02
 
 
@@ -253,16 +171,16 @@ def center_of_mass(base, target, even=False, a=False):
     tar = []
 
     if target:
-        at = Basic.atoms(base)
+        at = BasicGeo.atoms(base)
         for t in target:
             tar.append(at[t-1])
     else:
         if a:
-            at = Basic.atoms(base[:-7] + "A.in")
+            at = BasicGeo.atoms(base[:-7] + "A.in")
             tar = at
         else:
-            at = Basic.atoms(base)
-            temp = len(Basic.atoms(base[:-7] + "A.in"))
+            at = BasicGeo.atoms(base)
+            temp = len(BasicGeo.atoms(base[:-7] + "A.in"))
             i = 0
             for a in at:
                 if i >= temp:
@@ -387,3 +305,41 @@ def read_info_about_s66():
         for line in f:
             structures.append(line.split())
     return structures
+
+
+# took directory with all inputs written from generate_many_structures and set them up to be run
+def setup_dissociation_curves(base):
+    all_dirs = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dirs.sort()
+    for dir in all_dirs:
+        if dir == ".DS_Store":
+            continue
+        else:
+            organize_dc(base + dir + "/")
+
+
+def organize_dc(base):
+    all_geos = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_geos.sort()
+    for geo in all_geos:
+        if ("temp" not in geo) and ("in" in geo):
+            if not os.path.exists(base + geo[:-3]):
+                os.makedirs(base + geo[:-3])
+            command = "mv " + base + geo + " " + base + geo[:-3] + "/geometry.in"
+            os.system(command)
+
+
+def write_controls_to_dc(base, control, defaults):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    for dir in all_dir:
+        if ".DS" not in dir:
+            BasicControl.write_all_controls(base + dir + "/", control, defaults)
+
+
+def run_all_dc(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    for dir in all_dir:
+        if ".DS" not in dir:
+             bf.run_all(base + dir + "/")

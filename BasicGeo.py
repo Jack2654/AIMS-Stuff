@@ -19,10 +19,10 @@
 #               rotates a geometry (about 0,0,0) about the given axis using the given theta
 # -> move(read, write, dist):
 #               moves a structure by an amount specified as (x,y,z) in dist
-#
-#
-#
-#
+# -> xyz_to_geo(filepath, writepath):
+#               translates a .xyz file to a .in file using ASE
+# -> get_species_from_geo(filepath):
+#               returns a set of the species present in a geometry.in file
 #
 #
 #
@@ -33,6 +33,7 @@
 import math
 from scipy.spatial.transform import Rotation as R
 import VectorToolkit as vt
+from ase.io import read, write
 
 
 # functions:
@@ -128,17 +129,30 @@ def rotate(filepath, writepath, theta, axis):
             f.write("atom " + str(final[0]) + " " + str(final[1]) + " " + str(final[2]) + " " + str(temp[3]) + "\n")
 
 
-def move(read, write, dist):
-    lv = lattice_vectors(read)
-    at_full = atoms(read)
-    at = atoms_trimmed(read)
+def move(filepath, writepath, dist):
+    lv = lattice_vectors(filepath)
+    at_full = atoms(filepath)
+    at = atoms_trimmed(filepath)
     ret = []
     for a in at:
         temp = a[0] + dist[0], a[1] + dist[1], a[2] + dist[2]
         ret.append(temp)
-    with open(write, "w") as f:
+    with open(writepath, "w") as f:
         f.writelines(lv)
         i = 0
         for atm in ret:
             f.write("atom " + str(atm[0]) + " " + str(atm[1]) + " " + str(atm[2]) + " " + at_full[i].split()[4] + "\n")
             i += 1
+
+
+def xyz_to_geo(filepath, writepath):
+    a = read(filepath)
+    a.write(writepath)
+
+
+def get_species_from_geo(filepath):
+    with open(filepath, "r") as f:
+        species = []
+        for ln in f:
+            species.append(ln.split()[4])
+    return set(species)

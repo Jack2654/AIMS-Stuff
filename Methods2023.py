@@ -2,10 +2,6 @@ import VectorToolkit as vt
 import aimstools
 
 
-def angle(p1, p2, p3):
-    return vt.pointAngle(p1, p2, p3)
-
-
 def angleInfo(p1, p2, p3):
     debug = 0
     p3 = vt.vecSub(p3, p1)
@@ -80,8 +76,7 @@ def manyLocAngles(source, geometry, lat, mod, plus):  # this method finds the an
         i += 1
 
 
-def manyAbsAngles(source, geometry, lat, mod,
-                  plus):  # this method is similar to the one above except it defines IP and OOP
+def manyAbsAngles(source, geometry, lat, mod, plus):  # this method is similar to the one above except it defines IP and OOP
     with open(geometry, "r") as f:  # based on the "in-plane" lattice vectors
         lats = []  # this makes little sense in my case :(
         at = []  # mod takes the values "a" meaning all pairs need a lattice added,
@@ -118,7 +113,7 @@ def manyAbsAngles(source, geometry, lat, mod,
                 p3[1] -= lvals[3 * lat + 1]
                 p3[2] -= lvals[3 * lat + 2]
 
-        ang = angle(p1, p2, p3)
+        ang = vt.pointAngle(p1, p2, p3)
         p3[2] = 0  # this is only because I know in my case the lattice vectors make up the xy plane
         p2[2] -= p1[2]  # otherwise would actually have to do something different
         p1[2] -= p1[2]
@@ -209,18 +204,3 @@ def mullikenPlotter(filepath):
     ax3.set_title("Projection on scatter difference")
     plt.ylim([-3,3])
     plt.show()
-#
-
-#
-
-
-
-def remove_stars(readfile, writefile):
-    with open(readfile, "r") as f:
-        lns = []
-        for ln in f:
-            lns.append(ln)
-    with open(writefile, "w") as f:
-        for ln in lns:
-            new = ln.replace("NaN", "0.0")
-            f.write(new.replace("*", "0"))
