@@ -3,8 +3,8 @@ import VectorToolkit as vt
 import BasicGeo
 import BasicFunc as bf
 import BasicControl
-from mins import Species
-from molmass import Formula
+import BasicAimsOut as bao
+import matplotlib.pyplot as plt
 
 
 def turn_all_to_geo(directory):
@@ -17,27 +17,6 @@ def turn_all_to_geo(directory):
         write = "../../FHI-aims/KellerPBE/s66x10_in/" + f[:-4] + "/geometry.in"
         os.makedirs("../../FHI-aims/KellerPBE/s66x10_in/" + f[:-4])
         BasicGeo.xyz_to_geo(read, write)
-
-
-def create_min_s_defaults(filepath):
-    elem_dict = {'H': '1', 'He': '2', 'Li': '3', 'Be': '4', 'B': '5', 'C': '6', 'N': '7', 'O': '8',
-            'F': '9', 'Ne': '10', 'Na': '11', 'Mg': '12', 'Al': '13', 'Si': '14', 'P': '15',
-            'S': '16', 'Cl': '17', 'Ar': '18', 'K': '19', 'Ca': '20', 'Sc': '21', 'Ti': '22',
-            'V': '23', 'Cr': '24', 'Mn': '25', 'Fe': '26', 'Co': '27', 'Ni': '28', 'Cu': '29',
-            'Zn': '30', 'Ga': '31', 'Ge': '32', 'As': '33', 'Se': '34', 'Br': '35', 'Kr': '36',
-            'Rb': '37', 'Sr': '38', 'Y': '39', 'Zr': '40', 'Nb': '41', 'Mo': '42', 'Tc': '43',
-            'Ru': '44', 'Rh': '45', 'Pd': '46', 'Ag': '47', 'Cd': '48', 'In': '49', 'Sn': '50',
-            'Sb': '51', 'Te': '52', 'I': '53', 'Xe': '54', 'Cs': '55', 'Ba': '56', 'La': '57',
-            'Ce': '58', 'Pr': '59', 'Nd': '60', 'Pm': '61', 'Sm': '62', 'Eu': '63', 'Gd': '64',
-            'Tb': '65', 'Dy': '66', 'Ho': '67', 'Er': '68', 'Tm': '69', 'Yb': '70', 'Lu': '71',
-            'Hf': '72', 'Ta': '73', 'W': '74', 'Re': '75', 'Os': '76', 'Ir': '77', 'Pt': '78',
-            'Au': '79', 'Hg': '80', 'Tl': '81', 'Pb': '82', 'Bi': '83', 'Po': '84', 'At': '85',
-            'Rn': '86', 'Fr': '87', 'Ra': '88', 'Ac': '89', 'Th': '90', 'Pa': '91', 'U': '92',
-            'Np': '93', 'Pu': '94', 'Am': '95', 'Cm': '96', 'Bk': '97', 'Cf': '98', 'Es': '99',
-            'Fm': '100', 'Md': '101', 'No': '102'}
-    for x in elem_dict.keys():
-        species = Species(x)
-        species.write_file(filepath)
 
 
 def group_like_files(base):
@@ -56,26 +35,18 @@ def group_like_files(base):
         os.rename(base + dir, base + dir[:10] + "/" + dir)
 
 
-def find_total_energy(aims):
-    with open(aims, "r") as f:
-        for line in f:
-            if "| Total energy of" in line:
-                return line.split()[11]
-    return "ERROR: no total energy found in" + aims
-
-
 def binding_energy(folder, output_file):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
     total_energies = {}
     binding_energies = {}
     monomers = 0
     for file in all_dir:
-        if os.path.isdir(file):
-            total_energies[file] = find_total_energy(folder + "/" + file + "/aims.out")
-            if "monomer" in file:
+        if os.path.isdir(folder + "/" + file):
+            total_energies[file] = bao.find_total_energy(folder + "/" + file + "/aims.out")
+            if "A" in file or "B" in file or "monomer" in file:
                 monomers += float(total_energies[file])
     for x in total_energies:
-        if "monomer" not in x:
+        if "monomer" not in x and "A" not in x and "B" not in x:
             binding_energies[x] = float(total_energies[x]) - monomers
     sorted_be = sorted(binding_energies)
     with open(output_file, "a") as f:
@@ -88,7 +59,8 @@ def binding_energies(base, output):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     for dir in all_dir:
-        binding_energy(base + dir, output)
+        if ".DS_Store" not in dir and ".txt" not in dir:
+            binding_energy(base + dir, output)
 
 
 def generate_info(base):
@@ -97,7 +69,7 @@ def generate_info(base):
     total_energies = {}
     for file in all_dir:
         if os.path.isdir(base + file):
-            total_energies[file] = find_total_energy(base + "/" + file + "/aims.out")
+            total_energies[file] = bao.find_total_energy(base + "/" + file + "/aims.out")
     with open(base + "info.txt", "w") as f:
         f.write("Total energies per file:\n")
         for x in total_energies.keys():
@@ -163,10 +135,6 @@ def generate_structure(base, pointer):
         i += 0.02
 
 
-def mass(element):
-    return Formula(element).nominal_mass
-
-
 def center_of_mass(base, target, even=False, a=False):
     tar = []
 
@@ -192,7 +160,7 @@ def center_of_mass(base, target, even=False, a=False):
     for atom in tar:
         temp = atom.split()
         if not even:
-            cur_mass = mass(temp[4])
+            cur_mass = bf.mass(temp[4])
         else:
             cur_mass = 1
         total_mass += cur_mass
@@ -329,17 +297,65 @@ def organize_dc(base):
             os.system(command)
 
 
-def write_controls_to_dc(base, control, defaults):
+# write control.in files to the directories containing 1320 models across 6 structures for the new,
+# extended dissociation curves
+def write_controls_to_dc(base, control, defaults, additional=""):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     for dir in all_dir:
         if ".DS" not in dir:
-            BasicControl.write_all_controls(base + dir + "/", control, defaults)
+            BasicControl.write_all_controls(base + dir + "/", control, defaults, additional)
 
 
-def run_all_dc(base):
+# runs run_all in each directory found
+def run_all_dc(base, ignore=False):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     for dir in all_dir:
         if ".DS" not in dir:
-             bf.run_all(base + dir + "/")
+             bf.run_all(base + dir + "/", ignore)
+
+
+def determine_all_minima(filepath):
+    with open(filepath, "r") as f:
+        lines = []
+        for ln in f:
+            lines.append(ln)
+    x = []
+    for i in range(21):
+        x.append(0.8 + i * 0.02)
+    results = []
+
+    for i in range(66):
+        y = [float(x) for x in lines[1 + i*22: (i+1)*22]]
+        results.append(bf.minimize_func(bf.fit_poly(x, y, 4)))
+    return results
+
+
+def mean_absolute_error(file1, file2):
+    r1 = determine_all_minima(file1)
+    r2 = determine_all_minima(file2)
+    error = []
+    for i in range(len(r1)):
+        error.append(abs(r1[i]-r2[i]))
+    return sum(error) / len(error)
+
+
+def plot_dissociation_curve(files, structure):
+    series = [f + "binding_energies.txt" for f in files]
+    x = []
+    for i in range(21):
+        x.append(0.8 + i * 0.02)
+    colors = ["red", "orange", "blue", "black", "purple"]
+    i = 0
+    for s in series:
+        with open(s, "r") as f:
+            temp = f.readlines()
+        vals = [float(x) for x in temp[structure*22 - 21: structure * 22]]
+        plt.plot(x, vals, color=colors[i])
+        # plt.plot([bf.minimize_func(bf.fit_poly(x, vals, 4)) for i in range(2)], [-1, 1], color=colors[i], scaley=False)
+        plt.axvline(x=bf.minimize_func(bf.fit_poly(x, vals, 4)), color=colors[i], linestyle="--", label="_nolegend_")
+        i += 1
+    plt.legend(["PBE tight", "PBE tight+ts", "min+s", "min+s m4", "min+s m4, d40"], loc="upper right")
+    plt.title("Structure " + str(structure) + " Dissociation Curves")
+    plt.show()

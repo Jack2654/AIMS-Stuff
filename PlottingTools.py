@@ -23,7 +23,6 @@ def mulliken_plot(filepath, filename="nah", energyshift=0, ymin=-5, ymax=5, subs
     ########################################
     # Data
     ########################################
-    print("he")
     if debug:
         print("setting up workspace...")
     species_id = {}  # map species to its index in geometry.in: Pb --> 1
@@ -285,11 +284,11 @@ def mulliken_plot(filepath, filename="nah", energyshift=0, ymin=-5, ymax=5, subs
         plt.axhline(0, color='k', linestyle='--', lw=linewidth).set_dashes([5, 5])
     x_pts.append(all)
     # plt.yticks(range(ymin, ymax + 1), [])
-    plt.xticks(ticks=x_pts, labels=('$X$', '$\Gamma$', '$Y\|L$', '$\Gamma$', '$K$'))
+    plt.xticks(ticks=x_pts, labels=('$X$', '$\Gamma$', '$Y\|L$', '$\Gamma$', '$K$', '$A$', '$B$'))
     plt.ylabel('Energy (eV)')
     plt.xlabel("Wave vector, $k$")
     # plt.title("3.9\% Doping", weight='bold')
-    plt.title("(S-BrMBA)$_2$PbI$_4$", weight='bold')
+    plt.title("n_3 theoretical", weight='bold')
     plt.axis([0, xvals[len(xvals) - 1][len(xvals[len(xvals) - 1]) - 1], ymin, ymax])
     plt.tight_layout()
     plt.show()

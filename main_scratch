@@ -1,8 +1,10 @@
-fp = "../../FHI-aims/Yi_1_5_D/Results/Band_Results/n_3/theoretical"
-color_dict = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/theoretical/"
+cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
 
-# pt.mulliken_plot(filepath=fp, energyshift=0, ymin=-2.1, ymax=2.1, color_dict=color_dict, debug=True)
-# pt.mulliken_plot(filepath=start2, energyshift=-2.10031361, ymin=-4.0, ymax=4.0, color_dict=color_dict)
+# n_3 experimental energyshift: -0.3635
+# n_3 theoretical energyshift:  -1.3568
+
+pt.mulliken_plot(file, filename="", energyshift=-1.3568, ymin=-1, ymax=4, substate=0, color_dict=cd, eq=True, debug=True)
 
 file1 = "../../FHI-aims/KellerPBE/s66x10_in_copy/"
 file2 = "../../FHI-aims/KellerPBE/all_geometries/xx_1.00.in"
@@ -17,3 +19,66 @@ file3 = file3.replace("xx", number)
 one = Basic.distance(file2, a, file2, b)
 two = Basic.distance(file3, a, file3, b)
 print(two/one)
+
+
+# for setting up/ running dissociation curve calculations
+setting = 0
+
+if setting == 1:
+    file_0_93 = "../../FHI-aims/KellerPBE/sr_determination/geos_0.93/"
+    file_0_94 = "../../FHI-aims/KellerPBE/sr_determination/geos_0.94/"
+    file_1_04 = "../../FHI-aims/KellerPBE/sr_determination/geos_1.04/"
+    file_1_06 = "../../FHI-aims/KellerPBE/sr_determination/geos_1.06/"
+    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
+    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
+    addtl = "vdw_damping_sr 1.06"
+    kp.write_controls_to_dc(file_1_06, control_ts, min_defaults, addtl)
+
+if setting == 2:
+    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
+    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
+    for p in poss:
+        temp = base + p
+        kp.run_all_dc(temp)
+
+if setting == 3:
+    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
+    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        kp.binding_energies(temp, output_file)
+
+if setting == 4:
+    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
+    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
+    file = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        print(kp.mean_absolute_error(output_file, file))
+
+    new_file = "../../FHI-aims/KellerPBE/dissociation_curves/min_s_ts/binding_energies.txt"
+    print()
+    print(kp.mean_absolute_error(new_file, file))
+
+if setting == 5:
+    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
+    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        res = kp.determine_all_minima(output_file)
+        print(p[-5:])
+        for r in res:
+            print(r)
+        print()
+        print()
+
+# generate quadratic fit to data to form new guess for s_R
+x = [1.0658360817824688, 1.0668015511085427, 1.0673626194960821]
+y = [7.30925505119575, 7.30926397689526, 7.30928204385131]
+print(bf.minimize_func(bf.fit_poly(x, y, 2)))

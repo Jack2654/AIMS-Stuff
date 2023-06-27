@@ -1,13 +1,10 @@
 # This file compiles basic functions for analyzing aims.out output files
 # In particular, the following functions exist here:
 #
-# -> run_AIMS(directory):
-#                   runs aims in the given directory
-# -> run_all(base, ignore=True);
-#                   runs aims in every directory in the given base. If ignore, runs regardless of
-#                   whether aims has already been run in given directory
-# ->
-# ->
+# -> calc_complete(filepath):
+#               determines whether the calculation in the filepath is complete by searching for "Have a nice day."
+# -> find_total_energy(aims):
+#               determines the total energy of the calculation in the given path
 # ->
 # ->
 # ->
@@ -27,3 +24,11 @@ def calc_complete(filepath):
             if "Have a nice day." in line:
                 complete = True
     return complete
+
+
+def find_total_energy(aims):
+    with open(aims, "r") as f:
+        for line in f:
+            if "| Total energy of" in line:
+                return line.split()[11]
+    return "ERROR: no total energy found in" + aims

@@ -20,7 +20,7 @@ from PyAstronomy import pyasl
 
 
 # functions:
-def write_control(geometry, base_control, defaults):
+def write_control(geometry, base_control, defaults, additional=""):
     if not os.path.exists(geometry):
         print("bad path given to write_control " + geometry)
         return 0
@@ -29,16 +29,17 @@ def write_control(geometry, base_control, defaults):
         cont = f.read()
     with open(geometry[:-11] + "control.in", "w") as f:
         f.writelines(cont)
+        f.write("\n" + additional + "\n")
         for default in defaults:
             with open(default, "r") as g:
                 f.write(g.read())
 
 
-def write_all_controls(directory, base_control, defaults):
+def write_all_controls(directory, base_control, defaults, additional=""):
     for direct in os.listdir(os.fsencode(directory)):
         dir_name = os.fsdecode(direct)
         geometry = directory + dir_name + "/geometry.in"
-        write_control(geometry, base_control, defaults)
+        write_control(geometry, base_control, defaults, additional)
 
 
 def species_default_path(element, defaults_folder):
