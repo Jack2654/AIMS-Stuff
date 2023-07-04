@@ -165,13 +165,12 @@ def generate(filename, target, lattice_defined, debug, mag):
 # t3 = input("Enter z Coordinate in real lattice space: ")
 # generate(f, (float(t1), float(t2), float(t3)), True)
 # file = "../../FHI-aims/Yi_1_5_D/n_5/geometry.in"
-file = "../../FHI-aims/Yi_1_5_D/Calculations_for_Naidel/n_5/theoretical_bands/geometry.in.next_step"
-generate(file, (0, 1, 0), True, False, 0.0)
-generate(file, (1, 0, 1), True, False, 0.0)
-generate(file, (1, 0, 0), True, False, 0.0)
-generate(file, (0, 0, 1), True, False, 0.0)
-generate(file, (1, 0, 0.5), True, False, 0.0)
-generate(file, (-1, 0, 1), True, False, 0.0)
+file = "../../FHI-aims/Yi_1_5_D/new_input_files/n_2_4/theoretical/geometry.in"
+generate(file, (1, 0, 0), False, False, 0.0)
+generate(file, (0, 0, 1), False, False, 0.0)
+generate(file, (1, 0, 1), False, False, 0.0)
+generate(file, (1, 0, -1), False, False, 0.0)
+generate(file, (0, 1, 0), False, False, 0.0)
+
 # Note on verification of results: have verified reciprocal lattice vector protocol outputs same results as is found in
 # aims.out files
-# inputs (lattice): (0, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 1), (1, 0, 0.5), (-1, 0, 1)

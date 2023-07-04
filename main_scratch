@@ -82,3 +82,111 @@ if setting == 5:
 x = [1.0658360817824688, 1.0668015511085427, 1.0673626194960821]
 y = [7.30925505119575, 7.30926397689526, 7.30928204385131]
 print(bf.minimize_func(bf.fit_poly(x, y, 2)))
+
+below replaced by KellerPBE.s66x21_full:
+# for setting up/ running dissociation curve calculations
+setting = 0
+
+# writes all input control files
+if setting == 1:
+    file_1_06_25 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_25/"
+    file_1_06_35 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_35/"
+    file_1_06_45 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_45/"
+    file_1_07_25 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_25/"
+    file_1_07_35 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_35/"
+    file_1_07_45 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_45/"
+    file_1_03_30 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_30/"
+    file_1_03_40 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_40/"
+    file_1_03_50 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_50/"
+
+    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
+    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
+    addtl = "vdw_damping_sr 1.03\n vdw_damping_d "
+    # files = [file_1_06_25, file_1_06_35, file_1_06_45]
+    # files = [file_1_07_25, file_1_07_35, file_1_07_45]
+    files = [file_1_03_30, file_1_03_40, file_1_03_50]
+    for f in files:
+        temp = addtl + str(float(f[-3:-1]))
+        kp.write_controls_to_dc(f, control_ts, min_defaults, temp)
+
+# runs and times all calculations
+if setting == 2:
+    poss = ["1.06_25/", "1.06_35/", "1.06_45/", "1.07_25/", "1.07_35/", "1.07_45/", "1.03_30/", "1.03_40/", "1.03_50/"]
+    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
+    times = []
+    for p in poss:
+        temp = base + p
+        temp_t = time.time()
+        kp.run_all_dc(temp)
+        re_temp_t = time.time() - temp_t
+        print(p + " took " + str(re_temp_t) + " seconds")
+        times.append(re_temp_t)
+    for t in times:
+        print("Operation took " + str(t) + " seconds")
+
+# generates binding energy output files
+if setting == 3:
+    poss = ["1.06_30/", "1.06_40/", "1.06_50/", "1.07_30/", "1.07_40/", "1.07_50/", "1.06_25/", "1.06_35/", "1.06_45/", "1.07_25/", "1.07_35/", "1.07_45/", "1.03_30/", "1.03_40/", "1.03_50/"]
+    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        kp.binding_energies(temp, output_file)
+
+# prints out mean absolute error for each calculation
+if setting == 4:
+    poss = ["1.03_50/"]
+    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
+    file = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        print(kp.mean_absolute_error(output_file, file))
+
+if setting == 5:
+    poss = ["1.03_50/"]
+    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
+
+    for p in poss:
+        temp = base + p
+        output_file = temp + "binding_energies.txt"
+        res = kp.determine_all_minima(output_file)
+        print(p[-5:])
+        for r in res:
+            print(r)
+        print()
+        print()
+
+#folder_1 = "../../FHI-aims/KellerPBE/D442/geo_comparison/pbe_tight_ts/"
+#folder_2 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s/"
+#folder_3 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s_1.02_50/"
+#poss = [folder_1, folder_2, folder_3]
+
+#for file in poss:
+#    be_file = file + "binding_energies.txt"
+#    kp.binding_energies(file, be_file)
+#    res = kp.determine_all_minima(be_file)
+#    print()
+#    for r in res:
+#        print(r)
+
+# Fixed Problem Calcs: (D442x10 dataset)
+# 3.09.08: 2.00 (pbe_tight_ts) -- fixed by setting charge_mix_param to 0.30
+# 3.10.09: 0.85 (min_s, min_s_ts, min_s_1.02_50) -- fixed by setting charge_mix_param to 0.30
+# 3.10.09: 0.90 (min_s, min_s_ts, min_s_1.09_50) -- fixed by setting charge_mix_param to 0.30
+
+# output equation of specific structure
+filepath = "../../FHI-aims/KellerPBE/D442/geo_comparison/total_energies/pbe_tight_ts_te"
+x = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.25, 1.50, 2.00]
+with open(filepath, "r") as f:
+    lines = []
+    for ln in f:
+        lines.append(ln)
+i = 439
+order = 5
+y = [float(x) for x in lines[1 + i*11: (i+1)*11]]
+print()
+print(bf.minimize_func(bf.fit_poly(x, y, order)))
+print(kp.eq_form(bf.fit_poly(x, y, order)))

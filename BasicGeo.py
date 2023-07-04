@@ -154,5 +154,6 @@ def get_species_from_geo(filepath):
     with open(filepath, "r") as f:
         species = []
         for ln in f:
-            species.append(ln.split()[4])
+            if "atom" in ln:
+                species.append(ln.split()[4])
     return set(species)

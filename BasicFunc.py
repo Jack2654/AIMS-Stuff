@@ -57,7 +57,7 @@ def run_all(base, ignore=False):
             if not bao.calc_complete(directory + "/aims.out") or ignore:
                 current = time.time()
                 run_AIMS(directory + "/")
-                print("Completed calculation for " + dir_name + " in " + str(time.time() - current) + " seconds")
+                print("Completed calculation for " + directory + " in " + str(time.time() - current) + " seconds")
 
 
 def mass(element):
@@ -98,6 +98,16 @@ def fit_poly(x, y, order):
     # print(printed)
 
 
-def minimize_func(coeff, guess=0.90):
+def minimize_func(coeff, guess=0.90, bnds=None):
     fun_fit = poly.Polynomial(coeff)
-    return minimize(fun_fit, x0=guess).x[0]
+    return minimize(fun_fit, x0=guess, bounds=bnds).x[0]
+
+
+def copy_to_timewarp(source, destination):      # works :D
+    command = "scp -r " + source + " jhm48@timewarp.egr.duke.edu:" + destination
+    os.system(command)
+
+
+def mkdir_tw():
+    os.system("ssh jhm48@timewarp.egr.duke.edu /bin/bash")
+    os.system("mkdir brother_py")

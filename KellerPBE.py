@@ -5,6 +5,8 @@ import BasicFunc as bf
 import BasicControl
 import BasicAimsOut as bao
 import matplotlib.pyplot as plt
+from scipy.optimize import Bounds
+import time
 
 
 def turn_all_to_geo(directory):
@@ -303,7 +305,7 @@ def write_controls_to_dc(base, control, defaults, additional=""):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     for dir in all_dir:
-        if ".DS" not in dir:
+        if ".DS" not in dir and "txt" not in dir:
             BasicControl.write_all_controls(base + dir + "/", control, defaults, additional)
 
 
@@ -312,11 +314,11 @@ def run_all_dc(base, ignore=False):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     for dir in all_dir:
-        if ".DS" not in dir:
+        if ".DS" not in dir and ".txt" not in dir:
              bf.run_all(base + dir + "/", ignore)
 
 
-def determine_all_minima(filepath):
+def determine_all_minima_s66(filepath):
     with open(filepath, "r") as f:
         lines = []
         for ln in f:
@@ -328,13 +330,28 @@ def determine_all_minima(filepath):
 
     for i in range(66):
         y = [float(x) for x in lines[1 + i*22: (i+1)*22]]
-        results.append(bf.minimize_func(bf.fit_poly(x, y, 4)))
+        results.append(bf.minimize_func(bf.fit_poly(x, y, 4), bnds=Bounds(lb=0.8, ub=1.2)))
+    return results
+
+
+def determine_all_minima_d442(filepath):
+    with open(filepath, "r") as f:
+        lines = []
+        for ln in f:
+            lines.append(ln)
+    x = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.25, 1.50, 2.00]
+    results = []
+    for i in range(442):
+        y = [float(x) for x in lines[1 + i*11: (i+1)*11]]
+        ret = bf.minimize_func(bf.fit_poly(x, y, 5))
+        results.append(ret)
+        # , bnds=Bounds(lb=-0.5, ub=1.2)
     return results
 
 
 def mean_absolute_error(file1, file2):
-    r1 = determine_all_minima(file1)
-    r2 = determine_all_minima(file2)
+    r1 = determine_all_minima_s66(file1)
+    r2 = determine_all_minima_s66(file2)
     error = []
     for i in range(len(r1)):
         error.append(abs(r1[i]-r2[i]))
@@ -353,9 +370,209 @@ def plot_dissociation_curve(files, structure):
             temp = f.readlines()
         vals = [float(x) for x in temp[structure*22 - 21: structure * 22]]
         plt.plot(x, vals, color=colors[i])
-        # plt.plot([bf.minimize_func(bf.fit_poly(x, vals, 4)) for i in range(2)], [-1, 1], color=colors[i], scaley=False)
-        plt.axvline(x=bf.minimize_func(bf.fit_poly(x, vals, 4)), color=colors[i], linestyle="--", label="_nolegend_")
+        plt.axvline(x=bf.minimize_func(bf.fit_poly(x, vals, 4), bnds=Bounds(lb=0.8, ub=1.2)), color=colors[i], linestyle="--", label="_nolegend_")
+
+        if False:
+            print(bf.minimize_func(bf.fit_poly(x, vals, 4), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 5), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 6), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 7), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 8), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 9), bnds=Bounds(lb=0.8, ub=1.2)))
+            print(bf.minimize_func(bf.fit_poly(x, vals, 10), bnds=Bounds(lb=0.8, ub=1.2)))
+
+
         i += 1
     plt.legend(["PBE tight", "PBE tight+ts", "min+s", "min+s m4", "min+s m4, d40"], loc="upper right")
     plt.title("Structure " + str(structure) + " Dissociation Curves")
     plt.show()
+
+
+def eq_form(coeff):
+    res = ""
+    i=0
+    for c in coeff:
+        res += str(c) + "x^" + str(i) + "+"
+        i+=1
+    return res[:-1]
+
+
+def s66x21_run(poss, base, control_file, defaults_folder, ignore=False):
+    times = []
+    for file in poss:
+        print("Beginning calculations for settings:" + str(file))
+        temp_time = time.time()
+        temp_sr = str(file[0])
+        temp_d = str(file[1])
+        cur_folder = base + temp_sr + "_" + temp_d + "/"
+        commands = "vdw_damping_sr " + temp_sr + "\n vdw_damping_d " + temp_d + "\n"
+        be_file = cur_folder + "binding_energies.txt"
+
+        write_controls_to_dc(cur_folder, control_file, defaults_folder, commands)
+        run_all_dc(cur_folder, ignore=ignore)
+        binding_energies(cur_folder, be_file)
+
+        re_time = time.time() - temp_time
+        times.append(re_time)
+        print(str(file) + " took " + str(re_time) + " seconds")
+
+    for t in times:
+        print("Operation took " + str(t) + " seconds")
+
+    compare_to = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
+    for file in poss:
+        temp_sr = str(file[0])
+        temp_d = str(file[1])
+        cur_folder = base + temp_sr + "_" + temp_d + "/"
+        be_file = cur_folder + "binding_energies.txt"
+        print(str(file) + ": " + str(mean_absolute_error(be_file, compare_to)))
+
+    for file in poss:
+        temp_sr = str(file[0])
+        temp_d = str(file[1])
+        cur_folder = base + temp_sr + "_" + temp_d + "/"
+        be_file = cur_folder + "binding_energies.txt"
+        res = determine_all_minima_s66(be_file)
+        print()
+        for r in res:
+            print(r)
+
+
+def organize_d442_1(folder):
+    all_geos = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    for geo in all_geos:
+        if not os.path.exists(folder + geo[:7]):
+            os.makedirs(folder + geo[:7])
+        command = "mv " + folder + geo + " " + folder + geo[:7] + "/."
+        os.system(command)
+
+
+def organize_d442_2(folder):
+    all_dirs = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dirs.sort()
+    for dir in all_dirs:
+        all_geos = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder + dir + "/"))]
+        all_geos.sort()
+        for geo in all_geos:
+            input = folder + dir + "/" + geo
+            output = folder + dir + "/" + geo[:-3] + "in"
+            BasicGeo.xyz_to_geo(input, output)
+            command = "rm " + input
+            os.system(command)
+
+
+def organize_d442_3(folder):
+    all_dirs = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dirs.sort()
+    for dir in all_dirs:
+        all_geos = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder + dir + "/"))]
+        all_geos.sort()
+        for geo in all_geos:
+            command = "mv " + folder + dir + "/" + geo + " " + folder + dir + "/" + geo[-6:-3] + "/geometry.in"
+            os.makedirs(folder + dir + "/" + geo[-6:-3])
+            os.system(command)
+
+
+def d442x10_run(poss, base, control_file, default_files, ignore=False, vdw=True):
+    times = []
+    for file in poss:
+        print("Beginning calculations for settings:" + str(file))
+        temp_time = time.time()
+        temp_sr = str(file[0])
+        temp_d = str(file[1])
+        cur_folder = base + temp_sr + "_" + temp_d + "/"
+        commands = "vdw_damping_sr " + temp_sr + "\n vdw_damping_d " + temp_d + "\n"
+        be_file = cur_folder + "binding_energies.txt"
+
+        if vdw:
+            write_controls_to_dc(cur_folder, control_file, default_files, commands)
+        else:
+            write_controls_to_dc(cur_folder, control_file, default_files, "\n")
+        run_all_dc(cur_folder, ignore=ignore)
+        binding_energies(cur_folder, be_file)
+
+        re_time = time.time() - temp_time
+        times.append(re_time)
+        print(str(file) + " took " + str(re_time) + " seconds")
+
+    for t in times:
+        print("Operation took " + str(t) + " seconds")
+
+    folder_1 = "../../FHI-aims/KellerPBE/D442/geo_comparison/pbe_tight_ts/"
+    folder_2 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s/"
+    folder_3 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s_1.02_50/"
+    poss = [folder_1, folder_2, folder_3]
+
+
+def total_energy(folder, output_file):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    total_energies = {}
+    for file in all_dir:
+        if os.path.isdir(folder + "/" + file):
+            total_energies[file] = bao.find_total_energy(folder + "/" + file + "/aims.out")
+    sorted_te = sorted(total_energies)
+    with open(output_file, "a") as f:
+        f.write(folder[-7:] + "\n")
+        for x in sorted_te:
+            f.write(str(total_energies[x]) + "\n")
+
+
+def all_energies(base, output):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    for dir in all_dir:
+        if ".DS_Store" not in dir and ".txt" not in dir:
+            total_energy(base + dir, output)
+
+
+def split_monomers(input, output_base):
+    with open(input, "r") as f:
+        lines = f.readlines()
+    monomers = lines[1].split()[3:5]
+    monomer_a = [int(x) for x in monomers[0].split("=")[1].split("-")]
+    monomer_b = [int(x) for x in monomers[1].split("=")[1].split("-")]
+
+    if len(monomer_a) == 1:
+        monomer_a = [monomer_a[0], monomer_a[0]]
+    if len(monomer_b) == 1:
+        monomer_b = [monomer_b[0], monomer_b[0]]
+
+    mon_a = []
+    for count, line in enumerate(lines):
+        if monomer_a[0] < count < monomer_a[1] + 2:
+            temp = line.strip().split()
+            temp.append(temp[0])
+            temp[0] = "atom"
+            mon_a.append("   ".join(temp) + "\n")
+
+    mon_b = []
+    for count, line in enumerate(lines):
+        if monomer_b[0] < count < monomer_b[1] + 2:
+            temp = line.strip().split()
+            temp.append(temp[0])
+            temp[0] = "atom"
+            mon_b.append("   ".join(temp) + "\n")
+
+    if len(mon_a) + len(mon_b) + 2 != len(lines):
+        print("Monomer Split Error: " + input)
+        return 0
+
+    with open(output_base + "A/geometry.in", "w") as f:
+        f.writelines(mon_a)
+    with open(output_base + "B/geometry.in", "w") as f:
+        f.writelines(mon_b)
+
+
+def all_d442_monomers(base, output):
+    all_geos = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_geos.sort()
+    geos = []
+    for geo in all_geos:
+        geos.append(geo[:-8])
+    geos = set(geos)
+    for geo in geos:
+        input = base + geo + "_100.xyz"
+        output_base = output + geo + "/00"
+        os.mkdir(output_base + "A")
+        os.mkdir(output_base + "B")
+        split_monomers(input, output_base)

@@ -293,3 +293,20 @@ def mulliken_plot(filepath, filename="nah", energyshift=0, ymin=-5, ymax=5, subs
     plt.tight_layout()
     plt.show()
     # plt.savefig(filename, dpi=300, bbox_inches='tight')
+
+
+def dos_plot(files):
+    for file in files:
+        lines = []
+        with open(file, "r") as f:
+            for ln in f:
+                if "#" not in ln:
+                    lines.append([float(x) for x in ln.split()[:2]])
+        energy = []
+        dos = []
+        for line in lines:
+            energy.append(line[0])
+            dos.append(line[1])
+        print(file)
+        plt.plot(energy, dos)
+    plt.show()
