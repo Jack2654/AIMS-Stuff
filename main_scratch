@@ -1,192 +1,127 @@
-file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/theoretical/"
-cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+# main_scratch sections:
+# 1: code harnesses
+# 2: random bullshit
 
-# n_3 experimental energyshift: -0.3635
-# n_3 theoretical energyshift:  -1.3568
+###############################
+#          Section 1          #
+###############################
+# A: PlottingTools.mulliken_plot
+# B: Output Equation for Specific D442 Structure
+-------------------------------
+# A
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/theoretical/"
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+    pt.mulliken_plot(file, filename="", energyshift=-1.3568, ymin=-1, ymax=4, substate=0, color_dict=cd, eq=True, debug=True)
+    # n_3 experimental energyshift: -0.3635
+    # n_3 theoretical energyshift:  -1.3568
+-------------------------------
+# B
+    filepath = "../../FHI-aims/KellerPBE/D442/geo_comparison/total_energies/pbe_tight_ts_te"
+    x = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.25, 1.50, 2.00]
+    with open(filepath, "r") as f:
+        lines = []
+        for ln in f:
+            lines.append(ln)
+    i = 439
+    order = 5
+    y = [float(x) for x in lines[1 + i*11: (i+1)*11]]
+    print(bf.minimize_func(bf.fit_poly(x, y, order)))
+    print(kp.eq_form(bf.fit_poly(x, y, order)))
+-------------------------------
 
-pt.mulliken_plot(file, filename="", energyshift=-1.3568, ymin=-1, ymax=4, substate=0, color_dict=cd, eq=True, debug=True)
+###############################
+#          Section 2          #
+###############################
 
-file1 = "../../FHI-aims/KellerPBE/s66x10_in_copy/"
-file2 = "../../FHI-aims/KellerPBE/all_geometries/xx_1.00.in"
-file3 = "../../FHI-aims/KellerPBE/all_geometries/xx_1.50.in"
-
+file1 = "../../FHI-aims/KellerPBE/all_geometries/xx_1.00.in"
+file2 = "../../FHI-aims/KellerPBE/all_geometries/xx_1.50.in"
 number = "07"
 a = 2
 b = 12
-
+file1 = file1.replace("xx", number)
 file2 = file2.replace("xx", number)
-file3 = file3.replace("xx", number)
-one = Basic.distance(file2, a, file2, b)
-two = Basic.distance(file3, a, file3, b)
+one = Basic.distance(file1, a, file1, b)
+two = Basic.distance(file2, a, file2, b)
 print(two/one)
-
-
-# for setting up/ running dissociation curve calculations
-setting = 0
-
-if setting == 1:
-    file_0_93 = "../../FHI-aims/KellerPBE/sr_determination/geos_0.93/"
-    file_0_94 = "../../FHI-aims/KellerPBE/sr_determination/geos_0.94/"
-    file_1_04 = "../../FHI-aims/KellerPBE/sr_determination/geos_1.04/"
-    file_1_06 = "../../FHI-aims/KellerPBE/sr_determination/geos_1.06/"
-    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
-    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
-    addtl = "vdw_damping_sr 1.06"
-    kp.write_controls_to_dc(file_1_06, control_ts, min_defaults, addtl)
-
-if setting == 2:
-    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
-    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
-    for p in poss:
-        temp = base + p
-        kp.run_all_dc(temp)
-
-if setting == 3:
-    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
-    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        kp.binding_energies(temp, output_file)
-
-if setting == 4:
-    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
-    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
-    file = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        print(kp.mean_absolute_error(output_file, file))
-
-    new_file = "../../FHI-aims/KellerPBE/dissociation_curves/min_s_ts/binding_energies.txt"
-    print()
-    print(kp.mean_absolute_error(new_file, file))
-
-if setting == 5:
-    poss = ["0.93/", "0.94/", "1.04/", "1.06/"]
-    base = "../../FHI-aims/KellerPBE/sr_determination/geos_"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        res = kp.determine_all_minima(output_file)
-        print(p[-5:])
-        for r in res:
-            print(r)
-        print()
-        print()
-
-# generate quadratic fit to data to form new guess for s_R
-x = [1.0658360817824688, 1.0668015511085427, 1.0673626194960821]
-y = [7.30925505119575, 7.30926397689526, 7.30928204385131]
-print(bf.minimize_func(bf.fit_poly(x, y, 2)))
-
-below replaced by KellerPBE.s66x21_full:
-# for setting up/ running dissociation curve calculations
-setting = 0
-
-# writes all input control files
-if setting == 1:
-    file_1_06_25 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_25/"
-    file_1_06_35 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_35/"
-    file_1_06_45 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.06_45/"
-    file_1_07_25 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_25/"
-    file_1_07_35 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_35/"
-    file_1_07_45 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.07_45/"
-    file_1_03_30 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_30/"
-    file_1_03_40 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_40/"
-    file_1_03_50 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_50/"
-
-    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
-    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
-    addtl = "vdw_damping_sr 1.03\n vdw_damping_d "
-    # files = [file_1_06_25, file_1_06_35, file_1_06_45]
-    # files = [file_1_07_25, file_1_07_35, file_1_07_45]
-    files = [file_1_03_30, file_1_03_40, file_1_03_50]
-    for f in files:
-        temp = addtl + str(float(f[-3:-1]))
-        kp.write_controls_to_dc(f, control_ts, min_defaults, temp)
-
-# runs and times all calculations
-if setting == 2:
-    poss = ["1.06_25/", "1.06_35/", "1.06_45/", "1.07_25/", "1.07_35/", "1.07_45/", "1.03_30/", "1.03_40/", "1.03_50/"]
-    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
-    times = []
-    for p in poss:
-        temp = base + p
-        temp_t = time.time()
-        kp.run_all_dc(temp)
-        re_temp_t = time.time() - temp_t
-        print(p + " took " + str(re_temp_t) + " seconds")
-        times.append(re_temp_t)
-    for t in times:
-        print("Operation took " + str(t) + " seconds")
-
-# generates binding energy output files
-if setting == 3:
-    poss = ["1.06_30/", "1.06_40/", "1.06_50/", "1.07_30/", "1.07_40/", "1.07_50/", "1.06_25/", "1.06_35/", "1.06_45/", "1.07_25/", "1.07_35/", "1.07_45/", "1.03_30/", "1.03_40/", "1.03_50/"]
-    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        kp.binding_energies(temp, output_file)
-
-# prints out mean absolute error for each calculation
-if setting == 4:
-    poss = ["1.03_50/"]
-    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
-    file = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        print(kp.mean_absolute_error(output_file, file))
-
-if setting == 5:
-    poss = ["1.03_50/"]
-    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
-
-    for p in poss:
-        temp = base + p
-        output_file = temp + "binding_energies.txt"
-        res = kp.determine_all_minima(output_file)
-        print(p[-5:])
-        for r in res:
-            print(r)
-        print()
-        print()
-
-#folder_1 = "../../FHI-aims/KellerPBE/D442/geo_comparison/pbe_tight_ts/"
-#folder_2 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s/"
-#folder_3 = "../../FHI-aims/KellerPBE/D442/geo_comparison/min_s_1.02_50/"
-#poss = [folder_1, folder_2, folder_3]
-
-#for file in poss:
-#    be_file = file + "binding_energies.txt"
-#    kp.binding_energies(file, be_file)
-#    res = kp.determine_all_minima(be_file)
-#    print()
-#    for r in res:
-#        print(r)
 
 # Fixed Problem Calcs: (D442x10 dataset)
 # 3.09.08: 2.00 (pbe_tight_ts) -- fixed by setting charge_mix_param to 0.30
-# 3.10.09: 0.85 (min_s, min_s_ts, min_s_1.02_50) -- fixed by setting charge_mix_param to 0.30
-# 3.10.09: 0.90 (min_s, min_s_ts, min_s_1.09_50) -- fixed by setting charge_mix_param to 0.30
+# 3.10.09: 0.85 (min_s, min_s_ts, min_s_1.02_50, min_s_1.00_70, min_s_m4) -- fixed by setting charge_mix_param to 0.30
+# 3.10.09: 0.90 (min_s, min_s_ts, min_s_1.09_50, min_s_1.00_70, min_s_m4) -- fixed by setting charge_mix_param to 0.30
 
-# output equation of specific structure
-filepath = "../../FHI-aims/KellerPBE/D442/geo_comparison/total_energies/pbe_tight_ts_te"
+# Problem D442x10 Structures (labelled problem if error is greater than 0.50):
+# 1.03.03 -- min_s biggest problem
+# 1.07.78 -- problem with d>20
+# 1.10.11 -- problem with d>20
+# 2.05.20 -- min_s_m4 biggest problem
+# 2.06.02 -- problem with d>20
+# 3.11.08 -- problem with d>20
+# 3.12.14 -- min_s_1.02_50 biggest problem
+# 4.06.11 -- min_s biggest problem
+# 4.16.05 -- problem with d>20
+# 4.21.04 -- min_s BIGGEST PROBLEM > 300 !!!!
+
+def min_lowest_quad(x, y):
+    points = [[x[i], j] for i, j in enumerate(y)]
+    low_1 = [10, 10]
+    low_2 = [10, 10]
+    low_3 = [10, 10]
+    low_4 = [10, 10]
+    low_5 = [10, 10]
+    low_6 = [10, 10]
+    for count, point in enumerate(points):
+        if pt[1] < low_1[1]:
+            low_6 = low_5
+            low_5 = low_4
+            low_4 = low_3
+            low_3 = low_2
+            low_2 = low_1
+            low_1 = pt
+        elif pt[1] < low_2[1]:
+            low_6 = low_5
+            low_5 = low_4
+            low_4 = low_3
+            low_3 = low_2
+            low_2 = pt
+        elif pt[1] < low_3[1]:
+            low_6 = low_5
+            low_5 = low_4
+            low_4 = low_3
+            low_3 = pt
+        elif pt[1] < low_4[1]:
+            low_6 = low_5
+            low_5 = low_4
+            low_4 = pt
+        elif pt[1] < low_5[1]:
+            low_6 = low_5
+            low_5 = pt
+        elif pt[1] < low_6[1]:
+            low_6 = pt
+    x_min = [low_1[0], low_2[0], low_3[0]]
+    y_min = [low_1[1], low_2[1], low_3[1]]
+    res = bf.minimize_func(bf.fit_poly(x_min, y_min, 2))
+    print(eq_form(bf.fit_poly(x_min, y_min, 2)))
+    print(res)
+    if res < 0.8 or res > 1.2 or True:
+        x_min.append(low_4[0])
+        y_min.append(low_4[1])
+        res = bf.minimize_func(bf.fit_poly(x_min, y_min, 3))
+        print(eq_form(bf.fit_poly(x_min, y_min, 3)))
+        print(res)
+    if res < 0.8 or res > 1.2 or True:
+        x_min.append(low_5[0])
+        y_min.append(low_5[1])
+        res = bf.minimize_func(bf.fit_poly(x_min, y_min, 4))
+        print(eq_form(bf.fit_poly(x_min, y_min, 4)))
+        print(res)
+    if res < 0.8 or res > 1.2 or True:
+        x_min.append(low_6[0])
+        y_min.append(low_6[1])
+        res = bf.minimize_func(bf.fit_poly(x_min, y_min, 5))
+        print(eq_form(bf.fit_poly(x_min, y_min, 5)))
+        print(res)
+    return res
+
 x = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.25, 1.50, 2.00]
-with open(filepath, "r") as f:
-    lines = []
-    for ln in f:
-        lines.append(ln)
-i = 439
-order = 5
-y = [float(x) for x in lines[1 + i*11: (i+1)*11]]
-print()
-print(bf.minimize_func(bf.fit_poly(x, y, order)))
-print(kp.eq_form(bf.fit_poly(x, y, order)))
+y = [0.02140002698, 0.007480526983, -0.001020163007, -0.006705705018, -0.003773087024, -0.00201533502, -0.003865128034, 0.002481656993, -0.0002937420213, 0.0004280509893]
+kp.min_lowest_quad(x, y)

@@ -268,8 +268,8 @@ def mulliken_plot(filepath, filename="nah", energyshift=0, ymin=-5, ymax=5, subs
                     if spec_mlk[spec] > max:
                         max = spec_mlk[spec]
                         max_spec = spec
-                if currentK % 4 == 0:
-                    if max_spec == "Pb" or max_spec == "I":
+                if currentK % 4 == 0 or True:
+                    if max_spec == "Pb" or max_spec == "I" or True:
                         plt.plot(xvals[file_id][currentK - 1], energys[file_id][currentK - 1][currentState - 1],
                                  species_color[max_spec] + 'o', markersize=markersizeunit,
                                  markeredgecolor=species_color[max_spec])
@@ -288,7 +288,7 @@ def mulliken_plot(filepath, filename="nah", energyshift=0, ymin=-5, ymax=5, subs
     plt.ylabel('Energy (eV)')
     plt.xlabel("Wave vector, $k$")
     # plt.title("3.9\% Doping", weight='bold')
-    plt.title("n_3 theoretical", weight='bold')
+    plt.title("n_5 theoretical", weight='bold')
     plt.axis([0, xvals[len(xvals) - 1][len(xvals[len(xvals) - 1]) - 1], ymin, ymax])
     plt.tight_layout()
     plt.show()

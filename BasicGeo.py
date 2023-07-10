@@ -42,7 +42,7 @@ def atoms(file):
     with open(file, "r") as f:
         for line in f:
             if "atom" in line:
-                at.append(line)
+                at.append(line.strip())
     return at
 
 
@@ -157,3 +157,44 @@ def get_species_from_geo(filepath):
             if "atom" in ln:
                 species.append(ln.split()[4])
     return set(species)
+
+
+def move_into_unit_cell(filepath, writepath):
+    lines = []
+    with open(filepath, "r") as f:
+        for line in f:
+            lines.append(line.strip())
+    at_f = atoms(filepath)
+    at = atoms_trimmed(filepath)
+    lv = lattice_vectors(filepath)
+    at_ret = []
+    j = 0
+    for a in at:
+        i = 0
+        at_ret.append([a[0], a[1], a[2]])
+        for x in a:
+            if x < 0:
+                at_ret[j][0] += lv[i][0]
+                at_ret[j][1] += lv[i][1]
+                at_ret[j][2] += lv[i][2]
+            if x > lv[i][i]:
+                at_ret[j][0] -= lv[i][0]
+                at_ret[j][1] -= lv[i][1]
+                at_ret[j][2] -= lv[i][2]
+            i += 1
+        j += 1
+
+    at_return = []
+    i = 0
+    for atom in at_ret:
+        line = "atom " + str(atom[0]) + " " + str(atom[1]) + " " + str(atom[2]) + " " + at_f[i].split()[-1:][0] + "\n"
+        at_return.append(line)
+        i += 1
+
+    with open(writepath, "w") as f:
+        for ln in lines:
+            if "atom" not in ln:
+                f.write(ln + "\n")
+        f.writelines(at_return)
+
+
