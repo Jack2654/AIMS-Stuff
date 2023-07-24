@@ -8,23 +8,28 @@ import VectorToolkit as vt
 import math
 import time
 import BayesianOptimization as bo
+import FlawedPlotting as fp
 
 setting = 4
 # settings:
 # -> 0: do nothing
-# -> 1: run a set of structures and generate output
+# -> 1: run a set of s66 structures and generate output
 # -> 2: plot a given structure from s66
 # -> 3: find next node to evaluate S66 for Bayesian optimization
 # -> 4: d442 run of structures
 # -> 5: binding energies of d442 calculation
 # -> 6: plot dos of n_3 experimental atom projected dos
+# -> 7: histogram for D442x10
+# -> 8: histogram for S66x21
+# -> 9: plot a given structure from d442
 
 if setting == 1:
-    poss = [[0.91870443, 45]]
-    base = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_"
-    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
-    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
-    kp.s66x21_run(poss, base, control_ts, min_defaults, ignore=False)
+    poss = [["tight", "base"]]
+    base = "../../FHI-aims/KellerPBE/S66/blyp/geos_"
+    control = "../../FHI-aims/KellerPBE/control_files/control_blyp.in"
+    tight_defaults = "../../FHI-aims/Repository/species_defaults/defaults_2020/tight/"
+    # min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
+    kp.s66x21_run(poss, base, control, tight_defaults, ignore=False, write_control=False)
 
 if setting == 2:
     pbe_tight = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight/"
@@ -34,23 +39,23 @@ if setting == 2:
     min_s_m4_40 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.00_70/"
     # min_s_m4_50 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_m4_50/"
     series = [pbe_tight, pbe_tight_ts, min_s, min_s_m4, min_s_m4_40]
-    kp.plot_dissociation_curve(series, 59)
+    kp.plot_dissociation_curve_s66(series, 59)
 
 if setting == 3:
-    # extra line so I can collapse this
-    bo.next_node("../../FHI-aims/KellerPBE/info/d_sr_opt.txt")
+    file = "../../FHI-aims/KellerPBE/info/d_sr_opt.txt"
+    bo.next_node(file)
 
 if setting == 4:
-    poss = ["min_s_m4/"]
+    poss = ["blyp_min_s/"]
     base = "../../FHI-aims/KellerPBE/D442/geo_comparison/"
-    commands = ["vdw_damping_sr 1.0660114273\n"]
-    # control = "../../FHI-aims/KellerPBE/control_files/control_pbe.in"
-    control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
-    # pbe_tight_defaults = "../../FHI-aims/Repository/species_defaults/defaults_2020/tight/"
+    commands = [""]
+    control = "../../FHI-aims/KellerPBE/control_files/control_blyp.in"
+    # control_ts = "../../FHI-aims/KellerPBE/control_files/control_pbe_ts.in"
+    pbe_tight_defaults = "../../FHI-aims/Repository/species_defaults/defaults_2020/tight/"
     min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
     defaults = [min_defaults]
 
-    kp.d442x10_run(poss, base, commands, control_ts, defaults, ignore=False)
+    kp.d442x10_run(poss, base, commands, control, defaults, ignore=False, write_control=False)
 
 if setting == 5:
     folder_1 = "../../FHI-aims/KellerPBE/D442/geo_comparison/pbe_tight_ts/"
@@ -93,12 +98,13 @@ if setting == 6:
 
 if setting == 7:
     base = "../../FHI-aims/KellerPBE/D442/geo_comparison/"
-    poss = ["min_s/", "min_s_ts/", "min_s_1.02_50/"]
+    base2 = "../../FHI-aims/KellerPBE/D442/sr_opt/"
+    poss = ["min_s/", "min_s_ts/", "min_s_m4/", "min_s_1.00_70/", "min_s_095/", "min_s_100/"]
     series = []
     for p in poss:
         series.append(base + p)
     comparison = base + "pbe_tight_ts/"
-    kp.plot_d442_histogram(series, comparison)
+    kp.plot_d442_histogram([base2 + poss[5]], comparison)
 
 if setting == 8:
     pbe_tight_ts = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/"
@@ -108,6 +114,17 @@ if setting == 8:
     series = [min_s, min_s_ts, min_s_opt]
     kp.plot_s66_histogram(series, pbe_tight_ts)
 
-file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/geo_theo.in"
-write = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/geo_theo_better.in"
-# bg.move_into_unit_cell(file, write)
+if setting == 9:
+    base = "../../FHI-aims/KellerPBE/D442/geo_comparison/"
+    # pbe_tight = "pbe_tight/"
+    blyp_min_s = "blyp_min_s/"
+    pbe_tight_ts = "pbe_tight_ts/"
+    min_s = "min_s/"
+    min_s_d_sr_opt = "min_s_1.00_70/"
+    ends = [blyp_min_s, pbe_tight_ts, min_s, min_s_d_sr_opt]
+    series = []
+    for e in ends:
+        series.append(base + e)
+    for i in range(1, 442):
+        kp.plot_dissociation_curve_d442(series, i)
+

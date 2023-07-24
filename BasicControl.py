@@ -9,14 +9,16 @@
 # -> species_default_path(element, defaults_folder):
 #                   given an element and a path to the defaults, returns the path to the species default file
 # -> list_of_defaults(filepath, defaul):
-# ->                returns a list of paths to all required defaults files for the given folder
-# ->
+#                   returns a list of paths to all required defaults files for the given folder
+# -> read_control_for_bands():
+#                   reads control.in file as necessary for band outputs
 
 # imports:
 import os
-import BasicFunc as bf
 import BasicGeo as bg
 from PyAstronomy import pyasl
+import math
+import numpy as np
 
 
 # functions:
@@ -54,3 +56,54 @@ def list_of_defaults(filepath, defaults_folder):
     for e in elements:
         defaults.append(species_default_path(e, defaults_folder))
     return defaults
+
+
+def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
+    if debug:
+        print("reading data from ", filepath + "/control.in")
+    kpoint = []
+    band_len = []
+    xvals = []
+    band_len_tot = []
+
+    for line in open(filepath + "/control.in"):
+        if line.strip().startswith('output\tband'):
+            words = line.strip().split()
+            kpoint.append([float(i) for i in words[2:8]])
+            n_sample = int(words[-3])  # n_sample is the number of integration points
+    for i in kpoint:
+        kvec = []
+        xval = []
+        for j in range(3):
+            kvec.append(i[j + 3] - i[j])
+        temp = math.sqrt(sum([k * k for k in list(np.dot(kvec, rlatvec))]))  # length of kpath segment
+        if eq:
+            step = 0.5 / (n_sample - 1)
+        else:
+            step = temp / (n_sample - 1)
+
+        for i in range(n_sample):
+            xval.append(i * step)
+        xvals.append(xval)  # list of all points calculated at
+
+        if eq:
+            band_len.append(0.5)
+        else:
+            band_len.append(temp)  # list of lengths of k-path segments
+    tot_len = sum(band_len)
+
+    for i in range(len(band_len)):
+        if i == 0:
+            band_len_tot.append(0)
+        else:
+            band_len_tot.append(sum(band_len[:i]))
+    for i in range(len(xvals)):
+        xvals[i] = [j + band_len_tot[i] for j in
+                    xvals[i]]  # basically separating each band path by assigning sequential locations on the x-axis
+    if debug:
+        print("band lens: " + str(band_len))
+        print('K path')
+        print(kpoint)
+        print(n_sample)
+
+    return xvals, band_len_tot, tot_len

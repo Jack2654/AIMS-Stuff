@@ -23,17 +23,19 @@
 #               translates a .xyz file to a .in file using ASE
 # -> get_species_from_geo(filepath):
 #               returns a set of the species present in a geometry.in file
-#
-#
-#
-#
+# -> move_into_unit_cell(filepath, writepath):
+#               moves atoms outside the unit cell to inside the unit cell (approximately)
+# -> read_geo_for_bands(filepath, color_dict={}, debug=False):
+#               reads geometry.in file as needed for band outputs
 #
 
 # imports:
 import math
 from scipy.spatial.transform import Rotation as R
-import VectorToolkit as vt
 from ase.io import read, write
+import VectorToolkit as vt
+import numpy as np
+from numpy import pi
 
 
 # functions:
@@ -169,18 +171,32 @@ def move_into_unit_cell(filepath, writepath):
     lv = lattice_vectors(filepath)
     at_ret = []
     j = 0
+    count = 0
     for a in at:
         i = 0
         at_ret.append([a[0], a[1], a[2]])
         for x in a:
-            if x < 0:
+            adj = False
+            for lat in lv:
+                if lat == lv[i]:
+                    continue
+                #if x > lat[i] + lv[i][i]:
+                #    adj = True
+                #    count += 1
+                #    at_ret[j][0] -= lv[i][0]
+                #    at_ret[j][1] -= lv[i][1]
+                #    at_ret[j][2] -= lv[i][2]
+            if x < 0 and not adj:
+                count += 1
                 at_ret[j][0] += lv[i][0]
                 at_ret[j][1] += lv[i][1]
                 at_ret[j][2] += lv[i][2]
-            if x > lv[i][i]:
+            elif x > lv[i][i] and not adj:
+                count += 1
                 at_ret[j][0] -= lv[i][0]
                 at_ret[j][1] -= lv[i][1]
                 at_ret[j][2] -= lv[i][2]
+
             i += 1
         j += 1
 
@@ -196,5 +212,57 @@ def move_into_unit_cell(filepath, writepath):
             if "atom" not in ln:
                 f.write(ln + "\n")
         f.writelines(at_return)
+    print(str(count) + " atoms were adjusted")
 
 
+def read_geo_for_bands(filepath, color_dict={}, flags=1):
+    if flags == 0:
+        print("reading data from ", filepath + "/geometry.in")
+    elif flags == 1:
+        print("Processing control.in and geometry.in...")
+
+    atoms = []
+    latvec = []
+    rlatvec = []
+    species_id = {}  # map species to its index in geometry.in: Pb --> 1
+
+    for line in open(filepath + "/geometry.in"):
+        words = line.strip().split()
+        if len(words) == 0:
+            continue
+        if words[0] == "lattice_vector":
+            latvec.append([float(i) for i in words[1:4]])
+        if line.strip().startswith("atom"):
+            atoms.append(words[-1])  # full list of atoms in order they appear
+    species = list(set(atoms))  # set of different types of atoms
+
+
+    for i in range(len(atoms)):  # both 2i and 2i+1 for the two spin states representing an atom
+        if atoms[i] not in species_id:
+            species_id[atoms[i]] = []
+        species_id[atoms[i]].append(2 * i)
+        species_id[atoms[i]].append(2 * i + 1)
+
+    # Calculate reciprocal lattice vectors
+    volume = (np.dot(latvec[0], np.cross(latvec[1], latvec[2])))
+    rlatvec.append(2 * pi * np.cross(latvec[1], latvec[2]) / volume)
+    rlatvec.append(2 * pi * np.cross(latvec[2], latvec[0]) / volume)
+    rlatvec.append(2 * pi * np.cross(latvec[0], latvec[1]) / volume)
+
+    if flags == 0:
+        print("Lattice vectors:")
+        for j in range(3):
+            print(latvec[j])
+        print("atoms:")
+        print(atoms)
+        print("species:")
+        print(species)
+        print("species_id:")
+        print(species_id)
+        print("species_color:", species_color)
+        print("Reciprocal lattice vectors:")
+        for j in range(3):
+            print(rlatvec[j])
+        print()
+
+    return rlatvec, atoms, species, species_id

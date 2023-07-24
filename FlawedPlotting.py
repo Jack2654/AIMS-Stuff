@@ -173,7 +173,9 @@ def mull_plot(filepath=".", energy_shift=0, y_min=-5, y_max=5, color_dict={}, ba
             if len(currentMlk) == len(atoms) * 2:
                 continue
         for st in all_states:
-            plt.plot(x_vals[i], state_dict[st], color='k', lw=black_bands)
+            if 90 < i < 100: # not all states exist in mlk output files, idk which do :(
+                print(i)
+                plt.plot(x_vals[i], state_dict[st], color='k', lw=black_bands)
         print(str(time.time() - curTime) + " seconds")
 
     x_pts = [0]
@@ -183,7 +185,7 @@ def mull_plot(filepath=".", energy_shift=0, y_min=-5, y_max=5, color_dict={}, ba
         plt.axhline(0, color='k', linestyle='--', lw=line_width).set_dashes([5, 5])
     x_pts.append(all)
     # plt.yticks(range(ymin, ymax + 1), [])
-    #plt.xticks(ticks=x_pts, labels=('$X$', '$\Gamma$', '$Y\|L$', '$\Gamma$', '$K$'))
+    plt.xticks(ticks=x_pts, labels=('$X$', '$\Gamma$', '$Y\|L$', '$\Gamma$', '$K$'))
     plt.ylabel('Energy (eV)')
     plt.xlabel("Wave vector, $k$")
     plt.title("3.9\% Doping")

@@ -159,12 +159,13 @@ def generate(filename, target, lattice_defined, debug, mag):
     return final
 
 
-# f = input("Enter filepath to desired geometry.in file: ")
-# t1 = input("Enter x Coordinate in real lattice space: ")
-# t2 = input("Enter y Coordinate in real lattice space: ")
-# t3 = input("Enter z Coordinate in real lattice space: ")
-# generate(f, (float(t1), float(t2), float(t3)), True)
-# file = "../../FHI-aims/Yi_1_5_D/n_5/geometry.in"
+f = input("Enter filepath to desired geometry.in file: ")
+print(type(f))
+t1 = input("Enter x Coordinate in real lattice space: ")
+t2 = input("Enter y Coordinate in real lattice space: ")
+t3 = input("Enter z Coordinate in real lattice space: ")
+generate(f, (float(t1), float(t2), float(t3)), True, False, 0.0)
+file = "../../FHI-aims/Yi_1_5_D/n_5/geometry.in"
 file = "../../FHI-aims/Yi_1_5_D/new_input_files/n_2_4/theoretical/geometry.in"
 generate(file, (1, 0, 0), False, False, 0.0)
 generate(file, (0, 0, 1), False, False, 0.0)

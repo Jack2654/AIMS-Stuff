@@ -51,7 +51,10 @@ def binding_energy(folder, output_file):
                 monomers += float(total_energies[file])
     for x in total_energies:
         if "monomer" not in x and "A" not in x and "B" not in x:
-            binding_energies[x] = float(total_energies[x]) - monomers
+            if "ERR" in total_energies[x]:
+                binding_energies[x] = -10000
+            else:
+                binding_energies[x] = float(total_energies[x]) - monomers
     sorted_be = sorted(binding_energies)
     with open(output_file, "a") as f:
         f.write(folder[-7:] + "\n")
@@ -320,7 +323,7 @@ def run_all_dc(base, ignore=False):
             bf.run_all(base + dir + "/", ignore)
 
 
-def determine_all_minima_s66(filepath):
+def determine_all_minima_s66(filepath, option=1):
     with open(filepath, "r") as f:
         lines = []
         for ln in f:
@@ -332,7 +335,10 @@ def determine_all_minima_s66(filepath):
 
     for i in range(66):
         y = [float(x) for x in lines[1 + i * 22: (i + 1) * 22]]
-        results.append(bf.minimize_func(bf.fit_poly(x, y, 4), bnds=Bounds(lb=0.8, ub=1.2)))
+        if option == 1:
+            results.append(bf.minimize_func(bf.fit_poly(x, y, 4), bnds=Bounds(lb=0.8, ub=1.2)))
+        if option == 2:
+            results.append(min_lowest_quad(x, y))
     return results
 
 
@@ -350,7 +356,7 @@ def determine_all_minima_d442(filepath, option=1):
             ret = bf.minimize_func(bf.fit_poly(x, y, 5))
             results.append(ret)
         elif option == 2:
-            print(i)
+            # print(i)
             ret = min_lowest_quad(x, y)
             results.append(ret)
         else:
@@ -359,6 +365,11 @@ def determine_all_minima_d442(filepath, option=1):
 
 
 def min_lowest_quad(x, y):
+    res = bf.minimize_func(lowest_quad(x, y))
+    return res
+
+
+def lowest_quad(x, y):
     points = []
     i = 0
     for elem in y:
@@ -373,14 +384,14 @@ def min_lowest_quad(x, y):
     if min_dex == 0:
         x_min = [points[0][0], points[1][0], points[2][0]]
         y_min = [points[0][1], points[1][1], points[2][1]]
-    elif min_dex == 9:
-        x_min = [points[7][0], points[8][0], points[9][0]]
-        y_min = [points[7][1], points[8][1], points[9][1]]
+    elif min_dex == len(points) - 1:
+        x_min = [points[len(points) - 3][0], points[len(points) - 2][0], points[len(points) - 1][0]]
+        y_min = [points[len(points) - 3][1], points[len(points) - 2][1], points[len(points) - 1][1]]
     else:
         x_min = [points[min_dex - 1][0], points[min_dex][0], points[min_dex + 1][0]]
         y_min = [points[min_dex - 1][1], points[min_dex][1], points[min_dex + 1][1]]
 
-    res = bf.minimize_func(bf.fit_poly(x_min, y_min, 2))
+    res = bf.fit_poly(x_min, y_min, 2)
     return res
 
 
@@ -393,7 +404,7 @@ def mean_absolute_error(file1, file2):
     return sum(error) / len(error)
 
 
-def plot_dissociation_curve(files, structure):
+def plot_dissociation_curve_s66(files, structure):
     series = [f + "binding_energies.txt" for f in files]
     x = []
     for i in range(21):
@@ -407,7 +418,6 @@ def plot_dissociation_curve(files, structure):
         plt.plot(x, vals, color=colors[i])
         plt.axvline(x=bf.minimize_func(bf.fit_poly(x, vals, 4), bnds=Bounds(lb=0.8, ub=1.2)), color=colors[i],
                     linestyle="--", label="_nolegend_")
-
         if False:
             print(bf.minimize_func(bf.fit_poly(x, vals, 4), bnds=Bounds(lb=0.8, ub=1.2)))
             print(bf.minimize_func(bf.fit_poly(x, vals, 5), bnds=Bounds(lb=0.8, ub=1.2)))
@@ -416,10 +426,27 @@ def plot_dissociation_curve(files, structure):
             print(bf.minimize_func(bf.fit_poly(x, vals, 8), bnds=Bounds(lb=0.8, ub=1.2)))
             print(bf.minimize_func(bf.fit_poly(x, vals, 9), bnds=Bounds(lb=0.8, ub=1.2)))
             print(bf.minimize_func(bf.fit_poly(x, vals, 10), bnds=Bounds(lb=0.8, ub=1.2)))
-
         i += 1
     plt.legend(["PBE tight", "PBE tight+ts", "min+s", "min+s m4", "min+s m4, d40"], loc="upper right")
     plt.title("Structure " + str(structure) + " Dissociation Curves")
+    plt.show()
+
+
+def plot_dissociation_curve_d442(files, structure):
+    series = [f + "binding_energies.txt" for f in files]
+    x = [0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.25, 1.50, 2.00]
+    # colors = ["red", "orange", "blue", "black", "purple"]
+    i = 0
+    for s in series:
+        with open(s, "r") as f:
+            temp = f.readlines()
+        vals = [float(x) for x in temp[structure * 11 - 10: structure * 11]]
+        plt.plot(x, vals)
+        # plt.axvline(x=min_lowest_quad(x, vals), linestyle="--", label="_nolegend_")
+        i += 1
+    legends = [f.split("/")[6] for f in files]
+    plt.legend(legends)
+    plt.title("D442 Structure " + str(structure) + " Dissociation Curves")
     plt.show()
 
 
@@ -432,7 +459,7 @@ def eq_form(coeff):
     return res[:-1]
 
 
-def s66x21_run(poss, base, control_file, defaults_folder, ignore=False):
+def s66x21_run(poss, base, control_file, defaults_folder, ignore=False, write_control=True):
     times = []
     for file in poss:
         print("Beginning calculations for settings:" + str(file))
@@ -441,9 +468,11 @@ def s66x21_run(poss, base, control_file, defaults_folder, ignore=False):
         temp_d = str(file[1])
         cur_folder = base + temp_sr + "_" + temp_d + "/"
         commands = "vdw_damping_sr " + temp_sr + "\n vdw_damping_d " + temp_d + "\n"
+        commands = ""
         be_file = cur_folder + "binding_energies.txt"
 
-        write_controls_to_dc(cur_folder, control_file, defaults_folder, commands)
+        if write_control:
+            write_controls_to_dc(cur_folder, control_file, defaults_folder, commands)
         run_all_dc(cur_folder, ignore=ignore)
         binding_energies(cur_folder, be_file)
 
@@ -454,7 +483,7 @@ def s66x21_run(poss, base, control_file, defaults_folder, ignore=False):
     for t in times:
         print("Operation took " + str(t) + " seconds")
 
-    compare_to = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/binding_energies.txt"
+    compare_to = "../../FHI-aims/KellerPBE/S66/dissociation_curves/pbe_tight_ts/binding_energies.txt"
     for file in poss:
         temp_sr = str(file[0])
         temp_d = str(file[1])
@@ -467,7 +496,7 @@ def s66x21_run(poss, base, control_file, defaults_folder, ignore=False):
         temp_d = str(file[1])
         cur_folder = base + temp_sr + "_" + temp_d + "/"
         be_file = cur_folder + "binding_energies.txt"
-        res = determine_all_minima_s66(be_file)
+        res = determine_all_minima_s66(be_file, 2)
         print()
         for r in res:
             print(r)
@@ -508,7 +537,7 @@ def organize_d442_3(folder):
             os.system(command)
 
 
-def d442x10_run(poss, base, commands, control_file, default_files, ignore=False):
+def d442x10_run(poss, base, commands, control_file, default_files, ignore=False, write_control=True):
     times = []
 
     i = -1
@@ -524,7 +553,8 @@ def d442x10_run(poss, base, commands, control_file, default_files, ignore=False)
             continue
 
         print("Beginning calculations for: " + str(file))
-        write_controls_to_dc(cur_folder, control_file, default_files[i], commands[i])
+        if write_control:
+            write_controls_to_dc(cur_folder, control_file, default_files[i], commands[i])
         run_all_dc(cur_folder, ignore=ignore)
         binding_energies(cur_folder, be_file)
 
@@ -643,7 +673,7 @@ def plot_s66_histogram(series, comparison):
 
 
 def plot_d442_histogram(series, comparison):
-    colors = ["green", "orange", "blue"]
+    colors = ["green", "orange", "blue", "red"]
     base_be = comparison + "binding_energies.txt"
     base_vals = determine_all_minima_d442(base_be, option=2)
     i = 0
@@ -658,13 +688,13 @@ def plot_d442_histogram(series, comparison):
         for err in all_errors:
             if -0.5 < err < 0.5:
                 errors.append(err)
-        plt.hist(errors, bins=30, alpha=0.5, color=colors[i])
-        plt.axvline(x=[statistics.median(all_errors)], label="_nolegend_", color=colors[i])
+        plt.hist(errors, bins=30, alpha=0.5, color=colors[i+2])
+        plt.axvline(x=[statistics.median(all_errors)], label="_nolegend_", color=colors[i+2])
         # plt.axvline(x=[statistics.mean(all_errors)], label="_nolegend_", color=colors[i], linestyle="--")
         i += 1
     plt.axvline(x=[0.0], color='k', label="_nolegend_")
     plt.xlabel("Error (% of IMD)")
     plt.ylabel("Count")
     plt.title("D442x10 Structures")
-    plt.legend(["min+s", "min+s + ts", "min+s sr=1.02, d=50"])
+    plt.legend([x.split("/")[6] for x in series]) # was changed by accident, check if still works
     plt.show()

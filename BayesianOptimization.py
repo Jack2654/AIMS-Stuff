@@ -26,8 +26,9 @@ def next_node(datapath):
         f=None,
         domain=domain,
         model_type='GP',                # Gaussian
-        acquisition_type='MPI',       # Maximum Probability of Improvement
-        # acquisition_type='EI',          # Expected Improvement
+        # acquisition_type='MPI',       # Maximum Probability of Improvement
+        # acquisition_type='EI',        # Expected Improvement
+        acquisition_type='LCB',         # Lower Confidence Bound
         X=xy_init,
         Y=z_init
         )
