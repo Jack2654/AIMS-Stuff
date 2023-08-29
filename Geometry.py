@@ -68,7 +68,7 @@ def bandProcess(filepath: object, boo, bandlength) -> object:
     #print("min of",str(min),"found at",minVal)
     #print("previous",prev)
     if boo:
-        print(str(float(prev) - float(min)))
+        return(str(float(prev) - float(min)))
     else:
         if float(minVal) >= 150:
             minVal = 300 - float(minVal)

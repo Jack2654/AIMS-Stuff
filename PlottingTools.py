@@ -20,15 +20,16 @@ import time
 # a8 = equal sized plotted band segments
 # a9 = debug
 
-def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate=0, color_dict={}, labels=0, title="Default Title", eq=False, debug=False, quiet=False):
+def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate=0, color_dict={}, labels=0,
+                  title="Default Title", eq=False, debug=False, quiet=False):
     ############################################
     # Setup                                    #
     ############################################
     flags = 1  # normal run state, print out timing
     if debug:
-        flags = 0       # full debug state, print all info
+        flags = 0  # full debug state, print all info
     elif quiet:
-        flags = 2       # quiet run state, print out nothing
+        flags = 2  # quiet run state, print out nothing
 
     ############################################
     # geometry.in                              #
@@ -194,10 +195,13 @@ def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate
                 else:
                     if (currentK + 8) % 16 == 0:
                         plot_dot = True
-                if plot_dot: # this if statement exists just so "dots" are not too close together in output
-                    plt.plot(xvals[file_id][currentK - 1], energys[file_id][currentK - 1][currentState - 1],
-                                species_color[max_spec] + 'o', markersize=markersizeunit,
-                                markeredgecolor=species_color[max_spec])
+                cur_x = xvals[file_id][currentK - 1]
+                cur_E = energys[file_id][currentK - 1][currentState - 1]
+                if 0.5 < cur_E < 2.7 and abs(cur_x - (0.5 * round(cur_x / 0.5))) < 0.05:
+                    print(str(cur_x) + ", " + str(cur_E))
+                if plot_dot:  # this if statement exists just so "dots" are not too close together in output
+                    plt.plot(cur_x, cur_E, species_color[max_spec] + 'o', markersize=markersizeunit,
+                             markeredgecolor=species_color[max_spec])
             i += 1
         print(str(time.time() - curTime) + " seconds")
 
@@ -214,13 +218,12 @@ def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate
         plt.xticks(ticks=x_pts, labels=labels)
     plt.ylabel('Energy (eV)')
     plt.xlabel("Wave vector, $k$")
-    # plt.title("3.9\% Doping", weight='bold')
     plt.title(title, weight='bold')
     plt.axis([0, xvals[len(xvals) - 1][len(xvals[len(xvals) - 1]) - 1], ymin, ymax])
     plt.tight_layout()
-    # plt.show()
-    if not filename == 0:
-        plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    plt.show()
+    # if not filename == 0:
+    #    plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
 
 
 def dos_plot(files):
@@ -237,4 +240,23 @@ def dos_plot(files):
             dos.append(line[1])
         print(file)
         plt.plot(energy, dos)
+    plt.show()
+
+
+def MD_plot(file):
+    lines = []
+    with open(file, "r") as f:
+        for ln in f:
+            if "#" not in ln:
+                lines.append(ln)
+    times = []
+    temps = []
+    for ln in lines:
+        temp = ln.split()
+        times.append(float(temp[0]))
+        temps.append(float(temp[1]))
+    plt.plot(times, temps)
+    plt.plot((0, 5), (150, 150))
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Temperature (K)")
     plt.show()

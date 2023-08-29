@@ -1,7 +1,6 @@
 import math
 from sympy import *
 import os.path
-import numpy as np
 
 
 # Basic cross product formula, a and b should be three element tuples
@@ -95,11 +94,11 @@ def form(filename):
 # filename: path to geometry.in file
 # target: 3 element tuple values either cartesian length values or units of lattice vectors based on lattice_defined var
 # lattice_defined: true or false, if true target is interpreted as multiples of lattice vectors
-        # if false target is interpreted as cartesian values (in angstroms)
+# if false target is interpreted as cartesian values (in angstroms)
 # debug determines whether debug information is printed
-# mag: if 0 the result is scaled to be in an approximation of the brillouin zone, otherwise the result will be scaled
-        # to have a magnitude as determined by this parameter
-def generate(filename, target, lattice_defined, debug, mag):
+# mag: if not input or 0 the result is scaled to be in an approximation of the brillouin zone, otherwise the result will be scaled
+# to have a magnitude as determined by this parameter
+def generate(filename, target, lattice_defined=True, debug=False, mag=0):
     # The form function returns a 9-element tuple containing the lattice vectors from the given geometry.in file
     lattice = form(filename)
     a = (lattice[0], lattice[1], lattice[2])
@@ -153,25 +152,37 @@ def generate(filename, target, lattice_defined, debug, mag):
         print(r_y)
         print(r_z)
     if mag != 0:
-        leng = math.sqrt(final[0]**2 + final[1]**2 + final[2]**2)
-        final = (mag*final[0]/leng, mag*final[1]/leng, mag*final[2]/leng)
+        leng = math.sqrt(final[0] ** 2 + final[1] ** 2 + final[2] ** 2)
+        final = (mag * final[0] / leng, mag * final[1] / leng, mag * final[2] / leng)
+    if debug:
+        print("Result:")
     print(str(final[0]) + " " + str(final[1]) + " " + str(final[2]))
     return final
 
+    # f = input("Enter filepath to desired geometry.in file: ")
+    # lattice_defined = input("Is target defined by lattice vectors (True) or cartesian coordinates (False)? ")
+    # if lattice_defined == "True":
+    # t1 = input("Enter target multiples of first lattice vector: ")
+    # t2 = input("Enter target multiples of second lattice vector: ")
+    # t3 = input("Enter target multiples of third lattice vector: ")
 
-f = input("Enter filepath to desired geometry.in file: ")
-print(type(f))
-t1 = input("Enter x Coordinate in real lattice space: ")
-t2 = input("Enter y Coordinate in real lattice space: ")
-t3 = input("Enter z Coordinate in real lattice space: ")
-generate(f, (float(t1), float(t2), float(t3)), True, False, 0.0)
-file = "../../FHI-aims/Yi_1_5_D/n_5/geometry.in"
-file = "../../FHI-aims/Yi_1_5_D/new_input_files/n_2_4/theoretical/geometry.in"
-generate(file, (1, 0, 0), False, False, 0.0)
-generate(file, (0, 0, 1), False, False, 0.0)
-generate(file, (1, 0, 1), False, False, 0.0)
-generate(file, (1, 0, -1), False, False, 0.0)
-generate(file, (0, 1, 0), False, False, 0.0)
 
-# Note on verification of results: have verified reciprocal lattice vector protocol outputs same results as is found in
-# aims.out files
+# elif lattice_defined == "False":
+# t1 = input("Enter x coordinate of target in cartesian space: ")
+# t2 = input("Enter y coordinate of target in cartesian space: ")
+# t3 = input("Enter z coordinate of target in cartesian space: ")
+# else:
+# print("Bad argument bassed to lattice defined parameter")
+# raise ValueError
+
+geometry = "../../FHI-aims/1D_Ethan/3/geometry.in"
+points = (1, 0, 0)
+generate(geometry, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+points = (0, 1, 0)
+generate(geometry, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+points = (0, 0, 1)
+generate(geometry, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+points = (0, 1, 1)
+generate(geometry, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+points = (0, -1, 1)
+generate(geometry, (points[0], points[1], points[2]), lattice_defined=True, debug=False)

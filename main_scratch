@@ -154,8 +154,8 @@ bg.move_into_unit_cell(opt1, opt2)
 bg.move_into_unit_cell(opt2, opt3)
 bg.move_into_unit_cell(opt3, opt4)
 
-structure = 1
-# n_2_4 experimental:
+structure = 10
+# n_2_4 experimental: NOTE: change where dots are plotted to be % 16 and +8 % 16
 if structure == 0:
     file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/"
     figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_2_4_experimental.png"
@@ -164,7 +164,7 @@ if structure == 0:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|1$', '$4\|\Gamma$', '$5$')
+    labels = ('$1$', '$\Gamma$', '$2\|3$', '$\Gamma$', "$4'\|\Gamma$", '$5$')
     title = "Experimental m=4, n=2"
     equal = True
     debug = False
@@ -177,21 +177,21 @@ if structure == 1:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|1$', '$4\|\Gamma$', '$5$')
+    labels = ('$1$', '$\Gamma$', '$2\|3$', '$\Gamma$', "$4'\|\Gamma$", '$5$')
     title = "Theoretical m=4, n=2"
     equal = True
     debug = False
 
-# n_3 experimental:
+# n_3 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
 if structure == 2:
     file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental/"
     figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_3_experimental.png"
     eshift = -0.3635
-    ymin = -4
+    ymin = -1
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|3$', '$5\|\Gamma$', '$6$')
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', "$5'\|\Gamma$", '$6$')
     title = "Experimental m=3, n=3"
     equal = True
     debug = False
@@ -204,12 +204,12 @@ if structure == 3:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|3$', '$5\|\Gamma$', '$6$')
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', "$5'\|\Gamma$", '$6$')
     title = "Theoretical m=3, n=3"
     equal = True
     debug = False
 
-# n_4 experimental:
+# n_4 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
 if structure == 4:
     file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/"
     figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_4_experimental.png"
@@ -218,7 +218,7 @@ if structure == 4:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
+    labels = ('$1$', '$\Gamma$', "$2'\|\Gamma$", '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
     title = "Experimental m=4, n=4"
     equal = True
     debug = False
@@ -231,12 +231,12 @@ if structure == 5:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
+    labels = ('$1$', '$\Gamma$', "$2'\|\Gamma$", '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
     title = "Theoretical m=4, n=4"
     equal = True
     debug = False
 
-# n_5 experimental:
+# n_5 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
 if structure == 6:
     file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/"
     figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_5_experimental.png"
@@ -245,24 +245,34 @@ if structure == 6:
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k", "O": "r"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|3$', '$6$')
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|\Gamma$', "$6'$")
     title = "Experimental m=5, n=5"
     equal = True
     debug = False
-# n_5 theoretical:      (NOT DONE)
+# n_5 theoretical:
 if structure == 7:
     file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/theoretical/"
     figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_5_theoretical.png"
-    eshift = 0
-    ymin = -4
+    eshift = -2.2826
+    ymin = -1
     ymax = 4
     substate = 0
     cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k", "O": "r"}
-    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|3$', '$6$')
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|\Gamma$', "$6'$")
     title = "Theoretical m=5, n=5"
     equal = True
     debug = False
 
-pt.mulliken_plot(file, filename=figure_loc, energyshift=eshift, ymin=ymin, ymax=ymax, substate=substate,
-           color_dict=cd, labels=labels, title=title, eq=equal, debug=debug)
+#pt.mulliken_plot(file, filename=figure_loc, energyshift=eshift, ymin=ymin, ymax=ymax, substate=substate,
+#           color_dict=cd, labels=labels, title=title, eq=equal, debug=debug)
+
 Geometry.bandProcess(file + "band1001.out", True, 0)
+
+file_base = "../../FHI-aims/Yi_1_5_D/Results/New_Results/"
+options = ["n_2_4/", "n_3/", "n_4/", "n_5/"]
+for opt in options:
+    temp = file_base + opt + "experimental/geometry.in"
+    print(temp)
+    temp = file_base + opt + "theoretical/geometry.in"
+    print(temp)
+

@@ -259,10 +259,28 @@ def read_geo_for_bands(filepath, color_dict={}, flags=1):
         print(species)
         print("species_id:")
         print(species_id)
-        print("species_color:", species_color)
+        print("species_color:", color_dict)
         print("Reciprocal lattice vectors:")
         for j in range(3):
             print(rlatvec[j])
         print()
 
     return rlatvec, atoms, species, species_id
+
+
+def lattice_info(filename):
+    lat = lattice_vectors(filename)
+    mags = []
+    for vec in lat:
+        mag = math.sqrt((vec[0])**2 + (vec[1])**2 + (vec[2])**2)
+        mags.append(mag)
+        # print(mag)
+    # alpha:
+    alpha = (180 / np.pi) * np.arccos((lat[1][0] * lat[2][0] + lat[1][1] * lat[2][1] + lat[1][2] * lat[2][2]) / (mags[1] * mags[2]))
+    print(alpha)
+    # beta:
+    beta = (180 / np.pi) * np.arccos((lat[0][0] * lat[2][0] + lat[0][1] * lat[2][1] + lat[0][2] * lat[2][2]) / (mags[0] * mags[2]))
+    print(beta)
+    # gamma
+    gamma = (180 / np.pi) * np.arccos((lat[0][0] * lat[1][0] + lat[0][1] * lat[1][1] + lat[0][2] * lat[1][2]) / (mags[0] * mags[1]))
+    print(gamma)

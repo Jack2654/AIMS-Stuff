@@ -427,7 +427,7 @@ def plot_dissociation_curve_s66(files, structure):
             print(bf.minimize_func(bf.fit_poly(x, vals, 9), bnds=Bounds(lb=0.8, ub=1.2)))
             print(bf.minimize_func(bf.fit_poly(x, vals, 10), bnds=Bounds(lb=0.8, ub=1.2)))
         i += 1
-    plt.legend(["PBE tight", "PBE tight+ts", "min+s", "min+s m4", "min+s m4, d40"], loc="upper right")
+    plt.legend(["PBE tight", "PBE tight+ts", "min+s", "blyp_min"], loc="upper right")
     plt.title("Structure " + str(structure) + " Dissociation Curves")
     plt.show()
 
@@ -468,7 +468,6 @@ def s66x21_run(poss, base, control_file, defaults_folder, ignore=False, write_co
         temp_d = str(file[1])
         cur_folder = base + temp_sr + "_" + temp_d + "/"
         commands = "vdw_damping_sr " + temp_sr + "\n vdw_damping_d " + temp_d + "\n"
-        commands = ""
         be_file = cur_folder + "binding_energies.txt"
 
         if write_control:

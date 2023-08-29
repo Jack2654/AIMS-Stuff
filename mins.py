@@ -6,8 +6,6 @@ from ase.neighborlist import NewPrimitiveNeighborList
 from ase.build import make_supercell
 import ase
 from ase.neighborlist import NeighborList
-import stress
-
 
 class SmallBasisCorrection(Calculator):
     implemented_properties = ['energy', 'forces']
@@ -61,9 +59,10 @@ class SmallBasisCorrection(Calculator):
         p_ele = list((atoms.get_chemical_symbols()))
         RAB_uncorr_min = 0
         for ele in p_ele:
-            RAB_cut_tmp = self.getGamma()[ele]
-            if RAB_cut_tmp > RAB_uncorr_min:
-                RAB_uncorr_min = RAB_cut_tmp
+            if ele in ["O", "V", "Nb", "Mo"]:
+                RAB_cut_tmp = self.getGamma()[ele]
+                if RAB_cut_tmp > RAB_uncorr_min:
+                    RAB_uncorr_min = RAB_cut_tmp
         p_cell = atoms
         p_ele = list((atoms.get_chemical_symbols()))
         symb_p = atoms.get_chemical_symbols()
@@ -73,11 +72,15 @@ class SmallBasisCorrection(Calculator):
         g_po = atoms.get_initial_magnetic_moments()
         for ele in set(p_ele):
             mask = (s_p == ele)
-            s_po[mask] = (float(self.getS()[ele]))
-            g_po[mask] = (float(1 / 2 * self.getGamma()[ele]))
+            if ele in ["O", "V", "Nb", "Mo"]:
+                s_po[mask] = (float(self.getS()[ele]))
+                g_po[mask] = (float(1 / 2 * self.getGamma()[ele]))
         cutoffs = []
         for ele in p_ele:
-            cutoffs.append(self.getGamma()[ele])
+            if ele in self.getGamma():
+                cutoffs.append(self.getGamma()[ele])
+            else:
+                cutoffs.append(0)
         nl = NeighborList(cutoffs, skin=0, self_interaction=False, bothways=True, primitive=NewPrimitiveNeighborList)
         nl.update(atoms)
 
@@ -117,10 +120,10 @@ class SmallBasisCorrection(Calculator):
             )  # equivalent to outer product
 
         # no lattice, no stress
-        if self.atoms.cell.rank == 3:
-            stresses = stress.full_3x3_to_voigt_6_stress(stresses)
-            self.results['stress'] = stresses.sum(axis=0) / self.atoms.get_volume()
-            self.results['stresses'] = stresses / self.atoms.get_volume()
+        # if self.atoms.cell.rank == 3:
+            # stresses = full_3x3_to_voigt_6_stress(stresses)
+            # self.results['stress'] = stresses.sum(axis=0) / self.atoms.get_volume()
+            # self.results['stresses'] = stresses / self.atoms.get_volume()
         self.results['forces'] = forces
         self.results['energy'] = energy
 
@@ -1237,7 +1240,7 @@ class Species:
     def getIncludeFcts(self):
         return self.__include_fcts
 
-    def write_file(self, filepath="./"):
+    def write_file(self):
         first_tier_string = '\n#  "First tier" \n'
         if self.getIncludeFcts().find('s') > -1:
             first_tier_string += '{}'.format(self.getFirstTier().getS())
@@ -1276,9 +1279,9 @@ class Species:
         if self.getIncludeFcts().find('0') > -1:
             first_tier_string = ' '
         if len(str(self.__species.getAtomicNumber())) == 1:
-            f = open(filepath + '0{}_{}_default'.format(self.__species.getAtomicNumber(), self.getName()), 'w')
+            f = open('0{}_{}_default'.format(self.__species.getAtomicNumber(), self.getName()), 'w')
         else:
-            f = open(filepath + '{}_{}_default'.format(self.__species.getAtomicNumber(), self.getName()), 'w')
+            f = open('{}_{}_default'.format(self.__species.getAtomicNumber(), self.getName()), 'w')
         f.write('################################################################################')
         f.write('\n#')
         f.write('\n#  FHI-aims code project')

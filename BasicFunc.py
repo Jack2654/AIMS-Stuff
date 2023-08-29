@@ -15,7 +15,8 @@
 #                   returns the coefficients in increasing order
 # -> minimize_func(coeff, guess=0.00):
 #                   returns the optimized minimum of the given function specified by the coefficients
-# ->
+# -> merge_files(file1, file2, destination):
+#                   merges two files interactively line by line
 # ->
 
 # imports:
@@ -26,6 +27,7 @@ from molmass import Formula
 from mins import Species
 import numpy.polynomial.polynomial as poly
 from scipy.optimize import minimize
+from ase.io import read, write
 
 
 # functions:
@@ -111,3 +113,206 @@ def copy_to_timewarp(source, destination):      # works :D
 def mkdir_tw():
     os.system("ssh jhm48@timewarp.egr.duke.edu /bin/bash")
     os.system("mkdir brother_py")
+
+
+def merge_files(file1, file2, writefile):
+    with open(file1, "r") as f:
+        f1 = f.readlines()
+    with open(file2, "r") as f:
+        f2 = f.readlines()
+    max1 = len(f1)
+    max2 = len(f2)
+    counter1 = 0
+    counter2 = 0
+    with open(writefile, "w") as f:
+        while True:
+            if counter1 > max1 and counter2 > max2:
+                break
+
+            if counter1 < max1:
+                current1 = f1[counter1]
+            else:
+                f.writelines(f2[counter2:len(f2)-1])
+                break
+
+            if counter2 < max2:
+                current2 = f2[counter2]
+            else:
+                f.writelines(f1[counter1:len(f2) - 1])
+                break
+
+            # print("Comparison: " + current1.strip() + " to " + current2.strip())
+
+            if current1 == current2:
+                f.write(current1)
+            else:
+                processed = next_match(f1, f2, counter1, counter2)
+                if processed == "same":
+                    f.write(current1)
+
+                elif processed.startswith("1"):
+                    index = int(processed.split(" ")[3])
+                    if index == counter2 + 1 or index - counter2 > 100:
+                        f.write(current1)
+                        if index == counter2 + 1:
+                            counter2 = index
+                    else:
+                        print("File 1, line " + str(counter1 + 1) + ":")
+                        print(current1)
+                        print("File2, lines " + str(counter2 + 2) + " to " + str(index + 1) + ":")
+                        print("".join(f2[counter2 + 1:index + 1]))
+                        inp = int(input("Press 1 for file 1, 2 for file 2: "))
+                        if inp == 1:
+                            f.write(current1)
+                            counter2 = index
+                        elif inp == 2:
+                            f.write("".join(f2[counter2:index + 1]))
+                            counter2 = index
+                        else:
+                            print("ERROR")
+
+                elif processed.startswith("2"):
+                    index = int(processed.split(" ")[3])
+                    if index == counter1 + 1 or index - counter1 > 100:
+                        f.write(current1)
+                        if index == counter1 + 1:
+                            counter1 = index
+                    else:
+                        print("File1, lines " + str(counter1 + 2) + " to " + str(index + 1) + ":")
+                        print("".join(f1[counter1 + 1:index + 1]))
+                        print("File 2, line " + str(counter2 + 1) + ":")
+                        print(current2)
+                        inp = int(input("Press 1 for file 1, 2 for file 2: "))
+                        if inp == 1:
+                            f.write(current1)
+                            counter1 = index
+                        elif inp == 2:
+                            f.write("".join(f2[counter2:index + 1]))
+                            counter1 = index
+                        else:
+                            print("ERROR")
+
+                elif processed == "no match":
+                    print("File1:")
+                    print(current1)
+                    print("File2:")
+                    print(current2)
+                    inp = int(input("Press 1 for file 1, 2 for file 2, 3 for both: "))
+                    if inp == 1:
+                        f.write(current1)
+                    elif inp == 2:
+                        f.write(current2)
+                    elif inp == 3:
+                        f.write(current1)
+                        f.write(current2)
+                    else:
+                        print("ERROR")
+
+                elif processed == "unique 1":
+                    f.write(current1)
+                    counter2 -= 1
+
+                elif processed == "unique 2":
+                    f.write(current2)
+                    counter1 -= 1
+
+                else:
+                    print(processed)
+                    print("c1: " + str(counter1) + ", c2: " + str(counter2))
+                    print("both have matches: " + current1.strip() + " versus " + current2.strip())
+                    inp = int(input("1 for put 1, hold 2, 2 for put 2, hold 1: "))
+                    if inp == 1:
+                        f.write(current1)
+                        counter2 -= 1
+                    if inp == 2:
+                        f.write(current2)
+                        counter1 -= 1
+            counter1 += 1
+            counter2 += 1
+    with open(writefile, "r") as f:
+        print(f.readlines())
+
+
+def next_match(f1, f2, c1, c2):
+    line1 = f1[c1].strip()
+    line2 = f2[c2].strip()
+    if line1 == line2:
+        return "same"
+
+    if line1 == "":
+        index = match_exists(line2, f1, c1)
+        if not index == 0:
+            return "2 match at " + str(index)
+        return "unique 2"
+
+    if line2 == "":
+        index = match_exists(line1, f2, c2)
+        if not index == 0:
+            return "1 match at " + str(index)
+        return "unique 1"
+
+    index_1_match = match_exists(line1, f2, c2)
+    index_2_match = match_exists(line2, f1, c1)
+
+    if index_1_match == index_2_match == 0:
+        return "no match"
+    if index_1_match == 0:
+        return "unique 1"
+    if index_2_match == 0:
+        return "unique 2"
+
+    return "e: " + str(index_1_match) + " " + str(index_2_match)
+
+
+
+def match_exists(base, lines, counter):
+    i = counter
+    while i < len(lines):
+        current = lines[i].strip()
+        if current == base:
+            return i
+        i += 1
+    return 0
+
+
+def disturb_geos():
+    header = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/setup/"
+    file_input = header + "geometry_trimmed.cif"
+    displacements = ["0.05", "0.10", "0.15", "0.20"]
+    for disp in displacements:
+        for i in range(10):
+            cif_out = header + "geo_" + disp[-2:] + "_" + str(i) + ".cif"
+            command = "atomsk " + file_input + " -disturb " + disp + " " + cif_out
+            os.system(command)
+            with open(cif_out, "r") as f:
+                lines = f.readlines()
+            with open(cif_out, "w") as f:
+                f.write("data_image0\n")
+                f.writelines(lines)
+            a = read(cif_out)
+            a.write(cif_out[:-4] + ".in")
+
+
+def mkdirs_and_move():
+    header = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/"
+    displacements = ["05", "10", "15", "20"]
+    for disp in displacements:
+        command = "mkdir " + header + disp + "/"
+        for i in range(10):
+            os.system(command + str(i))
+            command2 = "mv " + header + disp + "/geo_" + disp + "_" + str(i) + ".in "
+            command2 += header + disp + "/" + str(i) + "/geometry.in"
+            os.system(command2)
+
+
+def put_control_files():
+    header = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/"
+    displacements = ["05", "10", "15", "20"]
+    for disp in displacements:
+        for i in range(10):
+            command = "cp " + header + "setup/control.in "
+            command += header + disp + "/" + str(i) + "/."
+            os.system(command)
+
+
+

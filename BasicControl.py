@@ -67,7 +67,7 @@ def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
     band_len_tot = []
 
     for line in open(filepath + "/control.in"):
-        if line.strip().startswith('output\tband'):
+        if line.strip().startswith('output') and "band" in line:
             words = line.strip().split()
             kpoint.append([float(i) for i in words[2:8]])
             n_sample = int(words[-3])  # n_sample is the number of integration points

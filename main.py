@@ -4,13 +4,15 @@ import Geometry
 import KellerPBE as kp
 import BasicGeo as bg
 import BasicFunc as bf
+import BasicAimsOut as bao
 import VectorToolkit as vt
 import math
 import time
 import BayesianOptimization as bo
 import FlawedPlotting as fp
+from ase.io import read, write
 
-setting = 4
+setting = 0
 # settings:
 # -> 0: do nothing
 # -> 1: run a set of s66 structures and generate output
@@ -24,22 +26,21 @@ setting = 4
 # -> 9: plot a given structure from d442
 
 if setting == 1:
-    poss = [["tight", "base"]]
+    poss = [["1.01", "20"], ["1.02", "20"]]
     base = "../../FHI-aims/KellerPBE/S66/blyp/geos_"
-    control = "../../FHI-aims/KellerPBE/control_files/control_blyp.in"
-    tight_defaults = "../../FHI-aims/Repository/species_defaults/defaults_2020/tight/"
-    # min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
-    kp.s66x21_run(poss, base, control, tight_defaults, ignore=False, write_control=False)
+    control = "../../FHI-aims/KellerPBE/control_files/control_blyp_ts.in"
+    # tight_defaults = "../../FHI-aims/Repository/species_defaults/defaults_2020/tight/"
+    min_defaults = "../../FHI-aims/Repository/species_defaults/min_s_defaults/"
+    kp.s66x21_run(poss, base, control, min_defaults, ignore=False, write_control=True)
 
 if setting == 2:
-    pbe_tight = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight/"
-    pbe_tight_ts = "../../FHI-aims/KellerPBE/dissociation_curves/pbe_tight_ts/"
-    min_s = "../../FHI-aims/KellerPBE/dissociation_curves/min_s/"
-    min_s_m4 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.03_50/"
-    min_s_m4_40 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_1.00_70/"
-    # min_s_m4_50 = "../../FHI-aims/KellerPBE/d_sr_optimization/geos_m4_50/"
-    series = [pbe_tight, pbe_tight_ts, min_s, min_s_m4, min_s_m4_40]
-    kp.plot_dissociation_curve_s66(series, 59)
+    pbe_tight = "../../FHI-aims/KellerPBE/S66/dissociation_curves/pbe_tight/"
+    pbe_tight_ts = "../../FHI-aims/KellerPBE/S66/dissociation_curves/pbe_tight_ts/"
+    min_s = "../../FHI-aims/KellerPBE/S66/dissociation_curves/min_s/"
+    blyp_min = "../../FHI-aims/KellerPBE/S66/blyp/geos_min_s/"
+    series = [pbe_tight, pbe_tight_ts, min_s, blyp_min]
+    for i in range(66):
+        kp.plot_dissociation_curve_s66(series, i+1)
 
 if setting == 3:
     file = "../../FHI-aims/KellerPBE/info/d_sr_opt.txt"
@@ -128,3 +129,49 @@ if setting == 9:
     for i in range(1, 442):
         kp.plot_dissociation_curve_d442(series, i)
 
+# file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/band1001.out"
+# bao.analyze_band_path(file)
+
+#file = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/"
+#for i in range(10):
+#    # print("Structure: " + str(i))
+#    temp = file + "20/" + str(i) + "/band100"
+#    temp_arr = []
+#    for j in range(1, 5):
+#        temp_2 = temp + str(j) + ".out"
+#        temp_arr.append(Geometry.bandProcess(temp_2, True, 0))
+#    print(" ".join(temp_arr))
+
+# 1D Ethan Project
+structure = 3
+if structure == 2:
+    file = "../../FHI-aims/1D_Ethan/2"
+    figure_loc = "../../FHI-aims/1D_Ethan/2.png"
+    eshift = -0.4913
+    ymin = -1
+    ymax = 5
+    substate = 0
+    cd = {"Bi": "m", "Br": "g", "N": "b", "C": "y", "H": "c"}
+    labels = ('$\Gamma$', '$1\|\Gamma$', '$2\|\Gamma$', '$3\|4$', '$\Gamma$', '$5$')
+    title = "1D Structure 2"
+    equal = True
+    debug = False
+
+if structure == 3:
+    file = "../../FHI-aims/1D_Ethan/3"
+    figure_loc = "../../FHI-aims/1D_Ethan/3.png"
+    eshift = -0.4233
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Bi": "m", "I": "g", "N": "b", "C": "y", "H": "c"}
+    labels = ('$\Gamma$', '$1\|\Gamma$', '$2\|\Gamma$', '$3\|4$', '$\Gamma$', '$5$')
+    title = "1D Structure 3"
+    equal = True
+    debug = False
+
+
+# pt.mulliken_plot(file, filename=figure_loc, energyshift=eshift, ymin=ymin, ymax=ymax, substate=substate,
+#           color_dict=cd, labels=labels, title=title, eq=equal, debug=debug)
+
+print(Geometry.bandProcess(file + "/band1001.out", True, 0))
