@@ -7,6 +7,8 @@
 #               returns an array of arrays containing only the position information of each atom
 # -> lattice_vectors(file):
 #               returns an array of arrays of floats of the lattice vectors in the file specified
+# -> reciprocal_vectors(file):
+#               returns an array of arrays of floats of the reciprocal lattice vectors based on the file specified
 # -> distance(fileA, a, fileB, b):
 #               returns the distance between points A and B in files A and B
 # -> recenter(file, writepath, index, x, y, z):
@@ -68,6 +70,18 @@ def lattice_vectors(file):
         temp = lat.split()
         ret.append([float(x) for x in temp[1:4]])
     return ret
+
+
+def reciprocal_vectors(file):
+    lv = lattice_vectors(file)
+    a = lv[0]
+    b = lv[1]
+    c = lv[2]
+    volume = abs(np.dot(a, np.cross(b, c)))
+    B1 = tuple((2 * math.pi / volume) * x for x in np.cross(b, c))
+    B2 = tuple((2 * math.pi / volume) * x for x in np.cross(c, a))
+    B3 = tuple((2 * math.pi / volume) * x for x in np.cross(a, b))
+    return [B1, B2, B3]
 
 
 def distance(fileA, a, fileB, b):

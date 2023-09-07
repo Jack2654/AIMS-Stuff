@@ -197,8 +197,8 @@ def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate
                         plot_dot = True
                 cur_x = xvals[file_id][currentK - 1]
                 cur_E = energys[file_id][currentK - 1][currentState - 1]
-                if 0.5 < cur_E < 2.7 and abs(cur_x - (0.5 * round(cur_x / 0.5))) < 0.05:
-                    print(str(cur_x) + ", " + str(cur_E))
+                # if 0.5 < cur_E < 2.7 and abs(cur_x - (0.5 * round(cur_x / 0.5))) < 0.05:
+                #     print(str(cur_x) + ", " + str(cur_E))
                 if plot_dot:  # this if statement exists just so "dots" are not too close together in output
                     plt.plot(cur_x, cur_E, species_color[max_spec] + 'o', markersize=markersizeunit,
                              markeredgecolor=species_color[max_spec])

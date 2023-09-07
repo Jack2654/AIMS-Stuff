@@ -105,6 +105,11 @@ def minimize_func(coeff, guess=0.90, bnds=None):
     return minimize(fun_fit, x0=guess, bounds=bnds).x[0]
 
 
+def maximize_func(coeff):
+    fun_fit = poly.Polynomial(-1*coeff)
+    return minimize(fun_fit, x0=0).x[0]
+
+
 def copy_to_timewarp(source, destination):      # works :D
     command = "scp -r " + source + " jhm48@timewarp.egr.duke.edu:" + destination
     os.system(command)

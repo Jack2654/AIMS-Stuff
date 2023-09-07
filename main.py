@@ -5,6 +5,7 @@ import KellerPBE as kp
 import BasicGeo as bg
 import BasicFunc as bf
 import BasicAimsOut as bao
+import BasicBandOut as bbo
 import VectorToolkit as vt
 import math
 import time
@@ -40,7 +41,7 @@ if setting == 2:
     blyp_min = "../../FHI-aims/KellerPBE/S66/blyp/geos_min_s/"
     series = [pbe_tight, pbe_tight_ts, min_s, blyp_min]
     for i in range(66):
-        kp.plot_dissociation_curve_s66(series, i+1)
+        kp.plot_dissociation_curve_s66(series, i + 1)
 
 if setting == 3:
     file = "../../FHI-aims/KellerPBE/info/d_sr_opt.txt"
@@ -76,10 +77,10 @@ if setting == 5:
 if setting == 6:
     file_base = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental_atom_proj/atom_proj_dos_I0"
     all_numbers = [3, 4, 5, 6, 7, 8, 9, 10, 56, 57, 58, 59, 60, 61, 62, 63, 109, 110, 111, 112, 113, 114, 115, 116, 163,
-               164, 165, 166, 167, 168, 169, 170]
+                   164, 165, 166, 167, 168, 169, 170]
     interstitial_numbers = [10, 63, 116, 170]
     non_interstitial_num = [3, 4, 5, 6, 7, 8, 9, 56, 57, 58, 59, 60, 61, 62, 109, 110, 111, 112, 113, 114, 115, 163,
-               164, 165, 166, 167, 168, 169]
+                            164, 165, 166, 167, 168, 169]
     numbers = non_interstitial_num
     files = []
     suffix = ".dat"
@@ -129,49 +130,124 @@ if setting == 9:
     for i in range(1, 442):
         kp.plot_dissociation_curve_d442(series, i)
 
-# file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/band1001.out"
-# bao.analyze_band_path(file)
-
-#file = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/"
-#for i in range(10):
-#    # print("Structure: " + str(i))
-#    temp = file + "20/" + str(i) + "/band100"
-#    temp_arr = []
-#    for j in range(1, 5):
-#        temp_2 = temp + str(j) + ".out"
-#        temp_arr.append(Geometry.bandProcess(temp_2, True, 0))
-#    print(" ".join(temp_arr))
-
-# 1D Ethan Project
-structure = 3
-if structure == 2:
-    file = "../../FHI-aims/1D_Ethan/2"
-    figure_loc = "../../FHI-aims/1D_Ethan/2.png"
-    eshift = -0.4913
-    ymin = -1
-    ymax = 5
-    substate = 0
-    cd = {"Bi": "m", "Br": "g", "N": "b", "C": "y", "H": "c"}
-    labels = ('$\Gamma$', '$1\|\Gamma$', '$2\|\Gamma$', '$3\|4$', '$\Gamma$', '$5$')
-    title = "1D Structure 2"
-    equal = True
-    debug = False
-
-if structure == 3:
-    file = "../../FHI-aims/1D_Ethan/3"
-    figure_loc = "../../FHI-aims/1D_Ethan/3.png"
-    eshift = -0.4233
+structure = 1
+# n_2_4 experimental: NOTE: change where dots are plotted to be % 16 and +8 % 16
+if structure == 0:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_2_4_experimental.png"
+    eshift = -2.2702
     ymin = -1
     ymax = 4
     substate = 0
-    cd = {"Bi": "m", "I": "g", "N": "b", "C": "y", "H": "c"}
-    labels = ('$\Gamma$', '$1\|\Gamma$', '$2\|\Gamma$', '$3\|4$', '$\Gamma$', '$5$')
-    title = "1D Structure 3"
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+    labels = ('$1$', '$\Gamma$', '$2\|3$', '$\Gamma$', "$4'\|\Gamma$", '$5$')
+    title = "Experimental m=4, n=2"
+    equal = True
+    debug = False
+# n_2_4 theoretical:
+if structure == 1:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/theoretical/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_2_4_theoretical.png"
+    eshift = -2.2211
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+    labels = ('$1$', '$\Gamma$', '$2\|3$', '$\Gamma$', "$4'\|\Gamma$", '$5$')
+    title = "Theoretical m=4, n=2"
     equal = True
     debug = False
 
+# n_3 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
+if structure == 2:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_3_experimental.png"
+    eshift = -0.3635
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', "$5'\|\Gamma$", '$6$')
+    title = "Experimental m=3, n=3"
+    equal = True
+    debug = False
+# n_3 theoretical:
+if structure == 3:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/theoretical/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_3_theoretical.png"
+    eshift = -1.3568
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k"}
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', "$5'\|\Gamma$", '$6$')
+    title = "Theoretical m=3, n=3"
+    equal = True
+    debug = False
+
+# n_4 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
+if structure == 4:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_4_experimental.png"
+    eshift = -1.2848
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
+    labels = ('$1$', '$\Gamma$', "$2'\|\Gamma$", '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
+    title = "Experimental m=4, n=4"
+    equal = True
+    debug = False
+# n_4 theoretical:
+if structure == 5:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/theoretical/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_4_theoretical.png"
+    eshift = -1.3466
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
+    labels = ('$1$', '$\Gamma$', "$2'\|\Gamma$", '$3\|\Gamma$', '$4\|\Gamma$', '$5$')
+    title = "Theoretical m=4, n=4"
+    equal = True
+    debug = False
+
+# n_5 experimental: NOTE: change where dots are plotted to be % 4 and +2 % 4
+if structure == 6:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_5_experimental.png"
+    eshift = -2.0580
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k", "O": "r"}
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|\Gamma$', "$6'$")
+    title = "Experimental m=5, n=5"
+    equal = True
+    debug = False
+# n_5 theoretical:
+if structure == 7:
+    file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/theoretical/"
+    figure_loc = "../../FHI-aims/Yi_1_5_D/Results/Figures/New_Figures/n_5_theoretical.png"
+    eshift = -2.2826
+    ymin = -1
+    ymax = 4
+    substate = 0
+    cd = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "S": "k", "O": "r"}
+    labels = ('$1$', '$\Gamma$', '$2\|\Gamma$', '$3\|\Gamma$', '$4\|\Gamma$', '$5\|\Gamma$', "$6'$")
+    title = "Theoretical m=5, n=5"
+    equal = True
+    debug = False
 
 # pt.mulliken_plot(file, filename=figure_loc, energyshift=eshift, ymin=ymin, ymax=ymax, substate=substate,
-#           color_dict=cd, labels=labels, title=title, eq=equal, debug=debug)
+#                  color_dict=cd, labels=labels, title=title, eq=equal, debug=debug)
 
-print(Geometry.bandProcess(file + "/band1001.out", True, 0))
+folder = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/"
+disp = ["05/", "10/", "15/", "20/"]
+for dis in disp:
+    cur_folder = folder + dis
+    for i in range(10):
+        temp = cur_folder + str(i) + "/"
+        for j in range(1, 7):
+            bbo.band_info(folder=temp, band="band100" + str(j) + ".out", band_gap=True, spin_splitting=True,
+                          effective_mass=True, verbose=False, debug=False)
