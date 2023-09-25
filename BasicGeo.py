@@ -29,10 +29,12 @@
 #               moves atoms outside the unit cell to inside the unit cell (approximately)
 # -> read_geo_for_bands(filepath, color_dict={}, debug=False):
 #               reads geometry.in file as needed for band outputs
-#
+# ->
 
 # imports:
 import math
+import random
+
 from scipy.spatial.transform import Rotation as R
 from ase.io import read, write
 import VectorToolkit as vt
@@ -298,3 +300,147 @@ def lattice_info(filename):
     # gamma
     gamma = (180 / np.pi) * np.arccos((lat[0][0] * lat[1][0] + lat[0][1] * lat[1][1] + lat[0][2] * lat[1][2]) / (mags[0] * mags[1]))
     print(gamma)
+
+
+def delta_d(filename, center, edges, debug=False):
+    lat = lattice_vectors(filename)
+    at = atoms_trimmed(filename)
+    at_center = at[center - 1]
+    at_edges = [at[i - 1] for i in edges]
+    at_edges_moved = []
+    for atom in at_edges:
+        for i in range(3):
+            if atom[i] - at_center[i] > 5:
+                atom = [atom[j] - lat[i][j] for j in range(3)]
+            if atom[i] - at_center[i] < -5:
+                atom = [atom[j] + lat[i][j] for j in range(3)]
+        at_edges_moved.append(atom)
+
+    distances = []
+    for atom in at_edges_moved:
+        distances.append(np.linalg.norm([atom[i] - at_center[i] for i in range(3)]))
+
+    avg_distance = np.average(distances)
+    result = 0
+    for dist in distances:
+        result += (dist - avg_distance) ** 2
+    result *= (1/6) * (1 / (avg_distance ** 2))
+    if debug:
+        print('atom %.5f %.5f %.5f M' % (at_center[0], at_center[1], at_center[2]))
+        for atom in at_edges_moved:
+            print('atom %.5f %.5f %.5f H' % (atom[0], atom[1], atom[2]))
+    return result
+
+
+def sigma_squared(filename, center, edges, debug=False):
+    # order of edges is [left, up, right, down, above, below]
+    lat = lattice_vectors(filename)
+    at = atoms_trimmed(filename)
+    at_center = at[center - 1]
+    at_edges = [at[i - 1] for i in edges]
+    at_edges_moved = []
+    for atom in at_edges:
+        for i in range(3):
+            if atom[i] - at_center[i] > 5:
+                atom = [atom[j] - lat[i][j] for j in range(3)]
+            if atom[i] - at_center[i] < -5:
+                atom = [atom[j] + lat[i][j] for j in range(3)]
+        at_edges_moved.append(atom)
+
+    angles = [angle(at_edges_moved[0], at_center, at_edges_moved[1]),
+              angle(at_edges_moved[0], at_center, at_edges_moved[4]),
+              angle(at_edges_moved[0], at_center, at_edges_moved[5]),
+              angle(at_edges_moved[0], at_center, at_edges_moved[3]),
+              angle(at_edges_moved[1], at_center, at_edges_moved[4]),
+              angle(at_edges_moved[1], at_center, at_edges_moved[5]),
+              angle(at_edges_moved[1], at_center, at_edges_moved[2]),
+              angle(at_edges_moved[2], at_center, at_edges_moved[4]),
+              angle(at_edges_moved[2], at_center, at_edges_moved[5]),
+              angle(at_edges_moved[2], at_center, at_edges_moved[3]),
+              angle(at_edges_moved[3], at_center, at_edges_moved[4]),
+              angle(at_edges_moved[3], at_center, at_edges_moved[5])]
+
+    result = 0
+    for ang in angles:
+        result += (ang - 90) ** 2
+    result /= 12
+
+    return result
+
+
+def angle(pt1, center, pt2):
+    a = np.array(pt1)
+    b = np.array(center)
+    c = np.array(pt2)
+    ba = a - b
+    bc = c - b
+    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    result = np.arccos(cosine_angle)
+    return np.degrees(result)
+
+
+def angle_info(readfile, i1, i2, i3):
+    debug = False
+    # MUST add the section which moves points
+
+    # pulls information from geometry.in and pulls three desired points
+    lv = lattice_vectors(readfile)
+    at = atoms_trimmed(readfile)
+    p1 = at[i1 - 1]
+    p2 = at[i2 - 1]
+    p3 = at[i3 - 1]
+
+    # moves points so they are positioned adequately
+
+
+    # computes normal vector to the "in-plane" plane
+    connect_vect = [p3[i] - p1[i] for i in range(3)]
+    b = math.sqrt((connect_vect[0]**2) / (connect_vect[0]**2 + connect_vect[1]**2))
+    a = math.sqrt(1 - b**2)
+    horizontal_vec = [a, b, 0]
+    normal_vec = np.cross(connect_vect, horizontal_vec)
+    normal_vec = [normal_vec[i] / np.linalg.norm(normal_vec) for i in range(3)]
+
+    # computes projection of p2 onto "in-plane" plane
+    p2_from_origin = [p2[i] - p1[i] for i in range(3)]
+    in_plane_proj_factor = np.dot(normal_vec, p2_from_origin)
+    in_plane_proj_vector = [in_plane_proj_factor * normal_vec[i] for i in range(3)]
+    in_plane_point = [p2[i] - in_plane_proj_vector[i] for i in range(3)]
+
+    # computes projection of p2 onto "out-of-plane" plane
+    horizontal_vec = [horizontal_vec[i] / np.linalg.norm(horizontal_vec) for i in range(3)]
+    p2_from_origin = [p2[i] - p1[i] for i in range(3)]
+    out_of_plane_proj_factor = np.dot(horizontal_vec, p2_from_origin)
+    out_of_plane_proj_vector = [out_of_plane_proj_factor * horizontal_vec[i] for i in range(3)]
+    out_of_plane_point = [p2[i] - out_of_plane_proj_vector[i] for i in range(3)]
+
+    if debug:
+        print("Point 1: " + str(p1))
+        print("Point 2: " + str(p2))
+        print("Point 3: " + str(p3))
+        print("In plane projection: " + str(in_plane_point))
+        print("Out of plane projection: " + str(out_of_plane_point))
+        print('Full Angle: %.10f' % angle(p1, p2, p3))
+        print('In-plane angle: %.10f' % angle(p1, in_plane_point, p3))
+        print('Out-of-plane angle: %.10f' % angle(p1, out_of_plane_point, p3))
+    else:
+        # print(angle(p1, p2, p3))
+        # print(angle(p1, in_plane_point, p3))
+        print(angle(p1, out_of_plane_point, p3))
+
+
+def disturb_positions(readfile, writefile, max_disturbance):
+    lv = lattice_vectors(readfile)
+    at = atoms(readfile)
+    with open(writefile, "w") as f:
+        for lat in lv:
+            f.write('lattice_vector\t%.8f\t%.8f\t%.8f\n' % (lat[0], lat[1], lat[2]))
+        for atom in at:
+            temp = atom.split()
+            if "Cs" in temp:
+                f.write('atom\t%s\t%s\t%s\t%s\n' % (temp[1], temp[2], temp[3], temp[-1]))
+                continue
+            coords = [float(x) for x in temp[1:4]]
+            for i in range(3):
+                coords[i] += max_disturbance * ((2 * random.random()) - 1)
+            f.write('atom\t%.8f\t%.8f\t%.8f\t%s\n' % (coords[0], coords[1], coords[2], temp[-1]))

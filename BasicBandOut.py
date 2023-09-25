@@ -7,17 +7,175 @@
 # imports:
 import BasicFunc as bf
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 from effmass import inputs, extrema
 import BasicGeo as bg
 
 
 # functions:
-def band_info(folder, band, band_gap=True, spin_splitting=True, effective_mass=True, verbose=True, debug=False):
-    # band length calculation wrong bc outputs in reciprocal lattice units, not A^-1
-    kpoints = []
+def band_info(folder, band, steps=1, band_gap=True, k0=True, spin_splitting=True, effective_mass=True, verbose=True,
+              debug=False):
     results = ""
+    lines, kpoints, gamma, max_valence, min_conduction, \
+        i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
+
+    # sets up arrays of CBM, VBM, and the required number of points around both points set by the "steps" parameter
+    points_about_CBM = [0] * (2 * steps + 1)
+    points_about_CBM[steps] = min_conduction
+    points_about_VBM = [0] * (2 * steps + 1)
+    points_about_VBM[steps] = max_valence
+    for x in range(steps):
+        if i_conduction_min - x <= 0:
+            points_about_CBM[steps + (x + 1)] = lines[i_conduction_min + (x + 1)][2 * j_conduction_min + 1]
+            points_about_CBM[steps - (x + 1)] = points_about_CBM[steps + (x + 1)]
+        elif i_conduction_min + x >= len(lines) - 1:
+            points_about_CBM[steps - (x + 1)] = lines[i_conduction_min - (x + 1)][2 * j_conduction_min + 1]
+            points_about_CBM[steps + (x + 1)] = points_about_CBM[steps - (x + 1)]
+        else:
+            points_about_CBM[steps - (x + 1)] = lines[i_conduction_min - (x + 1)][2 * j_conduction_min + 1]
+            points_about_CBM[steps + (x + 1)] = lines[i_conduction_min + (x + 1)][2 * j_conduction_min + 1]
+
+        if i_valence_max - x <= 0:
+            points_about_VBM[steps + (x + 1)] = lines[i_valence_max + (x + 1)][2 * j_valence_max + 1]
+            points_about_VBM[steps - (x + 1)] = points_about_VBM[steps + (x + 1)]
+        elif i_valence_max + x >= len(lines) - 1:
+            points_about_VBM[steps - (x + 1)] = lines[i_valence_max - (x + 1)][2 * j_valence_max + 1]
+            points_about_VBM[steps + (x + 1)] = points_about_VBM[steps - (x + 1)]
+        else:
+            points_about_VBM[steps - (x + 1)] = lines[i_valence_max - (x + 1)][2 * j_valence_max + 1]
+            points_about_VBM[steps + (x + 1)] = lines[i_valence_max + (x + 1)][2 * j_valence_max + 1]
+
+    # pull out the distance in units of reciprocal lattice vectors of the band path
+    if gamma == 1:
+        kps = kpoints[-1]
+    elif gamma > 1:
+        kps = kpoints[0]
+    else:
+        kps = [abs(kpoints[-1][i] - kpoints[0][i]) for i in range(3)]
+
+    # computes the band length in 1/Angstroms by multiplying the fractional distance in a direction with the length of
+    # the reciprocal lattice vector in that direction and then finding the overall length of the resultant vector
+    recip_vec = bg.reciprocal_vectors(folder + "geometry.in")
+    r_len = list(abs(np.linalg.norm(recip_vec[i])) for i in range(3))
+    band_length = math.sqrt(sum((r_len[i] * kps[i]) ** 2 for i in range(3)))
+
+    if debug:
+        print('Reciprocal lengths: %.5f %.5f %.5f' % (r_len[0], r_len[1], r_len[2]))
+        print('Band path direction (reciprocal lattice units): %.6f %.6f %.6f' % (kps[0], kps[1], kps[2]))
+        print('Band length (A^-1): %.10f' % band_length)
+
+    # sets up the arrays of x values corresponding to the points around the CBM and VBM
+    x_factor = band_length / (len(lines) - 1)
+    x_start_CBM = x_factor * (i_conduction_min - steps)
+    x_start_VBM = x_factor * (i_valence_max - steps)
+    x_vals_CBM = [x_start_CBM + (x_factor * y) for y in range(2 * steps + 1)]
+    x_vals_VBM = [x_start_VBM + (x_factor * y) for y in range(2 * steps + 1)]
+
+    if debug:
+        print("CBM, surrounding points, and corresponding x values:")
+        print(points_about_CBM)
+        print(x_vals_CBM)
+        print("VBM, surrounding points, and corresponding x values:")
+        print(points_about_VBM)
+        print(x_vals_VBM)
+        print('Band path direction (reciprocal lattice units): %.6f %.6f %.6f' % (kps[0], kps[1], kps[2]))
+        print('Band length (A^-1): %.10f' % band_length)
+
+    if band_gap:
+        min_coeff = bf.fit_poly(x_vals_CBM, points_about_CBM, 2)
+        min_x = bf.minimize_func(min_coeff)
+        min_fit = min_coeff[0] + min_coeff[1] * min_x + min_coeff[2] * min_x * min_x
+
+        max_coeff = bf.fit_poly(x_vals_VBM, points_about_VBM, 2)
+        max_x = bf.maximize_func(max_coeff)
+        max_fit = max_coeff[0] + max_coeff[1] * max_x + max_coeff[2] * max_x * max_x
+
+        if debug:
+            print('Minimum fit conduction energy: %.10f' % min_fit)
+            print('Maximum fit valence energy: %.10f' % max_fit)
+        if verbose:
+            print('Band gap: %.10f eV' % (min_fit - max_fit))
+        else:
+            results += ' %.10f' % (min_fit - max_fit)
+
+    if k0:
+        if i_conduction_min < len(kpoints) / 2:
+            offset = x_vals_CBM[steps]
+        else:
+            offset = band_length - x_vals_CBM[steps]
+        if verbose:
+            print('Momentum offset (k0): %.10f A^-1' % offset)
+        else:
+            results += ' %.10f' % offset
+
+    if spin_splitting:
+
+        points_above_CBM = [0] * (2 * steps + 1)
+        points_above_CBM[steps] = lines[i_conduction_min][2 * j_conduction_min + 3]
+        for x in range(steps):
+            if i_conduction_min - x <= 0:
+                points_above_CBM[steps + (x + 1)] = lines[i_conduction_min + (x + 1)][2 * j_conduction_min + 3]
+                points_above_CBM[steps - (x + 1)] = points_about_CBM[steps + (x + 1)]
+            elif i_conduction_min + x >= len(lines) - 1:
+                points_above_CBM[steps - (x + 1)] = lines[i_conduction_min - (x + 1)][2 * j_conduction_min + 3]
+                points_above_CBM[steps + (x + 1)] = points_about_CBM[steps - (x + 1)]
+            else:
+                points_above_CBM[steps - (x + 1)] = lines[i_conduction_min - (x + 1)][2 * j_conduction_min + 3]
+                points_above_CBM[steps + (x + 1)] = lines[i_conduction_min + (x + 1)][2 * j_conduction_min + 3]
+
+        min_coeff = bf.fit_poly(x_vals_CBM, points_about_CBM, 2)
+        min_x = bf.minimize_func(min_coeff)
+        min_fit = min_coeff[0] + min_coeff[1] * min_x + min_coeff[2] * min_x * min_x
+
+        above_coeff = bf.fit_poly(x_vals_CBM, points_above_CBM, 2)
+        above_fit = above_coeff[0] + above_coeff[1] * min_x + above_coeff[2] * min_x * min_x
+
+        if above_fit < min_fit:
+            print("Incorrect spin splittings computed as a result of quadratic approximation.")
+            print("Defaulting to value derived explicitly by subtracting output energies:")
+            print("Spin splitting: %.10f eV" % (points_above_CBM[steps] - points_about_CBM[steps]))
+        else:
+            if debug:
+                print('Minimum fit conduction energy: %.10f' % min_fit)
+                print('Value of split band immediately above min conduction: %.10f' % above_fit)
+            if verbose:
+                print('Spin splitting: %.10f eV' % (above_fit - min_fit))
+            else:
+                results += ' %.10f' % (above_fit - min_fit)
+
+    if effective_mass:
+        h_bar = 1.054571817
+        m_0 = 9.109383702
+        eV_2_J = 1.602176565
+        eff_mass_constants = (100 * (h_bar ** 2)) / m_0
+        # constant powers of 10:
+        # numerator: h_bar^2 - 10^(-68), G^2 - 10^(20)
+        # denominator: m_0 - 10^(-31), eV/J conversion - 10^(-19)
+        # cancelling these terms leaves a factor of 100 in the numerator
+
+        del_k = list(float(kps[i]) * steps / (len(kpoints) - 1) for i in range(3))
+        eff_mass_del_k = [(r_len[i] * del_k[i]) ** 2 for i in range(3)]
+        eff_mass_del_E = eV_2_J * (points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1])
+
+        eff_mass = [eff_mass_constants * x / eff_mass_del_E for x in eff_mass_del_k]
+        print("eV term: " + str(points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1]))
+        print("Effective Mass: " + str(eff_mass[2]))
+        #if debug:
+        #    print(del_k)
+        #    print("Constants: " + str(eff_mass_constants))
+        #    print("Delta k: " + str(eff_mass_del_k))
+        #    print("Delta E: " + str(eff_mass_del_E))
+        #if verbose:
+        #    print('Effective Mass Value: %.10f' % eff_mass)
+        #else:
+        #    results += ' %.10f' % eff_mass
+
+    if not verbose:
+        print(results.strip())
+
+
+def read_band_out(file):
+    kpoints = []
     gamma = -1
     max_valence = -100
     i_valence_max = -1
@@ -27,14 +185,12 @@ def band_info(folder, band, band_gap=True, spin_splitting=True, effective_mass=T
     i_conduction_min = -1
     j_conduction_min = -1
 
-    with open(folder + band, "r") as f:
+    with open(file, "r") as f:
         lines = f.readlines()
 
     for i, k_point in enumerate(lines):
         full = k_point.split()
-        kpoints.append([full[1], full[2], full[3]])
-        # if debug:
-        #     print("k-point " + str(full[0]) + ", coords: " + str(full[1]) + " " + str(full[2]) + " " + str(full[3]))
+        kpoints.append([float(full[1]), float(full[2]), float(full[3])])
         if i == 0 or i == len(lines) - 1:
             if "0.0000000" in full[1] and "0.0000000" in full[2] and "0.0000000" in full[3]:
                 gamma = float(full[0])
@@ -55,129 +211,15 @@ def band_info(folder, band, band_gap=True, spin_splitting=True, effective_mass=T
                     min_conduction = float(energy)
                     i_conduction_min = i
                     j_conduction_min = j
-            #else:
-            #    print("Partially filled states detected")
+            else:
+                print("Partially filled states detected")
 
-    if i_conduction_min == 0:
-        min_right = float(lines[i_conduction_min + 1].split()[2 * j_conduction_min + 5])
-        min_left = min_right
-    elif i_conduction_min == len(lines) - 1:
-        min_left = float(lines[i_conduction_min - 1].split()[2 * j_conduction_min + 5])
-        min_right = min_left
-    else:
-        min_left = float(lines[i_conduction_min - 1].split()[2 * j_conduction_min + 5])
-        min_right = float(lines[i_conduction_min + 1].split()[2 * j_conduction_min + 5])
+    lines_formatted = []
+    for line in lines:
+        lines_formatted.append([float(x) for x in line.split()[4:]])
 
-    if i_valence_max == 0:
-        max_right = float(lines[i_valence_max + 1].split()[2 * j_valence_max + 5])
-        max_left = max_right
-    elif i_valence_max == len(lines) - 1:
-        max_left = float(lines[i_valence_max - 1].split()[2 * j_valence_max + 5])
-        max_right = max_left
-    else:
-        max_left = float(lines[i_valence_max - 1].split()[2 * j_valence_max + 5])
-        max_right = float(lines[i_valence_max + 1].split()[2 * j_valence_max + 5])
-
-    if debug:
-        print("\nmax left: " + str(max_left))
-        print('Valence maxima of %.5f found at k_point %d' % (max_valence, i_valence_max + 1))
-        print("max right: " + str(max_right))
-        print("min left: " + str(min_left))
-        print('Conduction minima of %.5f found at k_point %d' % (min_conduction, i_conduction_min + 1))
-        print("min right: " + str(min_right))
-
-    if gamma == 1:
-        kps = kpoints[len(kpoints) - 1]
-    elif gamma == -1:
-        kps = [abs(float(kpoints[-1][i]) - float(kpoints[0][i])) for i in range(3)]
-    else:
-        kps = kpoints[0]
-    recip_vec = bg.reciprocal_vectors(folder + "geometry.in")
-    r_len = list(abs(np.linalg.norm(recip_vec[i])) for i in range(3))
-    band_length = math.sqrt(sum(r_len[i] ** 2 * float(kps[i]) ** 2 for i in range(3)))
-    # print("Band length: " + str(band_length))
-
-    if band_gap:
-        x_factor = band_length / (len(lines) - 1)
-        x_base = x_factor * i_conduction_min
-        min_coeff = bf.fit_poly([x_base - x_factor, x_base, x_base + x_factor], [min_left, min_conduction, min_right],
-                                2)
-        min_x = bf.minimize_func(min_coeff)
-        min_fit = min_coeff[0] + min_coeff[1] * min_x + min_coeff[2] * min_x * min_x
-        # problem case when min_left = min_conduction = min_right
-        x_factor = band_length / (len(lines) - 1)
-        x_base = x_factor * i_valence_max
-        max_coeff = bf.fit_poly([x_base - x_factor, x_base, x_base + x_factor], [max_left, max_valence, max_right], 2)
-        max_x = bf.maximize_func(max_coeff)
-        max_fit = max_coeff[0] + max_coeff[1] * max_x + max_coeff[2] * max_x * max_x
-
-        if min_conduction == min_left and min_conduction == min_right:
-            min_fit = min_conduction
-            min_x = x_factor * i_conduction_min
-
-        if max_valence == max_left and max_valence == max_right:
-            max_fit = max_valence
-            max_x = x_factor * i_valence_max
-
-        if verbose:
-            print('Band gap: %.10f' % (min_fit - max_fit))
-        else:
-            results += ' %.10f' % (min_fit - max_fit)
-
-    if spin_splitting:
-        above_center = float(lines[i_conduction_min].split()[2 * j_conduction_min + 7])
-        if i_conduction_min == 0:
-            above_right = float(lines[i_conduction_min + 1].split()[2 * j_conduction_min + 7])
-            above_left = above_right
-        elif i_conduction_min == len(lines) - 1:
-            above_left = float(lines[i_conduction_min - 1].split()[2 * j_conduction_min + 7])
-            above_right = above_left
-        else:
-            above_left = float(lines[i_conduction_min - 1].split()[2 * j_conduction_min + 7])
-            above_right = float(lines[i_conduction_min + 1].split()[2 * j_conduction_min + 7])
-
-        x_factor = band_length / (len(lines) - 1)
-        x_base = x_factor * i_conduction_min
-        min_coeff = bf.fit_poly([x_base - x_factor, x_base, x_base + x_factor], [above_left, above_center, above_right], 2)
-        spin_sp = min_coeff[0] + min_coeff[1] * min_x + min_coeff[2] * min_x * min_x - min_fit
-
-        if debug:
-            print(min_fit)
-            print(spin_sp+min_fit)
-        if verbose:
-            print('Spin splitting: %.10f' % spin_sp)
-        else:
-            results += ' %.10f' % spin_sp
-
-    if effective_mass:
-        if debug:
-            print("\nStarting Effective Mass Calculation using Finite-Forward Different Approximations")
-            print('Conduction minima of %.5f found at k_point %d' % (min_conduction, i_conduction_min + 1))
-            print('k-point coordinates are %.5f %.5f %.5f' % (float(kpoints[i_conduction_min][0]),
-                                                              float(kpoints[i_conduction_min][1]),
-                                                              float(kpoints[i_conduction_min][2])))
-        h_bar = 1.054571817
-        m_0 = 9.109383702
-        eV_2_J = 1.602176565
-        eff_mass_constants = (100 * (h_bar ** 2)) / m_0   # factor of 100 left over after cancelling out powers of 10
-
-        del_k = list(float(kps[i]) / (len(kpoints) - 1) for i in range(3))
-        eff_mass_del_k = sum(r_len[i] ** 2 * del_k[i] ** 2 for i in range(3))
-        eff_mass_del_E = eV_2_J * (min_left - 2 * min_conduction + min_right)
-
-        eff_mass = eff_mass_constants * eff_mass_del_k / eff_mass_del_E
-        if debug:
-            print(del_k)
-            print("Constants: " + str(eff_mass_constants))
-            print("Delta k: " + str(eff_mass_del_k))
-            print("Delta E: " + str(eff_mass_del_E))
-        if verbose:
-            print('Effective Mass Value: %.10f' % eff_mass)
-        else:
-            results += ' %.10f' % eff_mass
-
-    if not verbose:
-        print(results.strip())
+    return lines_formatted, kpoints, gamma, max_valence, min_conduction, \
+        i_conduction_min, j_conduction_min, i_valence_max, j_valence_max
 
 
 def eff_mass_package(filepath):
@@ -187,9 +229,3 @@ def eff_mass_package(filepath):
     for ele in segments:
         print(str(ele))
         print(ele.finite_difference_effmass())
-
-# file2 = "../../FHI-aims/data_aims/Ge_nsp_aims"
-# file3 = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental"
-# bbo.eff_mass(file)
-# bbo.eff_mass(file2)
-# bbo.eff_mass(file3)
