@@ -1,6 +1,7 @@
 import OneTimeScripts as ots
 import BasicGeo as bg
 import PlottingTools as pt
+import BasicBandOut as bbo
 
 folder = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/setup/"
 disturbances = [0.05, 0.10, 0.15, 0.20]
@@ -21,7 +22,7 @@ for disturb in disturbances:
         calculation = base + str(i) + "/"
         # print(base)
 
-for structure in range(7, 8):
+for structure in range(8):
     # n_2_4 experimental:
     if structure == 0:
         file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/"
@@ -129,4 +130,51 @@ for structure in range(7, 8):
         title = "Theoretical m=5, n=5"
         equal = True
         debug = False
-    pt.mulliken_plot(file, figure_loc, eshift, ymin, ymax, substate, cd, labels, title, equal, debug)
+    # pt.mulliken_plot(file, figure_loc + ".ne.png", eshift, ymin, ymax, substate, cd, labels, title, eq=False, debug=False)
+
+folder = "../../FHI-aims/Yi_1_5_D/Results/New_Results/"
+options = ["n_2_4/", "n_3/", "n_4/", "n_5/"]
+options = ["n_3/"]
+for opt in options:
+    continue
+    base = folder + opt
+    exp = base + "experimental/"
+    the = base + "theoretical/"
+    print(base)
+    for i in range(1, 7):
+        band = "band100" + str(i) + ".out"
+        if i == 6 and "3" not in opt and "5" not in opt:
+            continue
+        dbg = False
+
+        bbo.band_info(exp, band, steps=1, band_gap=True, k0=False, spin_splitting=True,
+                      effective_mass=False, verbose=False, debug=dbg)
+        bbo.band_info(the, band, steps=1, band_gap=True, k0=False, spin_splitting=True,
+                      effective_mass=False, verbose=False, debug=dbg)
+
+        continue
+        temp = []
+        for j in range(1, 6):
+            temp.append(bbo.band_info(exp, band, steps=j, band_gap=False, k0=False, spin_splitting=False,
+                                      effective_mass=True, verbose=False, debug=dbg))
+        temp_cpy = temp.copy()
+        temp.sort()
+        print(str(temp[2]) + " " + str(temp_cpy))
+
+        temp = []
+        for j in range(1, 6):
+            temp.append(bbo.band_info(the, band, steps=j, band_gap=False, k0=False, spin_splitting=False,
+                                      effective_mass=True, verbose=False, debug=dbg))
+        temp_cpy = temp.copy()
+        temp.sort()
+        print(str(temp[2]) + " " + str(temp_cpy))
+
+folder = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/python_dist_positions/"
+disturbs = ["5/", "10/", "15/", "20/"]
+for dist in disturbs:
+    temp = folder + dist
+    for i in range(10):
+        current = temp + str(i) + "/"
+        for j in range(1, 7):
+            band = "band100" + str(j) + ".out"
+            bbo.band_info(current, band, band_gap=True, spin_splitting=True, verbose=False)
