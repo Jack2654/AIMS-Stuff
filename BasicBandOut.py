@@ -117,7 +117,6 @@ def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=Tru
             results += ' %.10f' % offset
 
     if spin_splitting:
-
         points_above_CBM = [0] * (2 * steps + 1)
         points_above_CBM[steps] = lines[i_conduction_min][2 * j_conduction_min + 3]
         for x in range(steps):
@@ -179,21 +178,22 @@ def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=Tru
         eff_mass_del_E = eV_2_J * (points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1])
 
         if eff_mass_del_E == 0:
-            return 100000
-
-        eff_mass_dir = [eff_mass_constants * x / eff_mass_del_E for x in eff_mass_del_k]
-        eff_mass = eff_mass_constants * np.linalg.norm(eff_mass_del_k) / eff_mass_del_E
-
-        if debug:
-            print(del_k)
-            print("Constants: " + str(eff_mass_constants))
-            print("Delta k: " + str(eff_mass_del_k))
-            print("Delta E: " + str(eff_mass_del_E))
-            print("eV term: " + str(points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1]))
-        if verbose:
-            print('Effective Mass Value: %.10f' % eff_mass)
+            # print("NO change in delta E")
+            results += ' %.10f' % 10000
         else:
-            results += ' %.10f' % eff_mass
+            eff_mass_dir = [eff_mass_constants * x / eff_mass_del_E for x in eff_mass_del_k]
+            eff_mass = eff_mass_constants * np.linalg.norm(eff_mass_del_k) / eff_mass_del_E
+
+            if debug:
+                print(del_k)
+                print("Constants: " + str(eff_mass_constants))
+                print("Delta k: " + str(eff_mass_del_k))
+                print("Delta E: " + str(eff_mass_del_E))
+                print("eV term: " + str(points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1]))
+            if verbose:
+                print('Effective Mass Value: %.10f' % eff_mass)
+            else:
+                results += ' %.10f' % eff_mass
 
     if not verbose:
         print(results.strip())

@@ -221,9 +221,9 @@ def mulliken_plot(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate
     plt.title(title, weight='bold')
     plt.axis([0, xvals[len(xvals) - 1][len(xvals[len(xvals) - 1]) - 1], ymin, ymax])
     plt.tight_layout()
-    # plt.show()
-    if not filename == 0:
-        plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    plt.show()
+    # if not filename == 0:
+        # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
     plt.clf()
 
 

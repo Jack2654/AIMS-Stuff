@@ -70,7 +70,7 @@ def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
         if line.strip().startswith('output') and "band" in line:
             words = line.strip().split()
             kpoint.append([float(i) for i in words[2:8]])
-            n_sample = int(words[-3])  # n_sample is the number of integration points
+            n_sample = int(float((words[-3])))  # n_sample is the number of integration points
     for i in kpoint:
         kvec = []
         xval = []
@@ -107,3 +107,15 @@ def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
         print(n_sample)
 
     return xvals, band_len_tot, tot_len
+
+
+def write_species(control_file, geo_file, species_folder):
+    defaults = list_of_defaults(geo_file, species_folder)
+    with open(control_file, "r") as f:
+        ctrl = f.readlines()
+    with open(control_file, "w") as f:
+        f.writelines(ctrl)
+        for spec in defaults:
+            with open(spec, "r") as g:
+                info = g.readlines()
+            f.writelines(info)

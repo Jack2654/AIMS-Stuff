@@ -172,7 +172,7 @@ def get_species_from_geo(filepath):
     with open(filepath, "r") as f:
         species = []
         for ln in f:
-            if "atom" in ln:
+            if "atom" in ln and "#" not in ln:
                 species.append(ln.split()[4])
     return set(species)
 
@@ -359,7 +359,7 @@ def sigma_squared(filename, center, edges, debug=False):
               angle(at_edges_moved[2], at_center, at_edges_moved[3]),
               angle(at_edges_moved[3], at_center, at_edges_moved[4]),
               angle(at_edges_moved[3], at_center, at_edges_moved[5])]
-
+    # print(angles)
     result = 0
     for ang in angles:
         result += (ang - 90) ** 2
@@ -379,10 +379,65 @@ def angle(pt1, center, pt2):
     return np.degrees(result)
 
 
-def angle_info(readfile, i1, i2, i3):
+def angle_info(readfile, pts, shiftmap):
     debug = False
-    # MUST add the section which moves points
+    # pulls information from geometry.in and pulls three desired points
+    lv = lattice_vectors(readfile)
+    at = atoms_trimmed(readfile)
+    points = [at[pts[0] - 1], at[pts[1] - 1], at[pts[2] - 1]]
 
+    # moves points so they are positioned adequately
+    if not shiftmap == -1:
+        for i in range(3):
+            for j in range(3):
+                points[i][0] += shiftmap[i][j] * lv[j][0]
+                points[i][1] += shiftmap[i][j] * lv[j][1]
+                points[i][2] += shiftmap[i][j] * lv[j][2]
+
+    p1, p2, p3 = points
+    # computes normal vector to the "in-plane" plane
+    connect_vect = [p3[i] - p1[i] for i in range(3)]
+    b = math.sqrt((connect_vect[0]**2) / (connect_vect[0]**2 + connect_vect[1]**2))
+    a = math.sqrt(1 - b**2)
+    horizontal_vec = [a, b, 0]
+    normal_vec = np.cross(connect_vect, horizontal_vec)
+    normal_vec = [normal_vec[i] / np.linalg.norm(normal_vec) for i in range(3)]
+
+    # computes projection of p2 onto "in-plane" plane
+    p2_from_origin = [p2[i] - p1[i] for i in range(3)]
+    in_plane_proj_factor = np.dot(normal_vec, p2_from_origin)
+    in_plane_proj_vector = [in_plane_proj_factor * normal_vec[i] for i in range(3)]
+    in_plane_point = [p2[i] - in_plane_proj_vector[i] for i in range(3)]
+
+    # computes projection of p2 onto "out-of-plane" plane
+    horizontal_vec = [horizontal_vec[i] / np.linalg.norm(horizontal_vec) for i in range(3)]
+    p2_from_origin = [p2[i] - p1[i] for i in range(3)]
+    out_of_plane_proj_factor = np.dot(horizontal_vec, p2_from_origin)
+    out_of_plane_proj_vector = [out_of_plane_proj_factor * horizontal_vec[i] for i in range(3)]
+    out_of_plane_point = [p2[i] - out_of_plane_proj_vector[i] for i in range(3)]
+
+    if debug:
+        print("Point 1: " + str(p1))
+        print("Point 2: " + str(p2))
+        print("Point 3: " + str(p3))
+        print("In plane projection: " + str(in_plane_point))
+        print("Out of plane projection: " + str(out_of_plane_point))
+        print('Full Angle: %.10f' % angle(p1, p2, p3))
+        print('In-plane angle: %.10f' % angle(p1, in_plane_point, p3))
+        print('Out-of-plane angle: %.10f' % angle(p1, out_of_plane_point, p3))
+    else:
+        res = []
+        res.append(angle(p1, p2, p3))
+        # res.append(angle(p1, in_plane_point, p3))
+        # res.append(angle(p1, out_of_plane_point, p3))
+        return res
+
+
+def angle_info_old(readfile, pts):
+    debug = False
+    i1 = pts[0]
+    i2 = pts[1]
+    i3 = pts[2]
     # pulls information from geometry.in and pulls three desired points
     lv = lattice_vectors(readfile)
     at = atoms_trimmed(readfile)
@@ -424,9 +479,11 @@ def angle_info(readfile, i1, i2, i3):
         print('In-plane angle: %.10f' % angle(p1, in_plane_point, p3))
         print('Out-of-plane angle: %.10f' % angle(p1, out_of_plane_point, p3))
     else:
-        # print(angle(p1, p2, p3))
-        # print(angle(p1, in_plane_point, p3))
-        print(angle(p1, out_of_plane_point, p3))
+        res = []
+        res.append(angle(p1, p2, p3))
+        res.append(angle(p1, in_plane_point, p3))
+        res.append(angle(p1, out_of_plane_point, p3))
+        return res
 
 
 def disturb_positions(readfile, writefile, max_disturbance):
@@ -444,3 +501,43 @@ def disturb_positions(readfile, writefile, max_disturbance):
             for i in range(3):
                 coords[i] += max_disturbance * ((2 * random.random()) - 1)
             f.write('atom\t%.8f\t%.8f\t%.8f\t%s\n' % (coords[0], coords[1], coords[2], temp[-1]))
+
+
+def maurer_displacement(readfile, corners, shiftmap, center):
+    atoms = atoms_trimmed(readfile)
+    lv = lattice_vectors(readfile)
+    corner_loc = []
+    for i in range(len(corners)):
+        temp = atoms[corners[i] - 1]
+        for j in range(3):
+            temp[0] += shiftmap[i][j] * lv[j][0]
+            temp[1] += shiftmap[i][j] * lv[j][1]
+            temp[2] += shiftmap[i][j] * lv[j][2]
+        corner_loc.append(temp)
+    centroid = [0, 0, 0]
+    for corner in corner_loc:
+        centroid[0] += corner[0]
+        centroid[1] += corner[1]
+        centroid[2] += corner[2]
+    centroid[0] /= len(corners)
+    centroid[1] /= len(corners)
+    centroid[2] /= len(corners)
+    center_actual = atoms[center-1]
+    displacement = [centroid[i] - center_actual[i] for i in range(3)]
+    displacement[2] = 0
+    diag_one = [1 / math.sqrt(2), 1 / math.sqrt(2), 0]
+    diag_two = [1 / math.sqrt(2), -1 / math.sqrt(2), 0]
+
+    # print(f'Centroid:\t\t%0.5f %0.5f %0.5f' % (centroid[0], centroid[1], centroid[2]))
+    # print(f'Center:\t\t\t%0.5f %0.5f %0.5f' % (center_actual[0], center_actual[1], center_actual[2]))
+    # print(f'Displacement:\t%0.5f %0.5f %0.5f' % (displacement[0], displacement[1], displacement[2]))
+
+    proj_one = abs(np.dot(displacement, diag_one))
+    proj_two = abs(np.dot(displacement, diag_two))
+
+    # code to verify projections produce original result, remove abs()
+    # diag_one = [x * proj_one for x in diag_one]
+    # diag_two = [x * proj_two for x in diag_two]
+    # total = [(diag_one[i] + diag_two[i]) * np.linalg.norm(displacement) for i in range(3)]
+    # print(total)
+    return proj_one, proj_two
