@@ -58,7 +58,7 @@ def list_of_defaults(filepath, defaults_folder):
     return defaults
 
 
-def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
+def read_control_for_bands(filepath, rlatvec, bands, eq=False, debug=False):
     if debug:
         print("reading data from ", filepath + "/control.in")
     kpoint = []
@@ -66,11 +66,14 @@ def read_control_for_bands(filepath, rlatvec, eq=False, debug=False):
     xvals = []
     band_len_tot = []
 
+    counter = 0
     for line in open(filepath + "/control.in"):
         if line.strip().startswith('output') and "band" in line:
-            words = line.strip().split()
-            kpoint.append([float(i) for i in words[2:8]])
-            n_sample = int(float((words[-3])))  # n_sample is the number of integration points
+            if counter in bands:
+                words = line.strip().split()
+                kpoint.append([float(i) for i in words[2:8]])
+                n_sample = int(float((words[-3])))  # n_sample is the number of integration points
+            counter += 1
     for i in kpoint:
         kvec = []
         xval = []

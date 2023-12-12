@@ -13,7 +13,7 @@ import BasicGeo as bg
 
 
 # functions:
-def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=True,
+def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=False,
               effective_mass=False, verbose=True, debug=False):
     results = ""
     lines, kpoints, gamma, max_valence, min_conduction, \
@@ -196,7 +196,7 @@ def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=Tru
                 results += ' %.10f' % eff_mass
 
     if not verbose:
-        print(results.strip())
+        return results.strip()
 
 
 def read_band_out(file):
@@ -240,6 +240,7 @@ def read_band_out(file):
             elif float(occupation) == 0:
                 conduction_num += 1
                 # set conduction_num > 4 for m=3
+                # set conduction_num > 0 for anything else
                 if float(energy) < min_conduction and conduction_num > 0:
                     num_same_min = 0
                     min_conduction = float(energy)

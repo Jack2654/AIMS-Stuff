@@ -379,7 +379,7 @@ def angle(pt1, center, pt2):
     return np.degrees(result)
 
 
-def angle_info(readfile, pts, shiftmap):
+def angle_info(readfile, pts, shiftmap, direction=0):
     debug = False
     # pulls information from geometry.in and pulls three desired points
     lv = lattice_vectors(readfile)
@@ -427,9 +427,41 @@ def angle_info(readfile, pts, shiftmap):
         print('Out-of-plane angle: %.10f' % angle(p1, out_of_plane_point, p3))
     else:
         res = []
-        res.append(angle(p1, p2, p3))
-        # res.append(angle(p1, in_plane_point, p3))
-        # res.append(angle(p1, out_of_plane_point, p3))
+        if direction == 0:
+            res.append(angle(p1, p2, p3))
+            return res
+
+
+        d = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
+        if direction < 0:
+            d *= -1
+        if d > 0:
+            res.append(angle(p1, p2, p3))
+        elif d < 0:
+            res.append(360 - angle(p1, p2, p3))
+        else:
+            res.append(0)
+
+        d = (in_plane_point[0] - p1[0]) * (p3[1] - p1[1]) - (in_plane_point[1] - p1[1]) * (p3[0] - p1[0])
+        if direction < 0:
+            d *= -1
+        if d > 0:
+            res.append(angle(p1, in_plane_point, p3))
+        elif d < 0:
+            res.append(360 - angle(p1, in_plane_point, p3))
+        else:
+            res.append(0)
+
+        d = (out_of_plane_point[0] - p1[0]) * (p3[1] - p1[1]) - (out_of_plane_point[1] - p1[1]) * (p3[0] - p1[0])
+        if direction < 0:
+            d *= -1
+        if d > 0:
+            res.append(angle(p1, out_of_plane_point, p3))
+        elif d < 0:
+            res.append(360 - angle(p1, out_of_plane_point, p3))
+        else:
+            res.append(0)
+
         return res
 
 

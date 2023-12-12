@@ -175,13 +175,12 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
 # print("Bad argument bassed to lattice defined parameter")
 # raise ValueError
 
-geometry = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/"
-experimental = geometry + "experimental/geometry.in"
-theoretical = geometry + "theoretical/geometry.in"
-files = [experimental, theoretical]
-for f in files:
+base = "../../FHI-aims/Double_Perovskites/Real_Structures/"
+options = ["IJAYUQ"] # , "SELWOZ", "SELWUF"]
+for opt in options:
+    f = base + opt + "/geometry.in"
     print('%s:' % f)
-    points = (1, 1, -1)
-    generate(f, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
-    points = (1, -1, -1)
-    generate(f, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+    points = ()
+    generate(f, (points[0], points[1], points[2]), lattice_defined=False, debug=False)
+    points = ()
+    generate(f, (points[0], points[1], points[2]), lattice_defined=False, debug=False)

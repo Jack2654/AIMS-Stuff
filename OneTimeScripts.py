@@ -4,6 +4,9 @@
 import BasicGeo as bg
 import os
 import matplotlib.pyplot as plt
+import csv
+import matplotlib.pyplot as plt
+import math
 
 # code
 
@@ -106,3 +109,133 @@ def me_331_lab_1_plots():
     plt.ylabel("Pressure (Pa)")
     plt.title("Part B, Group E, Cycle 3")
     plt.show()
+
+
+def me344_lab5_plots(readfile):
+    with open(readfile) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        time = []
+        var_1 = []
+        var_2 = []
+        var_3 = []
+        var_4 = []
+        var_5 = []
+        var_6 = []
+        var_7 = []
+        for row in csv_reader:
+            time.append(float(row[0]))
+            var_1.append(float(row[1]))
+            var_2.append(float(row[2]))
+            var_3.append(float(row[3]))
+            var_4.append(float(row[4]))
+            var_5.append(float(row[5]))
+            var_6.append(float(row[6]))
+            var_7.append(float(row[7]))
+
+    plt.ylim([-10, 250])
+    plt.xlim([0, 10])
+    plt.xlabel("Time (s)")
+    plt.ylabel("Displacement (mm)")
+    plt.title("Spring C")
+    plt.plot(time, var_2)
+    plt.plot(time, var_4)
+    plt.plot(time, var_3)
+    plt.legend(["Road Position", "Middle Position", "Top Position"])
+    plt.show()
+
+    print(max(var_3))
+    print(min(var_3))
+    print(max(var_3) - min(var_3))
+    print(max(var_2) - min(var_2))
+
+
+    if False:
+        plt.plot(time, var_5)
+        plt.ylim([0, 210])
+        plt.xlim([0, 10])
+        plt.title("var 5")
+        plt.show()
+
+        plt.plot(time, var_6)
+        plt.ylim([0, 210])
+        plt.xlim([0, 10])
+        plt.title("var 6")
+        plt.show()
+
+        plt.plot(time, var_7)
+        plt.ylim([0, 210])
+        plt.xlim([0, 10])
+        plt.title("var 7")
+        plt.show()
+
+
+def me321_team_proj_2(file, color):
+    with open(file) as f:
+        lines = f.readlines()
+    reformatted_lines = []
+    for ln in lines:
+        temp = ln.split()
+        temp = [x.replace('\x00', "") for x in temp]
+        if len(temp) > 1:
+            reformatted_lines.append(temp)
+    actual_data = []
+    for ln in reformatted_lines:
+        if len(ln) == 4:
+            if len(ln[0]) > 1 and len(ln[1]) > 1 and len(ln[2]) > 1 and len(ln[3]) > 1:
+                actual_data.append([float(x) for x in ln])
+    time = [elem[0] for elem in actual_data]
+    force = [elem[1] for elem in actual_data]
+    displ = [elem[2] for elem in actual_data]
+    max = 0
+    for f in force:
+        if f > max:
+            max = f
+        if f < max and f > 10:
+            break
+    print(max)
+    start_index = 0
+    for i in range(len(force)):
+        if force[i] > 1:
+            start_index = i-1
+            break
+    time = time[start_index:]
+    displ = displ[start_index:]
+    time = [x - time[0] for x in time]
+    displ = [x - displ[0] for x in displ]
+    force = force[start_index:]
+    plt.plot(displ, force, color, linestyle="-")
+    # plt.axhline(max, color=color)
+
+
+def make_maurer(base):
+    files = ["00/", "05/", "10/", "15/", "20/", "25/", "30/", "35/", "40/", "45/", "50/"]
+    with open(base + "geometry.in", "r") as f:
+        lv = []
+        at = []
+        for ln in f.readlines():
+            if "atom" in ln:
+                at.append(ln)
+            if "lattice" in ln:
+                lv.append(ln)
+    for i in range(11):
+        temp = i * 0.05
+        disp = math.sqrt(2 * temp * temp)
+        with open(base + files[i] + "geometry.in", "w") as f:
+            f.writelines(lv)
+            for ln in at:
+                if "I" in ln:
+                    f.write(ln)
+                elif "Cs" in ln:
+                    f.write(ln)
+                else:
+                    temp_at = [float(x) for x in ln.split()[1:4]]
+                    temp_at[0] += disp
+                    temp_at[1] += disp
+                    f.write(f'atom %0.8f %0.8f 0.0 %s\n' % (temp_at[0], temp_at[1], ln.split()[-1]))
+
+
+def allocate_plotting_files(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    print(all_dir)

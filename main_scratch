@@ -672,3 +672,115 @@ for dist in disturbs:
         current = parent + str(i) + "/geometry.in"
         res = bg.maurer_displacement(current, corners_bi2, shiftmap_bi2, center_bi2)
         print(f'%.10f %.10f' % (res[0], res[1]))
+
+team_proj_2 = "../../Documents/23-24/ME321/ExactoCompressionTest_Results"
+numbers = [1, 2, 3, 4, 6]
+numbers = [str(x) for x in numbers]
+colors = ['r', 'orange', 'y', 'g', 'b']
+i = 0
+for num in numbers:
+    ots.me321_team_proj_2(team_proj_2 + num + ".txt", colors[i])
+    i += 1
+plt.title("Force v. Displacement")
+plt.legend(["Run 1", "Run 2", "Run 3", "Run 4", "Run 5"])
+plt.xlabel("Displacement (mm)")
+plt.ylabel("Force (N)")
+plt.grid()
+plt.show()
+
+
+folder = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/python_dist_positions/"
+disturbs = ["5/", "10/", "15/", "20/"]
+
+if True:
+    corners_ag1 = [20, 17, 14, 18, 26, 22]
+    shiftmap_ag1 = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    center_ag1 = 2
+
+    corners_ag2 = [13, 15, 16, 19, 21, 25]
+    corners_sig_ag2 = [13, 16, 19, 15, 25, 21]
+    shiftmap_ag2 = [[0, 0, 0], [0, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0]]
+    center_ag2 = 1
+
+    corners_bi1 = [14, 15, 16, 20, 23, 27]
+    corners_sig_bi1 = [14, 15, 20, 16, 27, 23]
+    shiftmap_bi1 = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0]]
+    center_bi1 = 3
+
+    corners_bi2 = [13, 17, 19, 18, 24, 28]
+    corners_sig_bi2 = [19, 18, 13, 17, 28, 24]
+    shiftmap_bi2 = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 1, 0], [0, 0, 0], [0, 0, 0]]
+    center_bi2 = 4
+
+    beta_1 = [2, 14, 3]
+    shiftmap_1 = -1
+    beta_2 = [3, 20, 2]
+    shiftmap_2 = [[0, 0, 0], [1, 0, 0], [1, 0, 0]]
+    beta_3 = [2, 17, 4]
+    shiftmap_3 = -1
+    beta_4 = [3, 15, 1]
+    shiftmap_4 = -1
+    beta_5 = [4, 13, 1]
+    shiftmap_5 = -1
+    beta_6 = [1, 19, 4]
+    shiftmap_6 = [[0, 0, 0], [1, 0, 0], [1, 0, 0]]
+    beta_7 = [4, 18, 2]
+    shiftmap_7 = [[0, 0, 0], [0, 1, 0], [0, 1, 0]]
+    beta_8 = [1, 16, 3]
+    shiftmap_8 = [[0, 0, 0], [0, 1, 0], [0, 1, 0]]
+
+    betas = [beta_1, beta_2, beta_3, beta_4, beta_5, beta_6, beta_7, beta_8]
+    shifts = [shiftmap_1, shiftmap_2, shiftmap_3, shiftmap_4, shiftmap_5, shiftmap_6, shiftmap_7, shiftmap_8]
+    directions = [-1, 1, -1, 1, 1, -1, 1, -1]
+
+for dist in disturbs:
+    break
+    # print(dist)
+    temp = folder + dist
+    for i in range(10):
+        current = temp + str(i) + "/"
+        for j in range(9, 10):
+            # band = "band100" + str(j) + ".out"
+            results = ""
+            for k in range(8):
+                results += str(bg.angle_info(current + "geometry.in", betas[k], shifts[k], directions[k])[2]) + " "
+                # print(f'%.10f' % (res[0]))
+            print(results)
+            # print(f'%0.10f' % bg.delta_d(current + "geometry.in", center_bi2, corners_sig_bi2, debug=False))
+            # print(f'%0.10f' % bg.sigma_squared(current + "geometry.in", center_bi2, corners_sig_bi2, debug=False))
+            # bbo.band_info(current, band, band_gap=True, spin_splitting=True, verbose=False)
+
+folder = "../../FHI-aims/Yi_1_5_D/band_plotting_folder/"
+structures_th = ["n_5_theoretical/", "n_4_theoretical/", "n_3_theoretical/", "n_2_4_theoretical/"]
+structures_ex = ["n_5_experimental/", "n_4_experimental/", "n_3_experimental/", "n_2_4_experimental/"]
+
+j = -1
+band_nums = [8, 7, 8, 7]
+for struct in structures_ex:
+    break
+    j += 1
+    parent = folder + struct
+    print(parent)
+    for i in range(band_nums[j]):
+        eff_masses = []
+        band = f'band%d.out' % i
+        results = bbo.band_info(parent, band, band_gap=True, spin_splitting=True, verbose=False).split()
+        eff_masses.append(bbo.band_info(parent, band, effective_mass=True, steps=1, verbose=False))
+        eff_masses.append(bbo.band_info(parent, band, effective_mass=True, steps=2, verbose=False))
+        eff_masses.append(bbo.band_info(parent, band, effective_mass=True, steps=3, verbose=False))
+        eff_masses.append(bbo.band_info(parent, band, effective_mass=True, steps=4, verbose=False))
+        eff_masses.append(bbo.band_info(parent, band, effective_mass=True, steps=5, verbose=False))
+        eff_masses = [float(x) for x in eff_masses]
+        eff_masses.sort()
+        results.append(eff_masses[2])
+        results = [float(x) for x in results]
+        print(f'%.6f %.6f %.6f' % (results[0], results[1], results[2]))
+
+base = "../../FHI-aims/Double_Perovskites/AgBi-Perovskites/Maurer2/"
+for i in range(11):
+    temp = f'%s%02d/geometry.in' % (base, (i * 5))
+    # res = bbo.band_info(temp, "band1006.out", band_gap=True, spin_splitting=True, verbose=False)
+    # angle1 = bg.angle_info(temp, (3, 9, 1), ((0, 0, 0), (0, 0, 0), (0, 0, 0)), 0)[0]
+    # angle2 = bg.angle_info(temp, (1, 5, 2), ((0, 0, 0), (0, 0, 0), (0, 0, 0)), 0)[0]
+    # delta_beta = (360 - ((angle2 + angle1) / 2)) - ((angle2 + angle1) / 2)
+    # print(delta_beta)
