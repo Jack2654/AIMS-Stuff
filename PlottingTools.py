@@ -7,7 +7,7 @@ import numpy as np
 import BasicGeo as bg
 import BasicControl as bc
 import time
-
+from mpl_toolkits.mplot3d import Axes3D
 
 # reimagined arguments: python3 *.py a1 a2 a3 a4 a5 a6 a7 a8 a9
 # a1 = file path to folder containing band files
@@ -226,7 +226,17 @@ def mulliken_plot_old(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, subs
         # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
     plt.clf()
 
-def dos_plot(files):
+
+def dos_plot(files, shift=0, limits=[-10, 10], combine=True, save=False):
+    fig = plt.gcf()
+    fig.set_size_inches(4, 6)
+    matplotlib.rc('text', usetex='true')
+    matplotlib.rcParams['axes.linewidth'] = 2
+    matplotlib.rcParams.update({'font.size': 20})
+    colorkey = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
+    ax = plt.axes()
+    doses = []
+    elements = []
     for file in files:
         lines = []
         with open(file, "r") as f:
@@ -236,11 +246,36 @@ def dos_plot(files):
         energy = []
         dos = []
         for line in lines:
-            energy.append(line[0])
-            dos.append(line[1])
-        print(file)
-        plt.plot(energy, dos)
-    plt.show()
+            if limits[0] < line[0] + shift < limits[1]:
+                energy.append(line[0] + shift)
+                dos.append(line[1])
+        element = file.split("/")[-1].split("_")[0]
+        doses.append(dos)
+        elements.append(element)
+    ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+    plt.ylabel("Energy (eV)")
+    plt.title("Species Projected DOS")
+    if combine:
+        total_dos = [0 for x in doses[0]]
+        organic_dos = [0 for x in doses[0]]
+        for index, element in enumerate(elements):
+            if element == "Pb" or element == "I":
+                ax.plot(doses[index], energy, color=colorkey[element], label=element)
+            else:
+                organic_dos = [organic_dos[i] + doses[index][i] for i in range(len(organic_dos))]
+            total_dos = [total_dos[i] + doses[index][i] for i in range(len(total_dos))]
+        ax.plot(organic_dos, energy, color='b', label="Organic", alpha=0.5)
+        ax.fill_betweenx(energy, 0, total_dos, color='k', alpha=0.1, label="Total DOS")
+    else:
+        for index, element in enumerate(elements):
+            ax.plot(doses[index], energy, color=colorkey[element], label=element)
+    plt.legend(fontsize="15")
+    if save:
+        filename = "/".join(files[0].split("/")[:-1]) + "/dos.png"
+        plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    else:
+        plt.show()
+
 
 
 def MD_plot(file):
@@ -261,7 +296,7 @@ def MD_plot(file):
     plt.ylabel("Temperature (K)")
     plt.show()
 
-
+# should add check that number of labels matches number of bands upfront
 def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
     ############################################
     # Setup                                    #
@@ -531,3 +566,224 @@ def read_band_settings(settings_file, debug=False):
     if len(energyshift) < len(bands):
         energyshift = [energyshift[0] for x in bands]
     return [filepath, figure_name, energyshift, ymin, ymax, substate, color_dict, labels, title, eq, bands, mod]
+
+
+def correlation_plot():
+    folder = "../../FHI-aims/Double_Perovskites/Figures/correlations/"
+
+    with open(folder + "IP.txt", "r") as f:
+        IP_raw = [x.split() for x in f.readlines()]
+    DB_IP = [float(x[0]) for x in IP_raw]
+    Maurer_IP = [float(x[5]) for x in IP_raw]
+    Sig_sq_IP = [float(x[8]) for x in IP_raw]
+    Delt_d_IP = [float(x[11]) for x in IP_raw]
+    SS_1_IP = [float(x[12]) for x in IP_raw]
+    SS_2_IP = [float(x[13]) for x in IP_raw]
+    SS_3_IP = [float(x[14]) for x in IP_raw]
+    SS_4_IP = [float(x[15]) for x in IP_raw]
+    SS_5_IP = [float(x[16]) for x in IP_raw]
+    SS_6_IP = [float(x[17]) for x in IP_raw]
+
+    with open(folder + "OOP.txt", "r") as f:
+        OOP_raw = [x.split() for x in f.readlines()]
+    DB_OOP = [float(x[0]) for x in OOP_raw]
+    Maurer_OOP = [float(x[5]) for x in OOP_raw]
+    Sig_sq_OOP = [float(x[8]) for x in OOP_raw]
+    Delt_d_OOP = [float(x[11]) for x in OOP_raw]
+    SS_1_OOP = [float(x[12]) for x in OOP_raw]
+    SS_2_OOP = [float(x[13]) for x in OOP_raw]
+    SS_3_OOP = [float(x[14]) for x in OOP_raw]
+    SS_4_OOP = [float(x[15]) for x in OOP_raw]
+    SS_5_OOP = [float(x[16]) for x in OOP_raw]
+    SS_6_OOP = [float(x[17]) for x in OOP_raw]
+
+    with open(folder + "Maurer.txt", "r") as f:
+        M_raw = [x.split() for x in f.readlines()]
+    end = 5
+    DB_M = [float(x[1]) for x in M_raw[:end]]
+    Maurer_M = [float(x[0]) for x in M_raw[:end]]
+    Sig_sq_M = [float(x[4]) for x in M_raw[:end]]
+    Delt_d_M = [float(x[7]) for x in M_raw[:end]]
+    SS_1_M = [float(x[8]) for x in M_raw[:end]]
+    SS_2_M = [float(x[9]) for x in M_raw[:end]]
+    SS_3_M = [float(x[10]) for x in M_raw[:end]]
+    SS_4_M = [float(x[11]) for x in M_raw[:end]]
+    SS_5_M = [float(x[12]) for x in M_raw[:end]]
+    SS_6_M = [float(x[13]) for x in M_raw[:end]]
+
+    with open(folder + "Random.txt", "r") as f:
+        Random_raw = [x.split() for x in f.readlines()]
+    DB_R = [float(x[0]) for x in Random_raw]
+    Maurer_R = [float(x[5]) for x in Random_raw]
+    Sig_sq_R = [float(x[8]) for x in Random_raw]
+    Delt_d_R = [float(x[11]) for x in Random_raw]
+    SS_1_R = [float(x[12]) for x in Random_raw]
+    SS_2_R = [float(x[13]) for x in Random_raw]
+    SS_3_R = [float(x[14]) for x in Random_raw]
+    SS_4_R = [float(x[15]) for x in Random_raw]
+    SS_5_R = [float(x[16]) for x in Random_raw]
+    SS_6_R = [float(x[17]) for x in Random_raw]
+
+    matplotlib.rc('text', usetex='true')
+
+    fig = plt.figure(figsize=(15, 8))
+    gs = fig.add_gridspec(4, 4, hspace=0.2, wspace=0.1)
+    axs = gs.subplots(sharey='row')
+
+    msize = 4
+    alph = 0.7
+    if False:
+        start1 = 0
+        end1 = 5
+        start2 = 9
+        end2 = 14
+        start3 = 18
+        end3 = 23
+        start4 = 27
+        end4 = 32
+    elif False:
+        start1 = 4
+        end1 = 9
+        start2 = 13
+        end2 = 18
+        start3 = 22
+        end3 = 27
+        start4 = 31
+        end4 = 36
+    else:
+        start1 = 0
+        end1 = 9
+        start2 = 9
+        end2 = 18
+        start3 = 18
+        end3 = 27
+        start4 = 27
+        end4 = 36
+
+    # IP graphs
+    color_set = ['rosybrown', 'firebrick', 'red', 'lightsalmon']
+    xvals = [Delt_d_IP, Sig_sq_IP, DB_IP, Maurer_IP]
+    SS = SS_2_IP
+
+    for i in range(4):
+        axs[0, i].plot(xvals[i][start1:end1], SS[start1:end1], 'o', color=color_set[i], markersize=msize, alpha=alph)
+        axs[0, i].plot(xvals[i][start2:end2], SS[start2:end2], 's', color=color_set[i], markersize=msize, alpha=alph)
+        axs[0, i].plot(xvals[i][start3:end3], SS[start3:end3], 'P', color=color_set[i], markersize=msize, alpha=alph)
+        axs[0, i].plot(xvals[i][start4:end4], SS[start4:end4], '^', color=color_set[i], markersize=msize, alpha=alph)
+        temp_domain = xvals[i][start1:end1] + xvals[i][start2:end2] + xvals[i][start3:end3] + xvals[i][start4:end4]
+        temp_range = SS[start1:end1] + SS[start2:end2] + SS[start3:end3] + SS[start4:end4]
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        axs[0, i].plot(temp_domain, [a*x+b for x in temp_domain], color=color_set[i])
+        r = np.corrcoef(temp_domain, temp_range)[0, 1]
+        bbox = dict(boxstyle='round', fc='blanchedalmond', ec='orange', alpha=0.5)
+        axs[0, i].text(min(temp_domain), max(temp_range) * 0.9, f'r=%0.4f' % r, bbox=bbox)
+
+    # OOP graphs
+    color_set = ['olive', 'green', 'mediumseagreen', 'lime']
+    xvals = [Delt_d_OOP, Sig_sq_OOP, DB_OOP, Maurer_OOP]
+    SS = SS_2_OOP
+
+    for i in range(4):
+        axs[1, i].plot(xvals[i][start1:end1], SS[start1:end1], 'o', color=color_set[i], markersize=msize, alpha=alph)
+        axs[1, i].plot(xvals[i][start2:end2], SS[start2:end2], 's', color=color_set[i], markersize=msize, alpha=alph)
+        axs[1, i].plot(xvals[i][start3:end3], SS[start3:end3], 'P', color=color_set[i], markersize=msize, alpha=alph)
+        axs[1, i].plot(xvals[i][start4:end4], SS[start4:end4], '^', color=color_set[i], markersize=msize, alpha=alph)
+        temp_domain = xvals[i][start1:end1] + xvals[i][start2:end2] + xvals[i][start3:end3] + xvals[i][start4:end4]
+        temp_range = SS[start1:end1] + SS[start2:end2] + SS[start3:end3] + SS[start4:end4]
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        axs[1, i].plot(temp_domain, [a * x + b for x in temp_domain], color=color_set[i])
+        r = np.corrcoef(temp_domain, temp_range)[0, 1]
+        bbox = dict(boxstyle='round', fc='blanchedalmond', ec='orange', alpha=0.5)
+        axs[1, i].text(min(temp_domain), max(temp_range) * 0.9, f'r=%0.4f' % r, bbox=bbox)
+        # ci = 1.96 * np.std(temp_range)/np.sqrt(len(temp_domain))
+        # y = [a * x + b for x in temp_domain]
+        # axs[1, i].fill_between(temp_domain, (y - ci), (y + ci), color=color_set[i], alpha=0.1)
+
+
+    # Maurer graphs
+    color_set = ['teal', 'darkturquoise', 'cyan', 'royalblue']
+    xvals = [Delt_d_M, Sig_sq_M, DB_M, Maurer_M]
+    SS = SS_2_M
+
+    for i in range(4):
+        axs[2, i].plot(xvals[i], SS, 'o', color=color_set[i], markersize=msize, alpha=alph)
+        temp_domain = xvals[i]
+        temp_range = SS
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        axs[2, i].plot(temp_domain, [a * x + b for x in temp_domain], color=color_set[i])
+        r = np.corrcoef(temp_domain, temp_range)[0, 1]
+        bbox = dict(boxstyle='round', fc='blanchedalmond', ec='orange', alpha=0.5)
+        axs[2, i].text(min(temp_domain), max(temp_range) * 0.9, f'r=%0.4f' % r, bbox=bbox)
+
+    # Random graphs
+    color_set = ['rebeccapurple', 'blueviolet', 'fuchsia', 'orchid']
+    xvals = [Delt_d_R, Sig_sq_R, DB_R, Maurer_R]
+    SS = SS_2_R
+
+    for i in range(4):
+        axs[3, i].plot(xvals[i], SS, 'o', color=color_set[i], markersize=msize, alpha=alph)
+        temp_domain = xvals[i]
+        temp_range = SS
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        axs[3, i].plot(temp_domain, [a * x + b for x in temp_domain], color=color_set[i])
+        r = np.corrcoef(temp_domain, temp_range)[0, 1]
+        bbox = dict(boxstyle='round', fc='blanchedalmond', ec='orange', alpha=0.5)
+        axs[3, i].text(min(temp_domain), max(temp_range) * 0.9, f'r=%0.4f' % r, bbox=bbox)
+
+    # labels
+    axs[3, 0].set(xlabel='$\Delta d$')
+    axs[3, 1].set(xlabel='$\sigma^2$')
+    axs[3, 2].set(xlabel='$\Delta\\beta$')
+    axs[3, 3].set(xlabel='$d_{diag}$')
+
+    axs[0, 0].set(ylabel='$\Delta E\pm$ (eV)')
+    axs[1, 0].set(ylabel='$\Delta E\pm$ (eV)')
+    axs[2, 0].set(ylabel='$\Delta E\pm$ (eV)')
+    axs[3, 0].set(ylabel='$\Delta E\pm$ (eV)')
+
+    filename = "../../FHI-aims/Double_Perovskites/Figures/images/fig4_all.png"
+    plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    # plt.show()
+
+
+def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for count, corner in enumerate(corners):
+        ax.scatter(corner[0], corner[1], corner[2], c='red', marker='o', alpha=0.3)
+        # Text for determining adjacency matrix
+        # ax.text(corner[0], corner[1], corner[2] + 0.05, str(count), color='r', fontsize=14)
+        for ind in adjacency[count]:
+            ax.plot([corners[ind][0], corner[0]],
+                    [corners[ind][1], corner[1]],
+                    [corners[ind][2], corner[2]], 'k')
+
+    # Plot pathway
+    color_dict = ['r', 'orange', 'y', 'g', 'b']
+    reciprocal = bg.reciprocal_vectors(geo_file)
+    pathway_recip = []
+    for i in range(len(pathway)):
+        point = pathway[i][0:3]
+        temp_x1 = reciprocal[0][0] * point[0] + reciprocal[1][0] * point[1] + reciprocal[2][0] * point[2]
+        temp_y1 = reciprocal[0][1] * point[0] + reciprocal[1][1] * point[1] + reciprocal[2][1] * point[2]
+        temp_z1 = reciprocal[0][2] * point[0] + reciprocal[1][2] * point[1] + reciprocal[2][2] * point[2]
+        point = pathway[i][3:]
+        temp_x2 = reciprocal[0][0] * point[0] + reciprocal[1][0] * point[1] + reciprocal[2][0] * point[2]
+        temp_y2 = reciprocal[0][1] * point[0] + reciprocal[1][1] * point[1] + reciprocal[2][1] * point[2]
+        temp_z2 = reciprocal[0][2] * point[0] + reciprocal[1][2] * point[1] + reciprocal[2][2] * point[2]
+        ax.plot([temp_x1, temp_x2],
+                [temp_y1, temp_y2],
+                [temp_z1, temp_z2], color_dict[i], linewidth=2, marker='o', markersize=10)
+        pathway_recip.append([temp_x1, temp_y1, temp_z1, temp_x2, temp_y2, temp_z2])
+
+    # Plot names near points
+    for i, point in enumerate(pathway_recip):
+        ax.text(point[0], point[1], point[2] + 0.02, names[i][0], color=color_dict[i], fontsize=14)
+        ax.text(point[3], point[4], point[5] + 0.02, names[i][1], color=color_dict[i], fontsize=14)
+
+    ax.text(0, 0, 0.02, 'Γ', color='k', fontsize=14)
+    ax.scatter(0, 0, 0, c='k', marker='o', s=100)
+
+    ax.set_axis_off()
+    plt.show()

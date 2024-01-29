@@ -47,7 +47,7 @@ def atoms(file):
     at = []
     with open(file, "r") as f:
         for line in f:
-            if "atom" in line:
+            if "atom" in line and "#" not in line:
                 at.append(line.strip())
     return at
 
@@ -87,8 +87,8 @@ def reciprocal_vectors(file):
 
 
 def distance(fileA, a, fileB, b):
-    x1 = atoms_trimmed(fileA)[a-1]
-    x2 = atoms_trimmed(fileB)[b-1]
+    x1 = atoms_trimmed(fileA)[a - 1]
+    x2 = atoms_trimmed(fileB)[b - 1]
     return vt.dist(x1, x2)
 
 
@@ -196,7 +196,7 @@ def move_into_unit_cell(filepath, writepath):
             for lat in lv:
                 if lat == lv[i]:
                     continue
-                #if x > lat[i] + lv[i][i]:
+                # if x > lat[i] + lv[i][i]:
                 #    adj = True
                 #    count += 1
                 #    at_ret[j][0] -= lv[i][0]
@@ -252,7 +252,6 @@ def read_geo_for_bands(filepath, color_dict={}, flags=1):
             atoms.append(words[-1])  # full list of atoms in order they appear
     species = list(set(atoms))  # set of different types of atoms
 
-
     for i in range(len(atoms)):  # both 2i and 2i+1 for the two spin states representing an atom
         if atoms[i] not in species_id:
             species_id[atoms[i]] = []
@@ -288,21 +287,24 @@ def lattice_info(filename):
     lat = lattice_vectors(filename)
     mags = []
     for vec in lat:
-        mag = math.sqrt((vec[0])**2 + (vec[1])**2 + (vec[2])**2)
+        mag = math.sqrt((vec[0]) ** 2 + (vec[1]) ** 2 + (vec[2]) ** 2)
         mags.append(mag)
         # print(mag)
     # alpha:
-    alpha = (180 / np.pi) * np.arccos((lat[1][0] * lat[2][0] + lat[1][1] * lat[2][1] + lat[1][2] * lat[2][2]) / (mags[1] * mags[2]))
+    alpha = (180 / np.pi) * np.arccos(
+        (lat[1][0] * lat[2][0] + lat[1][1] * lat[2][1] + lat[1][2] * lat[2][2]) / (mags[1] * mags[2]))
     print(alpha)
     # beta:
-    beta = (180 / np.pi) * np.arccos((lat[0][0] * lat[2][0] + lat[0][1] * lat[2][1] + lat[0][2] * lat[2][2]) / (mags[0] * mags[2]))
+    beta = (180 / np.pi) * np.arccos(
+        (lat[0][0] * lat[2][0] + lat[0][1] * lat[2][1] + lat[0][2] * lat[2][2]) / (mags[0] * mags[2]))
     print(beta)
     # gamma
-    gamma = (180 / np.pi) * np.arccos((lat[0][0] * lat[1][0] + lat[0][1] * lat[1][1] + lat[0][2] * lat[1][2]) / (mags[0] * mags[1]))
+    gamma = (180 / np.pi) * np.arccos(
+        (lat[0][0] * lat[1][0] + lat[0][1] * lat[1][1] + lat[0][2] * lat[1][2]) / (mags[0] * mags[1]))
     print(gamma)
 
 
-def delta_d(filename, center, edges, debug=False):
+def delta_d_old(filename, center, edges, debug=False):
     lat = lattice_vectors(filename)
     at = atoms_trimmed(filename)
     at_center = at[center - 1]
@@ -324,7 +326,7 @@ def delta_d(filename, center, edges, debug=False):
     result = 0
     for dist in distances:
         result += (dist - avg_distance) ** 2
-    result *= (1/6) * (1 / (avg_distance ** 2))
+    result *= (1 / 6) * (1 / (avg_distance ** 2))
     if debug:
         print('atom %.5f %.5f %.5f M' % (at_center[0], at_center[1], at_center[2]))
         for atom in at_edges_moved:
@@ -332,7 +334,7 @@ def delta_d(filename, center, edges, debug=False):
     return result
 
 
-def sigma_squared(filename, center, edges, debug=False):
+def sigma_squared_old(filename, center, edges, debug=False):
     # order of edges is [left, up, right, down, above, below]
     lat = lattice_vectors(filename)
     at = atoms_trimmed(filename)
@@ -397,8 +399,8 @@ def angle_info(readfile, pts, shiftmap, direction=0):
     p1, p2, p3 = points
     # computes normal vector to the "in-plane" plane
     connect_vect = [p3[i] - p1[i] for i in range(3)]
-    b = math.sqrt((connect_vect[0]**2) / (connect_vect[0]**2 + connect_vect[1]**2))
-    a = math.sqrt(1 - b**2)
+    b = math.sqrt((connect_vect[0] ** 2) / (connect_vect[0] ** 2 + connect_vect[1] ** 2))
+    a = math.sqrt(1 - b ** 2)
     horizontal_vec = [a, b, 0]
     normal_vec = np.cross(connect_vect, horizontal_vec)
     normal_vec = [normal_vec[i] / np.linalg.norm(normal_vec) for i in range(3)]
@@ -430,7 +432,6 @@ def angle_info(readfile, pts, shiftmap, direction=0):
         if direction == 0:
             res.append(angle(p1, p2, p3))
             return res
-
 
         d = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
         if direction < 0:
@@ -479,11 +480,10 @@ def angle_info_old(readfile, pts):
 
     # moves points so they are positioned adequately
 
-
     # computes normal vector to the "in-plane" plane
     connect_vect = [p3[i] - p1[i] for i in range(3)]
-    b = math.sqrt((connect_vect[0]**2) / (connect_vect[0]**2 + connect_vect[1]**2))
-    a = math.sqrt(1 - b**2)
+    b = math.sqrt((connect_vect[0] ** 2) / (connect_vect[0] ** 2 + connect_vect[1] ** 2))
+    a = math.sqrt(1 - b ** 2)
     horizontal_vec = [a, b, 0]
     normal_vec = np.cross(connect_vect, horizontal_vec)
     normal_vec = [normal_vec[i] / np.linalg.norm(normal_vec) for i in range(3)]
@@ -535,7 +535,7 @@ def disturb_positions(readfile, writefile, max_disturbance):
             f.write('atom\t%.8f\t%.8f\t%.8f\t%s\n' % (coords[0], coords[1], coords[2], temp[-1]))
 
 
-def maurer_displacement(readfile, corners, shiftmap, center):
+def maurer_displacement(readfile, corners, shiftmap, center, Ag=True):
     atoms = atoms_trimmed(readfile)
     lv = lattice_vectors(readfile)
     corner_loc = []
@@ -554,15 +554,28 @@ def maurer_displacement(readfile, corners, shiftmap, center):
     centroid[0] /= len(corners)
     centroid[1] /= len(corners)
     centroid[2] /= len(corners)
-    center_actual = atoms[center-1]
+    center_actual = atoms[center - 1]
     displacement = [centroid[i] - center_actual[i] for i in range(3)]
     displacement[2] = 0
-    diag_one = [1 / math.sqrt(2), 1 / math.sqrt(2), 0]
-    diag_two = [1 / math.sqrt(2), -1 / math.sqrt(2), 0]
+
+    if Ag:
+        index_a = 0
+        index_b = 1
+    else:
+        index_a = 2
+        index_b = 3
+    arm_one = [corner_loc[index_a][x] - center_actual[x] for x in range(3)]
+    arm_two = [corner_loc[index_b][x] - center_actual[x] for x in range(3)]
+    diag_one = [arm_one[x] + arm_two[x] for x in range(3)]
+    diag_two = [arm_two[x] - arm_one[x] for x in range(3)]
+    diag_one = [x / np.linalg.norm(diag_one) for x in diag_one]
+    diag_two = [x / np.linalg.norm(diag_two) for x in diag_two]
 
     # print(f'Centroid:\t\t%0.5f %0.5f %0.5f' % (centroid[0], centroid[1], centroid[2]))
     # print(f'Center:\t\t\t%0.5f %0.5f %0.5f' % (center_actual[0], center_actual[1], center_actual[2]))
     # print(f'Displacement:\t%0.5f %0.5f %0.5f' % (displacement[0], displacement[1], displacement[2]))
+    # print(f'Diag One:\t%0.5f %0.5f %0.5f' % (diag_one[0], diag_one[1], diag_one[2]))
+    # print(f'Diag Two:\t%0.5f %0.5f %0.5f\n' % (diag_two[0], diag_two[1], diag_two[2]))
 
     proj_one = abs(np.dot(displacement, diag_one))
     proj_two = abs(np.dot(displacement, diag_two))
@@ -572,4 +585,118 @@ def maurer_displacement(readfile, corners, shiftmap, center):
     # diag_two = [x * proj_two for x in diag_two]
     # total = [(diag_one[i] + diag_two[i]) * np.linalg.norm(displacement) for i in range(3)]
     # print(total)
+    # return f'%0.8f %0.8f' % (proj_one, proj_two)
+
     return proj_one, proj_two
+
+
+def sigma_squared(readfile, corners, shiftmap, center):
+    # order of corners is left, down, right, up, below, above
+    atoms = atoms_trimmed(readfile)
+    lv = lattice_vectors(readfile)
+    corner_loc = []
+    for i in range(len(corners)):
+        temp = atoms[corners[i] - 1]
+        for j in range(3):
+            temp[0] += shiftmap[i][j] * lv[j][0]
+            temp[1] += shiftmap[i][j] * lv[j][1]
+            temp[2] += shiftmap[i][j] * lv[j][2]
+        corner_loc.append(temp)
+    center_actual = atoms[center - 1]
+
+    angles = [angle(corner_loc[0], center_actual, corner_loc[1]),
+              angle(corner_loc[0], center_actual, corner_loc[3]),
+              angle(corner_loc[0], center_actual, corner_loc[4]),
+              angle(corner_loc[0], center_actual, corner_loc[5]),
+              angle(corner_loc[1], center_actual, corner_loc[2]),
+              angle(corner_loc[1], center_actual, corner_loc[4]),
+              angle(corner_loc[1], center_actual, corner_loc[5]),
+              angle(corner_loc[2], center_actual, corner_loc[3]),
+              angle(corner_loc[2], center_actual, corner_loc[4]),
+              angle(corner_loc[2], center_actual, corner_loc[5]),
+              angle(corner_loc[3], center_actual, corner_loc[4]),
+              angle(corner_loc[3], center_actual, corner_loc[5])]
+    result = 0
+    for ang in angles:
+        result += (ang - 90) ** 2
+    result /= 12
+
+    return result
+
+
+def delta_d(readfile, corners, shiftmap, center):
+    # order of corners is left, down, right, up, below, above
+    atoms = atoms_trimmed(readfile)
+    lv = lattice_vectors(readfile)
+    corner_loc = []
+    for i in range(len(corners)):
+        temp = atoms[corners[i] - 1]
+        for j in range(3):
+            temp[0] += shiftmap[i][j] * lv[j][0]
+            temp[1] += shiftmap[i][j] * lv[j][1]
+            temp[2] += shiftmap[i][j] * lv[j][2]
+        corner_loc.append(temp)
+    center_actual = atoms[center - 1]
+
+    distances = []
+    for atom in corner_loc:
+        distances.append(np.linalg.norm([atom[i] - center_actual[i] for i in range(3)]))
+
+    avg_distance = np.average(distances)
+    result = 0
+    for dist in distances:
+        result += (dist - avg_distance) ** 2
+    result *= (1 / 6) * (1 / (avg_distance ** 2))
+    return result
+
+
+def geo_to_poscar(readfile, writefile):
+    at = atoms(readfile)
+    lv = lattice_vectors(readfile)
+    with open(writefile, "w") as f:
+        f.write(readfile + "\n")  # header comment
+        f.write("1.00\n")  # scaling factor
+        for lat in lv:
+            f.write("\t".join(str(x) for x in lat) + "\n")
+
+        atom_counts = {}
+        for a in at:
+            temp = a.split()[-1]
+            if temp in atom_counts.keys():
+                atom_counts[temp] = atom_counts[temp] + 1
+            else:
+                atom_counts[temp] = 1
+
+        f.write("\t".join(atom_counts.keys()) + "\n")
+        f.write("\t".join(str(x) for x in [atom_counts[y] for y in atom_counts.keys()]) + "\n")
+        f.write("Cartesian\n")
+
+        for key in atom_counts.keys():
+            for a in at:
+                if a.split()[-1] == key:
+                    f.write("\t".join(str(x) for x in a.split()[1:4]) + "\n")
+
+
+    with open(writefile, "r") as f:
+        lines = f.readlines()
+    for ln in lines:
+        print(ln.strip())
+
+
+def closest(corner, corners):
+    min_index = -1
+    min_value = 200
+    second_min_index = -1
+    second_min_value = 200
+    for count, c in enumerate(corners):
+        temp_dist = vt.dist(corner, c)
+        if temp_dist != 0:
+            if temp_dist < second_min_value:
+                second_min_value = temp_dist
+                second_min_index = count
+            if temp_dist < min_value:
+                second_min_value = min_value
+                second_min_index = min_index
+                min_value = temp_dist
+                min_index = count
+    return [min_index, second_min_index]

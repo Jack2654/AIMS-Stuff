@@ -8,7 +8,7 @@
 import BasicFunc as bf
 import math
 import numpy as np
-from effmass import inputs, extrema
+# from effmass import inputs, extrema
 import BasicGeo as bg
 
 
@@ -263,9 +263,10 @@ def read_band_out(file):
 
 
 def eff_mass_package(filepath):
-    settings = inputs.Settings(extrema_search_depth=0.025, energy_range=0.75, valence_band=False)
-    Aims_data = inputs.DataAims(filepath)
-    segments = extrema.generate_segments(settings, Aims_data)
-    for ele in segments:
-        print(str(ele))
-        print(ele.finite_difference_effmass())
+    # settings = inputs.Settings(extrema_search_depth=0.025, energy_range=0.75, valence_band=False)
+    # Aims_data = inputs.DataAims(filepath)
+    # segments = extrema.generate_segments(settings, Aims_data)
+    # for ele in segments:
+    #     print(str(ele))
+    #     print(ele.finite_difference_effmass())
+    print(0)

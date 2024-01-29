@@ -28,6 +28,7 @@ from mins import Species
 import numpy.polynomial.polynomial as poly
 from scipy.optimize import minimize
 from ase.io import read, write
+import numpy as np
 
 
 # functions:
@@ -320,4 +321,14 @@ def put_control_files():
             os.system(command)
 
 
-
+def read_BZ_corners(filename):
+    with open(filename, "r") as f:
+        lns = f.readlines()
+    ret = []
+    for ln in lns:
+        temp = ln.split()
+        temp = [x.replace("(", "") for x in temp]
+        temp = [x.replace(")", "") for x in temp]
+        temp = [x.replace(",", "") for x in temp]
+        ret.append([float(x) for x in temp[0:3]])
+    return ret

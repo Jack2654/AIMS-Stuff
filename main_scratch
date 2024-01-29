@@ -784,3 +784,248 @@ for i in range(11):
     # angle2 = bg.angle_info(temp, (1, 5, 2), ((0, 0, 0), (0, 0, 0), (0, 0, 0)), 0)[0]
     # delta_beta = (360 - ((angle2 + angle1) / 2)) - ((angle2 + angle1) / 2)
     # print(delta_beta)
+
+
+# Determination of geometric parameters:
+# order of corners is left, down, right, up, below, above
+# ag1 is bottom left, bi1 is bottom right
+
+# 180 Degree, IP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (7, 8, 10, 9, 18, 17)
+center_ag1 = 3
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (5, 6, 12, 11, 16, 15)
+center_ag2 = 2
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (10, 11, 7, 6, 20, 19)
+center_bi1 = 4
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (12, 9, 5, 8, 14, 13)
+center_bi2 = 1
+
+# 170, 160, 150 Degrees, IP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (2, 3, 5, 4, 7, 6)
+center_ag1 = 1
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (14, 9, 15, 10, 20, 19)
+center_ag2 = 18
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (5, 10, 2, 9, 12, 11)
+center_bi1 = 8
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (15, 4, 14, 3, 17, 16)
+center_bi2 = 13
+
+# 180 Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (7, 8, 26, 25, 14, 13)
+center_ag1 = 3
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (5, 6, 28, 27, 12, 11)
+center_ag2 = 2
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (26, 27, 7, 6, 16, 15)
+center_bi1 = 4
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (28, 25, 5, 8, 10, 9)
+center_bi2 = 1
+
+# 170 (non-170) Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (10, 11, 26, 25, 13, 12)
+center_ag1 = 9
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (2, 3, 28, 27, 5, 4)
+center_ag2 = 1
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (26, 27, 10, 3, 16, 15)
+center_bi1 = 14
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (28, 25, 2, 11, 8, 7)
+center_bi2 = 6
+
+# 170_170 Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (12, 14, 13, 8, 16, 15)
+center_ag1 = 11
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (2, 3, 6, 18, 5, 4)
+center_ag2 = 1
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (13, 18, 12, 3, 20, 19)
+center_bi1 = 17
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (6, 8, 2, 14, 10, 9)
+center_bi2 = 7
+
+# 160 (non-160) Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (2, 3, 18, 17, 5, 4)
+center_ag1 = 1
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (10, 14, 20, 19, 16, 15)
+center_ag2 = 13
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (18, 19, 2, 14, 8, 7)
+center_bi1 = 6
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (20, 17, 10, 3, 12, 11)
+center_bi2 = 9
+
+# 160_160 Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (3, 5, 4, 2, 7, 6)
+center_ag1 = 1
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (14, 18, 13, 9, 20, 19)
+center_ag2 = 17
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (4, 9, 3, 18, 11, 10)
+center_bi1 = 8
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (13, 2, 14, 5, 16, 15)
+center_bi2 = 12
+
+# 150 (non-150) Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (2, 3, 26, 25, 5, 4)
+center_ag1 = 1
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (10, 14, 28, 27, 16, 15)
+center_ag2 = 13
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (26, 27, 2, 14, 8, 7)
+center_bi1 = 6
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (28, 25, 10, 3, 12, 11)
+center_bi2 = 9
+
+# 150_150 Degree, OOP:
+
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (3, 5, 4, 2, 7, 6)
+center_ag1 = 1
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (14, 18, 13, 9, 20, 19)
+center_ag2 = 17
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (4, 9, 3, 18, 11, 10)
+center_bi1 = 8
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (13, 2, 14, 5, 16, 15)
+center_bi2 = 12
+
+# Maurer
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = (7, 8, 10, 9, 18, 17)
+center_ag1 = 3
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = (5, 6, 12, 11, 16, 15)
+center_ag2 = 2
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = (10, 11, 7, 6, 20, 19)
+center_bi1 = 4
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = (12, 9, 5, 8, 14, 13)
+center_bi2 = 1
+
+# blank
+shifts_ag1 = [[0, 0, 0] for x in range(6)]
+corners_ag1 = ()
+center_ag1 =
+
+shifts_ag2 = [[0, 0, 0] for x in range(6)]
+shifts_ag2[2] = [1, 0, 0]
+shifts_ag2[3] = [0, 1, 0]
+corners_ag2 = ()
+center_ag2 =
+
+shifts_bi1 = [[0, 0, 0] for x in range(6)]
+shifts_bi1[2] = [1, 0, 0]
+corners_bi1 = ()
+center_bi1 =
+
+shifts_bi2 = [[0, 0, 0] for x in range(6)]
+shifts_bi2[3] = [0, 1, 0]
+corners_bi2 = ()
+center_bi2 =

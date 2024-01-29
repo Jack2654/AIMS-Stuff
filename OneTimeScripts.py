@@ -220,7 +220,7 @@ def make_maurer(base):
                 lv.append(ln)
     for i in range(11):
         temp = i * 0.05
-        disp = math.sqrt(2 * temp * temp)
+        disp = math.sqrt(0.5 * temp * temp)
         with open(base + files[i] + "geometry.in", "w") as f:
             f.writelines(lv)
             for ln in at:
