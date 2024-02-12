@@ -8,6 +8,10 @@ import BasicGeo as bg
 import BasicControl as bc
 import time
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d.proj3d import proj_transform
+import matplotlib.patheffects as pe
+
 
 # reimagined arguments: python3 *.py a1 a2 a3 a4 a5 a6 a7 a8 a9
 # a1 = file path to folder containing band files
@@ -20,8 +24,44 @@ from mpl_toolkits.mplot3d import Axes3D
 # a8 = equal sized plotted band segments
 # a9 = debug
 
+class Arrow3D(FancyArrowPatch):
+
+    def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
+        super().__init__((0, 0), (0, 0), *args, **kwargs)
+        self._xyz = (x, y, z)
+        self._dxdydz = (dx, dy, dz)
+
+    def draw(self, renderer):
+        x1, y1, z1 = self._xyz
+        dx, dy, dz = self._dxdydz
+        x2, y2, z2 = (x1 + dx, y1 + dy, z1 + dz)
+
+        xs, ys, zs = proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        super().draw(renderer)
+
+    def do_3d_projection(self, renderer=None):
+        x1, y1, z1 = self._xyz
+        dx, dy, dz = self._dxdydz
+        x2, y2, z2 = (x1 + dx, y1 + dy, z1 + dz)
+
+        xs, ys, zs = proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+
+        return np.min(zs)
+
+
+def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
+    '''Add an 3d arrow to an `Axes3D` instance.'''
+
+    arrow = Arrow3D(x, y, z, dx, dy, dz, *args, **kwargs)
+    ax.add_artist(arrow)
+
+
+setattr(Axes3D, 'arrow3D', _arrow3D)
+
 def mulliken_plot_old(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate=0, color_dict={}, labels=0,
-                  title="Default Title", eq=False, debug=False, quiet=False):
+                      title="Default Title", eq=False, debug=False, quiet=False):
     ############################################
     # Setup                                    #
     ############################################
@@ -223,7 +263,7 @@ def mulliken_plot_old(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, subs
     plt.tight_layout()
     plt.show()
     # if not filename == 0:
-        # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
     plt.clf()
 
 
@@ -277,7 +317,6 @@ def dos_plot(files, shift=0, limits=[-10, 10], combine=True, save=False):
         plt.show()
 
 
-
 def MD_plot(file):
     lines = []
     with open(file, "r") as f:
@@ -295,6 +334,7 @@ def MD_plot(file):
     plt.xlabel("Time (ps)")
     plt.ylabel("Temperature (K)")
     plt.show()
+
 
 # should add check that number of labels matches number of bands upfront
 def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
@@ -431,7 +471,6 @@ def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
         plt.clf()
         return 0
 
-
     ############################################
     # mlk									   #
     ############################################
@@ -549,8 +588,8 @@ def read_band_settings(settings_file, debug=False):
             substate = float(temp[1])
         elif temp[0] == "color_dict":
             color_dict = {}
-            for x in range(int((len(temp) - 1)/2)):
-                color_dict.update({temp[2*x+1]: temp[2*x+2]})
+            for x in range(int((len(temp) - 1) / 2)):
+                color_dict.update({temp[2 * x + 1]: temp[2 * x + 2]})
         elif temp[0] == "labels":
             labels = temp[1:]
         elif temp[0] == "title":
@@ -673,7 +712,7 @@ def correlation_plot():
         temp_domain = xvals[i][start1:end1] + xvals[i][start2:end2] + xvals[i][start3:end3] + xvals[i][start4:end4]
         temp_range = SS[start1:end1] + SS[start2:end2] + SS[start3:end3] + SS[start4:end4]
         a, b = np.polyfit(temp_domain, temp_range, 1)
-        axs[0, i].plot(temp_domain, [a*x+b for x in temp_domain], color=color_set[i])
+        axs[0, i].plot(temp_domain, [a * x + b for x in temp_domain], color=color_set[i])
         r = np.corrcoef(temp_domain, temp_range)[0, 1]
         bbox = dict(boxstyle='round', fc='blanchedalmond', ec='orange', alpha=0.5)
         axs[0, i].text(min(temp_domain), max(temp_range) * 0.9, f'r=%0.4f' % r, bbox=bbox)
@@ -698,7 +737,6 @@ def correlation_plot():
         # ci = 1.96 * np.std(temp_range)/np.sqrt(len(temp_domain))
         # y = [a * x + b for x in temp_domain]
         # axs[1, i].fill_between(temp_domain, (y - ci), (y + ci), color=color_set[i], alpha=0.1)
-
 
     # Maurer graphs
     color_set = ['teal', 'darkturquoise', 'cyan', 'royalblue']
@@ -746,19 +784,22 @@ def correlation_plot():
     # plt.show()
 
 
-def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names):
+# noinspection PyTypeChecker
+def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     for count, corner in enumerate(corners):
         ax.scatter(corner[0], corner[1], corner[2], c='red', marker='o', alpha=0.3)
         # Text for determining adjacency matrix
-        # ax.text(corner[0], corner[1], corner[2] + 0.05, str(count), color='r', fontsize=14)
+        if setup:
+            ax.text(corner[0], corner[1], corner[2] + 0.05, str(count), color='r', fontsize=14)
         for ind in adjacency[count]:
             ax.plot([corners[ind][0], corner[0]],
                     [corners[ind][1], corner[1]],
                     [corners[ind][2], corner[2]], 'k')
-
+    if setup:
+        plt.show()
     # Plot pathway
     color_dict = ['r', 'orange', 'y', 'g', 'b']
     reciprocal = bg.reciprocal_vectors(geo_file)
@@ -774,16 +815,47 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
         temp_z2 = reciprocal[0][2] * point[0] + reciprocal[1][2] * point[1] + reciprocal[2][2] * point[2]
         ax.plot([temp_x1, temp_x2],
                 [temp_y1, temp_y2],
-                [temp_z1, temp_z2], color_dict[i], linewidth=2, marker='o', markersize=10)
+                [temp_z1, temp_z2], color_dict[i], linewidth=2, marker='o', markersize=7)
         pathway_recip.append([temp_x1, temp_y1, temp_z1, temp_x2, temp_y2, temp_z2])
 
     # Plot names near points
+    x_offset = -0.03
+    y_offset = 0.02
+    z_offset = 0.02
+    outline_width = 1
     for i, point in enumerate(pathway_recip):
-        ax.text(point[0], point[1], point[2] + 0.02, names[i][0], color=color_dict[i], fontsize=14)
-        ax.text(point[3], point[4], point[5] + 0.02, names[i][1], color=color_dict[i], fontsize=14)
+        if sum([abs(x) for x in point[0:3]]) != 0:
+            ax.text(point[0] + x_offset, point[1] + y_offset, point[2] + z_offset,
+                    names[i][0], color=color_dict[i], fontsize=14,
+                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
+        if sum([abs(x) for x in point[3:]]) != 0:
+            ax.text(point[3] + x_offset, point[4] + y_offset, point[5] + z_offset,
+                    names[i][1], color=color_dict[i], fontsize=14,
+                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
 
-    ax.text(0, 0, 0.02, 'Γ', color='k', fontsize=14)
-    ax.scatter(0, 0, 0, c='k', marker='o', s=100)
+    ax.text(x_offset, y_offset, z_offset, 'Γ', color='k', fontsize=14)
+    ax.scatter(0, 0, 0, c='k', marker='o', s=70)
+
+    recip_labels = ["x*", "y*", "z*"]
+    for i, recip in enumerate(reciprocal):
+        ax.arrow3D(0, 0, 0, 0.75 * recip[0], 0.75 * recip[1], 0.75 * recip[2],
+                   mutation_scale=20,
+                   arrowstyle="-|>",
+                   linestyle='dashed',
+                   ec='k',
+                   alpha=0.5)
+        if i > 0:
+            ax.text(0.75 * recip[0] + x_offset, 0.75 * recip[1] + y_offset, 0.75 * recip[2] + z_offset, recip_labels[i],
+                    color='k', fontsize=14)
+        else:
+            ax.text(0.75 * recip[0] - 0.3 * x_offset, 0.75 * recip[1] + y_offset, 0.75 * recip[2] + z_offset, recip_labels[i],
+                    color='k', fontsize=14)
 
     ax.set_axis_off()
-    plt.show()
+    ax.set_proj_type('ortho')
+    ax.view_init(elev=65, azim=70, roll=160)
+    if save:
+        filename = "/".join(geo_file.split("/")[:-1]) + "/BZ.png"
+        plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    else:
+        plt.show()

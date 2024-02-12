@@ -23,6 +23,7 @@
 import os
 import time
 import BasicAimsOut as bao
+import BasicControl as bc
 from molmass import Formula
 from mins import Species
 import numpy.polynomial.polynomial as poly
@@ -40,7 +41,7 @@ def run_AIMS(directory):
     temp = os.getcwd()
     os.chdir(directory)
     mpirun = "/opt/homebrew/bin/orterun -N 8 "
-    aims_exec = "/Users/jackmorgenstein/FHI-aims/Repository/builds/build_06_09_23/aims.230612.mpi.x"
+    aims_exec = "/Users/jackmorgenstein/FHI-aims/Repositories/FHIaims/builds/aims.231208.mpi.x"
     path = " > aims.out 2>&1"
     command = mpirun + aims_exec + path
     os.system(command)
@@ -332,3 +333,21 @@ def read_BZ_corners(filename):
         temp = [x.replace(",", "") for x in temp]
         ret.append([float(x) for x in temp[0:3]])
     return ret
+
+
+def all_NMR_S_values(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    for direct in all_dir:
+        if os.path.isdir(base + direct):
+            output = base + direct + "/aims.out"
+            print(f'%s\t\t%s' % (direct, bao.NMR_shielding_values(output)))
+
+
+def count_all_bases(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    for direct in all_dir:
+        if os.path.isdir(base + direct):
+            control = base + direct + "/control.in"
+            print(bc.count_gaussian_bases(control))

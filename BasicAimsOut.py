@@ -54,5 +54,15 @@ def analyze_band_path(filepath):
         i += 1
 
 
-
-
+def NMR_shielding_values(output):
+    with open(output, "r") as f:
+        found_NMR = False
+        results = []
+        for line in f:
+            if "NMR shielding tensors" in line:
+                found_NMR = True
+            if "Memory report" in line:
+                found_NMR = False
+            if found_NMR and "Total:" in line:
+                results.append(float(line.split()[1]))
+    return "\t\t".join([str(x) for x in results])

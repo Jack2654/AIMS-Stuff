@@ -8,6 +8,7 @@ import csv
 import matplotlib.pyplot as plt
 import math
 
+
 # code
 
 
@@ -149,7 +150,6 @@ def me344_lab5_plots(readfile):
     print(max(var_3) - min(var_3))
     print(max(var_2) - min(var_2))
 
-
     if False:
         plt.plot(time, var_5)
         plt.ylim([0, 210])
@@ -197,7 +197,7 @@ def me321_team_proj_2(file, color):
     start_index = 0
     for i in range(len(force)):
         if force[i] > 1:
-            start_index = i-1
+            start_index = i - 1
             break
     time = time[start_index:]
     displ = displ[start_index:]
@@ -239,3 +239,146 @@ def allocate_plotting_files(base):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
     all_dir.sort()
     print(all_dir)
+
+
+def TMS_work():
+    folder = "../../FHI-aims/French_NMR/TMS_reference/"
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dir.sort()
+    for direct in all_dir:
+        if os.path.isdir(folder + direct) and "J" not in direct:
+            new_direct = " ../../FHI-aims/French_NMR/TMS_full/" + direct
+            command = "mkdir " + new_direct
+            command2 = "cp " + folder + "u-cc-pVTZ/geometry.in " + new_direct + "/geometry.in"
+            command3 = "cp " + folder + direct + "/control.in " + new_direct + "/control.in"
+            # os.system(command)
+            os.system(command2)
+            os.system(command3)
+
+
+def TMS_work_2():
+    folder = "../../FHI-aims/French_NMR/TMS_non_relativistic/"
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dir.sort()
+    for direct in all_dir:
+        if os.path.isdir(folder + direct):
+            with open(folder + direct + "/control.in", "r") as f:
+                lns = f.readlines()
+            lns_to_be_written = []
+            lns_to_be_written.append("# Tetramethylsilane - Si(CH3)4\n")
+            lns_to_be_written.append("check_stacksize         .false.\n")
+            lns_to_be_written.append("xc                      pbe\n")
+            lns_to_be_written.append("vdw_correction_hirshfeld\n")
+            lns_to_be_written.append("spin                    none\n")
+            lns_to_be_written.append("relativistic            none\n")
+            lns_to_be_written.append("basis_threshold         0.0\n")
+            lns_to_be_written.append("magnetic_response       s\n\n")
+            lns_to_be_written.append("# " + direct + "\n")
+            species_found = False
+            for ln in lns:
+                if "species" in ln and not species_found:
+                    species_found = True
+                if species_found:
+                    lns_to_be_written.append(ln)
+            with open(folder + direct + "/control.in", "w") as f:
+                f.writelines(lns_to_be_written)
+
+
+def TMS_NMR_shielding_plot(data):
+    with open(data, "r") as f:
+        basis_type = []
+        non_rel_norm = []
+        rel_norm = []
+        set_size = []
+        for line in f:
+            temp = line.split()
+            basis_type.append(temp[0])
+            non_rel_norm.append([float(x) for x in temp[5:8]])
+            rel_norm.append([float(x) for x in temp[11:14]])
+            set_size.append(int(temp[14]))
+
+    index_dict = {"FHI-aims09": 0, "NAO-VCC-nZ": 1, "pcS-n": 2, "aug-pcS-n": 3,
+                  "cc-pVnZ": 4, "aug-cc-pVnZ": 5, "cc-pCVnZ": 6, "aug-cc-pCVnZ": 7}
+
+    color_dict = {"FHI-aims09": 'k', "NAO-VCC-nZ": 'b', "pcS-n": 'saddlebrown', "aug-pcS-n": 'c',
+                  "cc-pVnZ": 'y', "aug-cc-pVnZ": 'g', "cc-pCVnZ": 'r', "aug-cc-pCVnZ": 'pink'}
+
+    full_data = [[[], [], [], [], [], [], [], []] for x in range(8)]
+    for i in range(len(basis_type)):
+        if basis_type[i] in index_dict.keys():
+            full_data[index_dict.get(basis_type[i])][0] = basis_type[i]
+            full_data[index_dict.get(basis_type[i])][1].append(set_size[i])
+            full_data[index_dict.get(basis_type[i])][2].append(non_rel_norm[i][0])  # Si non_rel
+            full_data[index_dict.get(basis_type[i])][3].append(non_rel_norm[i][1])  # C non_rel
+            full_data[index_dict.get(basis_type[i])][4].append(non_rel_norm[i][2])  # H non_rel
+            full_data[index_dict.get(basis_type[i])][5].append(rel_norm[i][0])  # Si rel
+            full_data[index_dict.get(basis_type[i])][6].append(rel_norm[i][1])  # C rel
+            full_data[index_dict.get(basis_type[i])][7].append(rel_norm[i][2])  # H rel
+
+    titles = ["Si Non-relativistic", "C Non-relativistic", "H Non-relativistic",
+              "Si Relativistic", "C Relativistic", "H Relativistic"]
+    bounds = [[0.001, 100], [0.006, 20], [0.0001, 3],
+              [20, 300], [2, 30], [1.2, 4]]
+    for i, cur_title in enumerate(titles):
+        for subset in full_data:
+            plt.plot(subset[1], subset[i + 2], color=color_dict.get(subset[0]), label=subset[0])
+            plt.scatter(subset[1], subset[i + 2], color=color_dict.get(subset[0]), label="_none")
+        plt.legend()
+        plt.ylim(bounds[i])
+        plt.xlabel("Basis Set Size")
+        plt.ylabel("error (ppm)")
+        plt.semilogy()
+        plt.title(cur_title)
+        name = "/".join(data.split("/")[:-1]) + "/" + cur_title.replace(" ", "_") + ".png"
+        plt.savefig(name, dpi=1000, bbox_inches='tight', format="png")
+        plt.clf()
+
+
+def visualize_spin_texture_directions():
+    file = "../../FHI-aims/Double_Perovskites/sample_spin_text.in"
+    points = []
+    with open(file, "r") as f:
+        for line in f:
+            temp = line.split()
+            points.append([float(x) for x in temp[2:8]])
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    for point in points:
+        ax.plot([point[0], point[3]],
+                [point[1], point[4]],
+                [point[2], point[5]], 'k')
+    plt.show()
+
+
+def TA_crystal(additive):
+    geo_file = "../../FHI-aims/French_NMR/TA_crystal/geo_full_crystal.in"
+    write_file = "../../FHI-aims/French_NMR/TA_crystal/new_geo" + str(additive) + ".in"
+    N = []
+    H = []
+    C = []
+    lv = []
+    with open(geo_file, "r") as f:
+        for ln in f:
+            if "H" in ln:
+                H.append(ln)
+            elif "C" in ln:
+                C.append(ln)
+            elif "N" in ln:
+                N.append(ln)
+            elif "lattice_vector" in ln:
+                lv.append(ln)
+            else:
+                print(ln.strip())
+
+    with open(write_file, "w") as f:
+        f.writelines(lv)
+        for i, ln in enumerate(N):
+            if (i + additive) % 4 == 0:
+                f.write(ln)
+        for i, ln in enumerate(C):
+            if (i + additive) % 4 == 0:
+                f.write(ln)
+        for i, ln in enumerate(H):
+            if (i + additive) % 4 == 0:
+                f.write(ln)
+

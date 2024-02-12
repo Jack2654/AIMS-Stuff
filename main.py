@@ -1,14 +1,15 @@
 import BasicFunc
+import Geometry
 import OneTimeScripts as ots
 import BasicGeo as bg
 import PlottingTools as pt
 import BasicBandOut as bbo
+import BasicAimsOut as bao
 import BasicControl as bc
 import BasicFunc as bf
 import matplotlib.pyplot as plt
 import math
 import random
-import range_330
 import time
 import numpy as np
 
@@ -136,23 +137,21 @@ for dist in disturbs:
 
 # pt.correlation_plot()
 
-base = "../../FHI-aims/Yi_1_5_D/band_plotting_folder/"
-settings = base + "n_5_experimental/settings_final.in"
-# pt.mulliken_plot(settings, debug=False, quiet=False, save=True)
+base = "../../FHI-aims/Double_Perovskites/real-systems/experimental-bs-selwoz/"
+settings = base + "settings.in"
+# pt.mulliken_plot(settings, debug=False, quiet=False, save=False)
+for i in range(6):
+    band = "band100" + str(i + 1) + ".out"
+    # bbo.band_info(base, band, spin_splitting=True)
 
-folder = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/"
-elements = ["C", "F", "H", "I", "N", "Pb"]
-files = []
-for elem in elements:
-    temp = folder + elem + "_l_proj_dos_raw.dat"
-    files.append(temp)
-# pt.dos_plot(files, shift=6.29, limits=[-1, 4], save=True)
+base = "../../FHI-aims/French_NMR/TA_construction/"
+one = base + "one.in"
+two = base + "two.in"
+three = base + "three.in"
+temp = base + "temp.in"
+# bg.rotate(two, three, 2*math.pi/3, np.array([0, 0, 1]))
+# Geometry.combine(one, two, temp, 27, 37)
+# Geometry.combine(temp, three, temp, 64, 37)
+# bg.recenter(temp, temp, 1, 0, 0, 0)
 
-corner_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/BZ_corners.in"
-corners = np.asarray(bf.read_BZ_corners(corner_file))
-adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
-             [], [9, 10], [11], [11], []]
-pathway = [[0, 0, 0, 0, 0.50, 0]]
-names = [['Γ', 'Z']]
-geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/geometry.in"
-pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names)
+

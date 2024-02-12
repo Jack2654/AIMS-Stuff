@@ -143,9 +143,9 @@ def combine(file1, file2, writefile, index1, index2):
     with open(file2, "r") as f:
         i = 1
         for ln in f:
-            if not (i == index2):
+            if not (i == index2) and "atom" in ln:
                 lv.append(ln)
-            i += 1
+                i += 1
     with open(writefile, "w") as f:
         f.writelines(lv)
 

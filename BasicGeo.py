@@ -139,7 +139,8 @@ def rotate(filepath, writepath, theta, axis):
     at = atoms(filepath)
     lv = lattice_vectors(filepath)
     with open(writepath, "w") as f:
-        f.writelines(lv)
+        lats = ["lattice_vector " + " ".join([str(y) for y in x]) + "\n" for x in lv]
+        f.writelines(lats)
         for i in at:
             temp = i[5:].split()
             p1 = float(temp[0]), float(temp[1]), float(temp[2])

@@ -122,3 +122,46 @@ def write_species(control_file, geo_file, species_folder):
             with open(spec, "r") as g:
                 info = g.readlines()
             f.writelines(info)
+
+
+def count_gaussian_bases(file):
+    gauss_counts = {}
+    gauss_count = -1
+    nao_counts = {}
+    nao_count = -1
+    cur_spec = "X"
+    include_nao = True
+
+    with open(file, "r") as f:
+        for line in f:
+            if "include_min_basis" in line and ".false." in line:
+                include_nao = False
+            if "species" in line and "#" not in line:
+                gauss_count = 0
+                nao_count = 0
+                cur_spec = line.split()[1]
+                gauss_counts.update({cur_spec: 0})
+                nao_counts.update({cur_spec: 0})
+            if len(line.strip()) > 0:
+                if "#" not in line.split()[0]:
+                    if gauss_count > -1 and "gaussian" in line:
+                        gauss_count += int(line.split()[2])
+                        gauss_counts.update({cur_spec: gauss_count})
+                    if nao_count > -1 and "valence" in line:
+                        nao_count += 1
+                        nao_counts.update({cur_spec: nao_count})
+                    if nao_count > -1 and "hydro" in line:
+                        nao_count += 1
+                        nao_counts.update({cur_spec: nao_count})
+                    if nao_count > -1 and "ionic" in line:
+                        nao_count += 1
+                        nao_counts.update({cur_spec: nao_count})
+
+    res = []
+    for key in gauss_counts.keys():
+        if include_nao:
+            temp = gauss_counts.get(key) + nao_counts.get(key)
+        else:
+            temp = gauss_counts.get(key)
+        res.append(temp)
+    return "\t".join([str(x) for x in res])
