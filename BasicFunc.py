@@ -40,8 +40,8 @@ def run_AIMS(directory):
         print("Bad path given to run_AIMS" + directory + "control.in")
     temp = os.getcwd()
     os.chdir(directory)
-    mpirun = "/opt/homebrew/bin/orterun -N 8 "
-    aims_exec = "/Users/jackmorgenstein/FHI-aims/Repositories/FHIaims/builds/aims.231208.mpi.x"
+    mpirun = "/opt/homebrew/bin/mpirun -N 8 "
+    aims_exec = "/Users/jackmorgenstein/FHI-aims/Repositories/FHIaims/new_build/aims.240206.mpi.x"
     path = " > aims.out 2>&1"
     command = mpirun + aims_exec + path
     os.system(command)

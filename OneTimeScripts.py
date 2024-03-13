@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import csv
 import matplotlib.pyplot as plt
 import math
+import BasicAimsOut as bao
+from scipy import interpolate
+import numpy as np
+
 
 
 # code
@@ -381,4 +385,163 @@ def TA_crystal(additive):
         for i, ln in enumerate(H):
             if (i + additive) % 4 == 0:
                 f.write(ln)
+
+
+# computes hybridization of m=4, n=6 system
+def hybridization():
+    folder = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/"
+    k_point = []
+    found = False
+    with open(folder + " bandmlk1001.out", "r") as f:
+        for ln in f:
+            if "k point number:   101" in ln:
+                found = True
+            if found and ("4952" in ln or "4953" in ln):
+                k_point.append(ln)
+    with open(folder + "hybrid_check.out", "w") as f:
+        f.writelines(k_point)
+
+
+def set_up_dissociation_curves(folder, xc, distances):
+    for distance in distances:
+        current = folder + str(distance)
+        os.mkdir(current)
+        default_path = "~/FHI-aims/Repositories/FHIaims/species_defaults/defaults_2020/tight/05_B_default"
+        with open(current + "/geometry.in", "w") as f:
+            f.write("atom 0 0 0 B\n")
+            f.write("initial_moment 1\n")
+            f.write("atom 0 0 " + str(distance) + " B\n")
+            f.write("initial_moment -1")
+        with open(current + "/control.in", "w") as f:
+            if xc == "pbe_ts":
+                print("PBE+TS detected")
+                f.write("xc pbe\n")
+                f.write("vdw_correction_hirshfeld_alkali\n")
+            else:
+                f.write("xc " + xc + "\n")
+            f.write("relativistic atomic_zora scalar\n")
+            f.write("spin collinear\n")
+            f.write("check_stacksize .false.\n")
+            f.write("sc_accuracy_rho 0.0001\n")
+        os.system("cat " + default_path + " >> " + current + "/control.in")
+
+
+def plot_dissociation_curves():
+    distances = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.85, 1.9, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0]
+    folder = "../../Documents/23-24/ME511/In_Class/Ex_1/"
+    pw_lda = folder + "pw_lda/"
+    pbe = folder + "pbe/"
+    pbe_ts = folder + "pbe_ts/"
+
+    # reference energies
+    ref_pw_lda = bao.find_total_energy(pw_lda + "free_x_fill/aims.out")
+    ref_pbe = bao.find_total_energy(pbe + "free_x_fill/aims.out")
+    ref_pbe_ts = bao.find_total_energy(pbe_ts + "free_x_fill/aims.out")
+    print(ref_pw_lda, ref_pbe, ref_pbe_ts)
+
+    # total energies
+    pw_lda_energies = []
+    pbe_energies = []
+    pbe_ts_energies = []
+    for distance in distances:
+        pw_lda_energies.append(float(bao.find_total_energy(pw_lda + "curve/" + str(distance) + "/aims.out")))
+        pbe_energies.append(float(bao.find_total_energy(pbe + "curve/" + str(distance) + "/aims.out")))
+        pbe_ts_energies.append(float(bao.find_total_energy(pbe_ts + "curve/" + str(distance) + "/aims.out")))
+
+    # binding energies
+    binding_pw_lda = [x - 2 * float(ref_pw_lda) for x in pw_lda_energies]
+    binding_pbe = [x - 2 * float(ref_pbe) for x in pbe_energies]
+    binding_pbe_ts = [x - 2 * float(ref_pbe_ts) for x in pbe_ts_energies]
+    print("PBE:")
+    print(binding_pbe)
+    print("PBE+TS:")
+    print(binding_pbe_ts)
+
+    # plotting 3 xc
+    spline_pw_lda = interpolate.CubicSpline(distances, binding_pw_lda)
+    spline_pbe = interpolate.CubicSpline(distances, binding_pbe)
+    spline_pbe_ts = interpolate.CubicSpline(distances, binding_pbe_ts)
+    xs = np.arange(1.0, 8.0, 0.01)
+    plt.scatter(distances, binding_pw_lda, label='_nolegend_', color='r')
+    plt.plot(xs, spline_pw_lda(xs), color='r')
+    plt.scatter(distances, binding_pbe, label='_nolegend_', color='b')
+    plt.plot(xs, spline_pbe(xs), color='b')
+    plt.scatter(distances, binding_pbe, label='_nolegend_', color='k')
+    plt.plot(xs, spline_pbe_ts(xs), color='k')
+    plt.xlabel("Intermolecular Distance (Angstroms)")
+    plt.ylabel("Binding Energy (eV)")
+    plt.legend(["pw-lda", "pbe", "pbe+ts"])
+    plt.show()
+
+    # plotting pw-lda / LJ / Morse
+    epsilon = 3.16612
+    sigma = 1.6 / (2 ** (1 / 6))
+    alpha = 1.55
+    LJ_pw_lda = [4 * epsilon * (((sigma / x)) ** 12 - ((sigma / x) ** 6)) for x in xs]
+    morse_pw_lda = [epsilon * ((1 - (math.e ** (alpha * (1.6 - x))))**2 - 1) for x in xs]
+    plt.plot(xs, spline_pw_lda(xs))
+    plt.plot(xs, LJ_pw_lda)
+    plt.plot(xs, morse_pw_lda)
+    plt.xlabel("Intermolecular Distance (Angstroms)")
+    plt.ylabel("Binding Energy (eV)")
+    plt.legend(["pw-lda", "LJ", "Morse"])
+    plt.ylim([-4, 8])
+    # plt.show()
+    plt.clf()
+
+    # plotting pbe / LJ / Morse
+    epsilon = 2.59353
+    sigma = 1.6 / (2 ** (1 / 6))
+    alpha = 1.7
+    LJ_pw_lda = [4 * epsilon * (((sigma / x)) ** 12 - ((sigma / x) ** 6)) for x in xs]
+    morse_pw_lda = [epsilon * ((1 - (math.e ** (alpha * (1.6 - x)))) ** 2 - 1) for x in xs]
+    plt.plot(xs, spline_pbe(xs))
+    plt.plot(xs, LJ_pw_lda)
+    plt.plot(xs, morse_pw_lda)
+    plt.xlabel("Intermolecular Distance (Angstroms)")
+    plt.ylabel("Binding Energy (eV)")
+    plt.legend(["pbe (+ts)", "LJ", "Morse"])
+    plt.ylim([-3, 8])
+    plt.show()
+
+
+def TA_NMR_calculations():
+    base = "../../FHI-aims/French_NMR/NMR/"
+    TA_folder = base + "TAI2_NMR/"
+    TA_geometry = TA_folder + "geometry.in"
+    TA_control = TA_folder + "control.in"
+    TA_submit = TA_folder + "submit.sh"
+    for i in range(62):
+        cur_dir = TA_folder + str(i) + "/"
+        cur_geo = cur_dir + "geometry.in"
+        cur_sub = cur_dir + "submit.sh"
+        command = f'cp %s %scontrol.in' % (TA_control, cur_dir)
+        if not os.path.exists(cur_dir):
+            os.system("mkdir " + cur_dir)
+        os.system(command)
+
+        with open(TA_geometry, "r") as f:
+            ln = f.readlines()
+        with open(cur_geo, "w") as f:
+            count = 0
+            for line in ln:
+                if "H" in line and count == i:
+                    temp = line.split()[:-1]
+                    temp = "\t".join(temp)
+                    temp += "\tH_NAO"
+                    f.write(temp.strip() + "\n")
+                    f.write("magnetic_response\n")
+                else:
+                    f.write(line.strip() + "\n")
+                if "H" in line:
+                    count += 1
+
+        with open(TA_submit, "r") as f:
+            ln = f.readlines()
+        with open(cur_sub, "w") as f:
+            for line in ln:
+                if "name" in line:
+                    f.write("#SBATCH --job-name=TAI2_" + str(i) + "\n")
+                else:
+                    f.write(line)
 

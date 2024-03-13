@@ -12,6 +12,7 @@ import math
 import random
 import time
 import numpy as np
+import os
 
 set = "20"
 base = f'../../FHI-aims/Double_Perovskites/AgBi-Perovskites/ideal/disturbed_positions/python_dist_positions/%s/' % set
@@ -144,14 +145,26 @@ for i in range(6):
     band = "band100" + str(i + 1) + ".out"
     # bbo.band_info(base, band, spin_splitting=True)
 
-base = "../../FHI-aims/French_NMR/TA_construction/"
-one = base + "one.in"
-two = base + "two.in"
-three = base + "three.in"
-temp = base + "temp.in"
-# bg.rotate(two, three, 2*math.pi/3, np.array([0, 0, 1]))
+base = "../../FHI-aims/French_NMR/TA_theoretical/TA_construction/"
+one = base + "one_c2.in"
+two = base + "two_c2.in"
+three = base + "three_c2.in"
+temp = base + "s4.in"
+
 # Geometry.combine(one, two, temp, 27, 37)
-# Geometry.combine(temp, three, temp, 64, 37)
+# Geometry.combine(temp, three, temp, 64, 36)
 # bg.recenter(temp, temp, 1, 0, 0, 0)
 
+# folder = "../../FHI-aims/Yi/S_S_Mixing/R_S/exp_bands_w_restart/"
+folder = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/"
+file = folder + "settings_final.in"
+for i in range(1, 5):
+    band = "band100" + str(i) + ".out"
+    # print(bbo.band_info(folder, band, band_gap=True, spin_splitting=False, verbose=False))
+# pt.mulliken_plot(file, save=True)
 
+# ots.hybridization()
+
+# ots.plot_dissociation_curves()
+
+ots.TA_NMR_calculations()

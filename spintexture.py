@@ -63,11 +63,11 @@ def plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_sh
     plt.ylabel("$k_y$ ($\AA^{-1}$)")
 
     xrange = 0.45
-    yrange = 0.23
+    yrange = 0.45
 
     plt.xlim(-xrange, xrange)
     plt.ylim(-yrange, yrange)
-    plt.title("IJAYUQ VBM (1708)")
+    # plt.title("IJAYUQ VBM (1708)")
     plt.show()
 
 
@@ -83,11 +83,12 @@ def extra_states(full_file, write_file, state):
 
 
 base = "../../FHI-aims/Double_Perovskites/real-systems/spin_textures/"
-# selwoz = base + "selwoz/"
-# state = 750
+selwoz = base + "selwoz/"
+state = 750
 # state = 751
-# output = selwoz + "state" + str(state) + ".dat"
-# extra_states(selwoz + "spin_texture.dat", output, state)
+# state = 752
+output = selwoz + "state" + str(state) + ".dat"
+extra_states(selwoz + "spin_texture.dat", output, state)
 
 # selwuf = base + "selwuf/"
 # state = 750
@@ -95,11 +96,11 @@ base = "../../FHI-aims/Double_Perovskites/real-systems/spin_textures/"
 # output = selwuf + "state" + str(state) + ".dat"
 # extra_states(selwuf + "spin_texture.dat", output, state)
 
-ijayuq = base + "ijayuq/"
-state = 1708
+# ijayuq = base + "ijayuq/"
+# state = 1708
 # state = 1709
-output = ijayuq + "state" + str(state) + ".dat"
-extra_states(ijayuq + "spin_texture.dat", output, state)
+# output = ijayuq + "state" + str(state) + ".dat"
+# extra_states(ijayuq + "spin_texture.dat", output, state)
 
 k_points_1_read, energy_1_read, spins_1_read = read_state(output)
 energy_shift = min(energy_1_read)

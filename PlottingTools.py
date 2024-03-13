@@ -60,6 +60,7 @@ def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
 
 setattr(Axes3D, 'arrow3D', _arrow3D)
 
+
 def mulliken_plot_old(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, substate=0, color_dict={}, labels=0,
                       title="Default Title", eq=False, debug=False, quiet=False):
     ############################################
@@ -395,7 +396,7 @@ def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
     matplotlib.rcParams.update({'font.size': 20})
 
     all_files = [join(filepath, f) for f in listdir(filepath) if isfile(join(filepath, f))]
-    band_files = [f for f in all_files if 'band' in f and f.endswith('.out') and 'bandmlk' not in f]
+    band_files = [f for f in all_files if 'band' in f.split("/")[-1] and f.endswith('.out') and 'bandmlk' not in f]
     band_files.sort()
     band_files = [band_files[x] for x in bands]
     band_mlkfiles = [f for f in all_files if 'bandmlk' in f and f.endswith('.out')]
@@ -571,6 +572,8 @@ def read_band_settings(settings_file, debug=False):
     substate = 0
     eq = False
     mod = 16
+    filepath = "/".join(settings_file.split("/")[:-1])
+    figure_name = filepath + "/" + settings_file.split("/")[-1] + ".png"
     for ln in settings:
         temp = ln.replace("\t", " ").split()
         if len(temp) == 0:
