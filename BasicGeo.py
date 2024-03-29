@@ -243,7 +243,12 @@ def read_geo_for_bands(filepath, color_dict={}, flags=1):
     rlatvec = []
     species_id = {}  # map species to its index in geometry.in: Pb --> 1
 
-    for line in open(filepath + "/geometry.in"):
+    if filepath[-1] == "/":
+        file = filepath + "geometry.in"
+    else:
+        file = filepath + "/geometry.in"
+
+    for line in open(file):
         words = line.strip().split()
         if len(words) == 0:
             continue
@@ -701,3 +706,20 @@ def closest(corner, corners):
                 min_value = temp_dist
                 min_index = count
     return [min_index, second_min_index]
+
+
+# writes new geometry file to desired location where the list of atoms have their species changed to the changed field
+def rename_species(readfile, writefile, indices, original, changed):
+    lv = lattice_vectors(readfile)
+    full_lv = ["lattice_vector " + "\t".join([str(y) for y in x]) + "\n" for x in lv]
+    at = atoms(readfile)
+    at_expanded = [x.split() for x in at]
+    for i, atom in enumerate(at_expanded):
+        if i+1 in indices:
+            if atom[-1] == original:
+                atom[-1] = changed
+            else:
+                print("CHECK YOUR INDEXES!!!")
+    with open(writefile, "w") as f:
+        f.writelines(full_lv)
+        f.writelines(["\t".join(x) + "\n" for x in at_expanded])

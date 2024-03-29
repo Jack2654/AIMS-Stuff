@@ -67,7 +67,11 @@ def read_control_for_bands(filepath, rlatvec, bands, eq=False, debug=False):
     band_len_tot = []
 
     counter = 0
-    for line in open(filepath + "/control.in"):
+    if filepath[-1] == "/":
+        read_path = filepath + "control.in"
+    else:
+        read_path = filepath + "/control.in"
+    for line in open(read_path):
         if line.strip().startswith('output') and "band" in line:
             if counter in bands:
                 words = line.strip().split()

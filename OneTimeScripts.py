@@ -507,12 +507,14 @@ def plot_dissociation_curves():
 
 def TA_NMR_calculations():
     base = "../../FHI-aims/French_NMR/NMR/"
-    TA_folder = base + "TAI2_NMR/"
+    TA_folder = base + "TAI3_NMR/"
     TA_geometry = TA_folder + "geometry.in"
     TA_control = TA_folder + "control.in"
     TA_submit = TA_folder + "submit.sh"
     for i in range(62):
         cur_dir = TA_folder + str(i) + "/"
+        if i < 10:
+            cur_dir = TA_folder + "0" + str(i) + "/"
         cur_geo = cur_dir + "geometry.in"
         cur_sub = cur_dir + "submit.sh"
         command = f'cp %s %scontrol.in' % (TA_control, cur_dir)
@@ -541,7 +543,28 @@ def TA_NMR_calculations():
         with open(cur_sub, "w") as f:
             for line in ln:
                 if "name" in line:
-                    f.write("#SBATCH --job-name=TAI2_" + str(i) + "\n")
+                    f.write("#SBATCH --job-name=TAI3_" + str(i) + "\n")
                 else:
                     f.write(line)
+
+
+# removes MPI errors after "Have a nice day" message in aims.out file
+def aims():
+    folder = "../../FHI-aims/Yi/S_S_Mixing/R_S/exp_bands_w_restart/"
+    file = folder + "aims_unaltered.out"
+    with open(file, "r") as f:
+        lines = f.readlines()
+    file = folder + "aims.out"
+    with open(file, "w") as f:
+        done = False
+        for line in lines:
+            if done:
+                f.write(line)
+                break
+            if "Have a nice day" in line:
+                done = True
+            f.write(line)
+
+
+
 

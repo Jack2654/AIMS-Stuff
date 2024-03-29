@@ -5,7 +5,8 @@
 #               determines whether the calculation in the filepath is complete by searching for "Have a nice day."
 # -> find_total_energy(aims):
 #               determines the total energy of the calculation in the given path
-# ->
+# -> find_shielding(aims):
+#               determines total shielding of the first element in the output file
 # ->
 # ->
 # ->
@@ -32,6 +33,20 @@ def find_total_energy(aims):
             if "| Total energy of" in line:
                 return line.split()[11]
     return "ERROR: no total energy found in" + aims
+
+
+def find_shielding(aims):
+    value = "ERROR"
+    with open(aims, "r") as f:
+        start = False
+        for line in f:
+            if "WELCOME TO MAGNETIC RESPONSE CALCULATIONS" in line:
+                start = True
+            if start:
+                if "Total" in line:
+                    value = float(line.split()[1])
+                    start = False
+    return value
 
 
 def analyze_band_path(filepath):
@@ -66,3 +81,16 @@ def NMR_shielding_values(output):
             if found_NMR and "Total:" in line:
                 results.append(float(line.split()[1]))
     return "\t\t".join([str(x) for x in results])
+
+
+# returns all shielding values found in a given folder
+def all_shieldings(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    data = []
+    for direct in all_dir:
+        if os.path.isdir(base + direct):
+            output = base + direct + "/aims.out"
+            # print(f'%s %f' % (direct, find_shielding(output)))
+            data.append(find_shielding(output))
+    return data

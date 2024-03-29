@@ -1030,21 +1030,26 @@ shifts_bi2[3] = [0, 1, 0]
 corners_bi2 = ()
 center_bi2 =
 
-# BZ plotting code for m=4, n=4 experimental
+# BZ plotting code for m=4, n=4
 corner_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/BZ_corners.in"
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
              [], [9, 10], [11], [11], []]
-pathway = [[0, 0, 0, 0, 0.5, 0],
+pathway_exp = [[0, 0.5, 0, 0, 0, 0],
            [-0.41216031, 0.21398791, 0.67943786, 0, 0, 0],
            [0, 0, 0, 0.41216031, 0.21398791, -0.67943786],
            [0, 0, 0, -0.4358056479, 0, 0.6410465853],
            [0, 0, 0, 0.1899306382, 0, 0.4173119146]]
+pathway_theo = [[-0.000006496415069, 0.5, 0.000006634790866, 0, 0, 0],
+                [-0.42222215, 0.21398549, 0.65800129, 0, 0, 0],
+                [0, 0, 0, 0.42221658, 0.21400477, -0.65799561],
+                [0, 0, 0, -0.4401418105, 0.000001154439359, 0.6215919761],
+                [0, 0, 0, 0.2032369749, 0.00000001405307422, 0.4128421789]]
 names = [['Γ', '1'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_4/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
 
-# BZ plotting code for m=2, n=4 experimental
+# BZ plotting code for m=2, n=4
 corner_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/BZ_corners.in"
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 adjacency = [[1, 4], [3, 5], [0, 6], [2, 7], [5], [7], [4], [6]]
@@ -1053,20 +1058,30 @@ pathway = [[0.5, 0, 0, 0, 0, 0],
            [0, 0, 0, 0.11365615, 0.00140814, -0.5],
            [0, 0, 0, 0, 0, 0.5],
            [0, 0, 0, 0, 0.5, 0]]
+pathway_theo = [[0.5, 0.0000287604, -0.0000011029, 0, 0, 0],
+                [0.111032555, 0.018854093, 0.500001225, 0, 0, 0],
+                [0, 0, 0, 0.111032886, -0.018851353, -0.49999872],
+                [0, 0, 0, 0.0000004035, -0.0000004732, 0.5],
+                [0, 0, 0, -0.0000019468, 0.5, -0.0000000568]]
 names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_2_4/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
 
-# BZ plotting code for m=3, n=3 experimental
+# BZ plotting code for m=3, n=3
 corner_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental/BZ_corners.in"
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
              [], [9, 10], [11], [11], []]
-pathway = [[0, 0.5, 0, 0, 0, 0],
+pathway_exp = [[0, 0.5, 0, 0, 0, 0],
            [0.19182883, -0.20848921, -0.55404977, 0, 0, 0],
            [0, 0, 0, 0.19182883, 0.21647380, -0.55404977],
            [0, 0, 0, -0.4173627635, 0, 0.6175963143],
            [0, 0, 0, 0.2338708863, 0, 0.4341044371]]
+pathway_theo = [[0.0000234202775, 0.5000000062, 0.0001273666518, 0, 0, 0],
+                [0.18908264, -0.209803154, -0.55519596, 0, 0, 0],
+                [0, 0, 0, 0.189102628, 0.216933749, -0.555087256],
+                [0, 0, 0, -0.4075564363, 0.00001701318456, 0.6188502559],
+                [0, 0, 0, 0.2235231191, 0.00002467970504, 0.4348169387]]
 names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
@@ -1085,16 +1100,21 @@ names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
 
-# BZ plotting code for m=4, n=6 experimental
+# BZ plotting code for m=4, n=6
 corner_file = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/BZ_corners.in"
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
              [], [9, 10], [11], [11], []]
-pathway = [[0, 0.5, 0, 0, 0, 0],
+pathway_exp = [[0, 0.5, 0, 0, 0, 0],
            [-0.42151859, 0.21853893, -0.41079894, 0, 0, 0],
            [0, 0, 0, -0.42151859, -0.22182749, -0.41079894],
            [0, 0, 0, 0.3313480044, 0, 0.4298806893],
            [0, 0, 0, -0.08894081792, 0, 0.5188215072]]
+pathway_theo = [[-0.000067637355, 0.5000000056, -0.000120866122, 0, 0, 0],
+                [-0.43131418, 0.21794344, -0.4090992, 0, 0, 0],
+                [0, 0, 0, -0.43125545, -0.21620539, -0.40899426],
+                [0, 0, 0, 0.3390895438, -0.000022592074, 0.4307783116],
+                [0, 0, 0, -0.086977208, -0.000014485761, 0.5177555196]]
 names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=False, setup=False)
@@ -1107,3 +1127,72 @@ for elem in elements:
     temp = folder + elem + "_l_proj_dos_raw.dat"
     files.append(temp)
 # pt.dos_plot(files, shift=6.29, limits=[-1, 4], save=True)
+
+# m=3, n=3 rename
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_3_theoretical/"
+file = folder + "settings_plane.in"
+Pb1_list = (1, 2, 108)
+Pb2_list = (55, 161, 162)
+I1_list = (3, 4, 5, 6, 7, 8, 9, 109, 110, 111, 112, 113, 114, 115)
+I2_list = (56, 57, 58, 59, 60, 61, 62, 163, 164, 165, 166, 167, 168, 169)
+base = folder + "geometry.in"
+new_loc = folder + "../plane_geos/n_3_theoretical/geometry.in"
+bg.rename_species(base, new_loc, Pb1_list, "Pb", "Pb1")
+bg.rename_species(new_loc, new_loc, Pb2_list, "Pb", "Pb2")
+bg.rename_species(new_loc, new_loc, I1_list, "I", "I1")
+bg.rename_species(new_loc, new_loc, I2_list, "I", "I2")
+
+# m=4, n=4 rename
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_4_theoretical/"
+Pb1_list = (1, 2, 7, 8)
+Pb2_list = (3, 4, 5, 6)
+I1_list = (16, 20, 36, 30, 22, 18, 26, 32, 10, 9, 25, 31, 17, 21, 29, 15, 19, 35)
+I2_list = (23, 11, 13, 37, 39, 33, 41, 44, 27, 28, 43, 42, 34, 40, 38, 14, 12, 24)
+base = folder + "geometry.in"
+new_loc = folder + "../plane_geos/n_4_theoretical/geometry.in"
+bg.rename_species(base, new_loc, Pb1_list, "Pb", "Pb1")
+bg.rename_species(new_loc, new_loc, Pb2_list, "Pb", "Pb2")
+bg.rename_species(new_loc, new_loc, I1_list, "I", "I1")
+bg.rename_species(new_loc, new_loc, I2_list, "I", "I2")
+
+# m=4, n=6 rename
+# note Pb1/I1 is 4-wide plane, Pb2/I2 is 6-wide plane
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_4_6_experimental/"
+Pb1_list = (1, 2, 7, 8)
+Pb2_list = (3, 4, 5, 6, 9, 10)
+I1_list = (44, 34, 36, 20, 16, 12, 40, 14, 25, 26, 13, 39, 15, 11, 35, 19, 33, 43)
+I2_list = (21, 37, 52, 18, 32, 24, 48, 28, 30, 50, 54, 42, 46, 45, 41, 49, 53, 27, 29, 47, 23, 31, 17, 38, 51, 22)
+base = folder + "geometry.in"
+new_loc = folder + "../plane_geos/n_4_6_experimental/geometry.in"
+bg.rename_species(base, new_loc, Pb1_list, "Pb", "Pb1")
+bg.rename_species(new_loc, new_loc, Pb2_list, "Pb", "Pb2")
+bg.rename_species(new_loc, new_loc, I1_list, "I", "I1")
+bg.rename_species(new_loc, new_loc, I2_list, "I", "I2")
+
+# m=2, n=4 rename
+# note Pb1/I1 is 2-wide plane, Pb2/I2 is 4-wide plane
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_2_4_theoretical/"
+Pb1_list = (5, 6, 7, 8)
+Pb2_list = (1, 2, 3, 4, 9, 10, 11, 12)
+I1_list = (30, 60, 20, 48, 44, 41, 45, 17, 57, 29, 31, 59, 19, 47, 43, 42, 46, 18, 58, 32)
+I2_list = (25, 13, 37, 33, 21, 65, 49, 61, 53, 64, 56, 68, 52, 24, 36, 40, 16, 28, 26, 14, 38, 22, 34, 66, 50, 62,
+           54, 55, 63, 67, 51, 23, 35, 39, 15, 27)
+base = folder + "geometry.in"
+new_loc = folder + "../plane_geos/n_2_4_theoretical/geometry.in"
+bg.rename_species(base, new_loc, Pb1_list, "Pb", "Pb1")
+bg.rename_species(new_loc, new_loc, Pb2_list, "Pb", "Pb2")
+bg.rename_species(new_loc, new_loc, I1_list, "I", "I1")
+bg.rename_species(new_loc, new_loc, I2_list, "I", "I2")
+
+# m=5, n=5 rename
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_5_experimental/"
+Pb1_list = (82, 83, 245, 246, 247)
+Pb2_list = (1, 2, 165, 163, 164)
+I1_list = (92,  94, 93, 91, 90, 88, 87, 89, 84, 86, 249, 85, 248, 250, 251, 253, 252, 254, 255, 257, 258, 256)
+I2_list = (3,   5,  8,  6,  9,  7,  12, 10, 11, 13, 174, 176, 173, 175, 172, 170, 169, 171, 168, 166, 4, 167)
+base = folder + "geometry.in"
+new_loc = folder + "../plane_geos/n_5_experimental/geometry.in"
+# bg.rename_species(base, new_loc, Pb1_list, "Pb", "Pb1")
+# bg.rename_species(new_loc, new_loc, Pb2_list, "Pb", "Pb2")
+# bg.rename_species(new_loc, new_loc, I1_list, "I", "I1")
+# bg.rename_species(new_loc, new_loc, I2_list, "I", "I2")

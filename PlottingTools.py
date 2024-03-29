@@ -1,11 +1,13 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import math
+import os
 from os import listdir
 from os.path import isfile, join
 import numpy as np
 import BasicGeo as bg
 import BasicControl as bc
+import BasicAimsOut as bao
 import time
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
@@ -268,7 +270,14 @@ def mulliken_plot_old(filepath, filename=0, energyshift=0, ymin=-5, ymax=5, subs
     plt.clf()
 
 
-def dos_plot(files, shift=0, limits=[-10, 10], combine=True, save=False):
+def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Species Projected DOS", filename=None):
+    if limits is None:
+        limits = [-10, 10]
+    all_files = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    files = []
+    for file in all_files:
+        if ("_l_proj_dos.dat" in file) and ("no_soc" not in file):
+            files.append(folder + file)
     fig = plt.gcf()
     fig.set_size_inches(4, 6)
     matplotlib.rc('text', usetex='true')
@@ -295,7 +304,7 @@ def dos_plot(files, shift=0, limits=[-10, 10], combine=True, save=False):
         elements.append(element)
     ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
     plt.ylabel("Energy (eV)")
-    plt.title("Species Projected DOS")
+    plt.title(title)
     if combine:
         total_dos = [0 for x in doses[0]]
         organic_dos = [0 for x in doses[0]]
@@ -312,33 +321,70 @@ def dos_plot(files, shift=0, limits=[-10, 10], combine=True, save=False):
             ax.plot(doses[index], energy, color=colorkey[element], label=element)
     plt.legend(fontsize="15")
     if save:
-        filename = "/".join(files[0].split("/")[:-1]) + "/dos.png"
+        if filename is None:
+            filename = "/".join(files[0].split("/")[:-1]) + "/dos.png"
         plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+        plt.clf()
     else:
         plt.show()
 
 
-def MD_plot(file):
+def MD_plots(file):
     lines = []
     with open(file, "r") as f:
         for ln in f:
             if "#" not in ln:
                 lines.append(ln)
-    times = []
-    temps = []
-    for ln in lines:
-        temp = ln.split()
-        times.append(float(temp[0]))
-        temps.append(float(temp[1]))
+    times = [float(line.split()[0]) for line in lines]
+    temps = [float(line.split()[1]) for line in lines]
+    energies = [float(line.split()[2]) for line in lines]
+    energies = [x - energies[0] for x in energies]
+
+    # temperature over time
     plt.plot(times, temps)
-    plt.plot((0, 5), (150, 150))
     plt.xlabel("Time (ps)")
     plt.ylabel("Temperature (K)")
+    plt.ylim([0, 620])
+    plt.show()
+    plt.clf()
+
+    # energy over time
+    plt.plot(times, energies)
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Change in Energy (eV)")
+    plt.show()
+
+
+def many_MD(folder):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dir.sort()
+    legend = []
+    for direct in all_dir:
+        if os.path.isdir(folder + direct):
+            data = folder + direct + "/MD.dat"
+            lines = []
+            legend.append(direct)
+            with open(data, "r") as f:
+                for ln in f:
+                    if "#" not in ln:
+                        lines.append(ln)
+
+            times = [float(line.split()[0]) for line in lines]
+            temps = [float(line.split()[1]) for line in lines]
+            energies = [float(line.split()[2]) for line in lines]
+
+            plt.plot(times, temps)
+            plt.xlabel("Time (ps)")
+            plt.ylabel("Temperature (K)")
+            # plt.ylabel("Energy (eV)")
+            plt.ylim([0, 620])
+            plt.legend(legend)
+            plt.title("Temperature over time for H5O2 MD")
     plt.show()
 
 
 # should add check that number of labels matches number of bands upfront
-def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
+def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=False):
     ############################################
     # Setup                                    #
     ############################################
@@ -365,8 +411,10 @@ def mulliken_plot(settings_file, debug=False, quiet=False, save=False):
     ############################################
     # geometry.in                              #
     ############################################
-    rlatvec, atoms, species, species_id = bg.read_geo_for_bands(filepath, color_dict, flags)
-
+    if not alt_geo:
+        rlatvec, atoms, species, species_id = bg.read_geo_for_bands(filepath, color_dict, flags)
+    else:
+        rlatvec, atoms, species, species_id = bg.read_geo_for_bands(alt_geo, color_dict, flags)
     ############################################
     # control.in                               #
     ############################################
@@ -788,7 +836,7 @@ def correlation_plot():
 
 
 # noinspection PyTypeChecker
-def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False):
+def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False, filename=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -858,7 +906,51 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
     ax.set_proj_type('ortho')
     ax.view_init(elev=65, azim=70, roll=160)
     if save:
-        filename = "/".join(geo_file.split("/")[:-1]) + "/BZ.png"
+        if filename is None:
+            filename = "/".join(geo_file.split("/")[:-1]) + "/BZ.png"
         plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
     else:
         plt.show()
+    plt.clf()
+
+
+# histograms for NMR calculations
+def NMR_histogram(folders):
+    datas = [bao.all_shieldings(folder) for folder in folders]
+    # TMS reference is 31.1846 ppm
+    datas = [[x - 31.1846 for x in data] for data in datas]
+    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig.set_figheight(6)
+    fig.subplots_adjust(hspace=0)
+
+    axs[0].hist(datas[0], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
+    axs[1].hist(datas[1], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
+    axs[2].hist(datas[2], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
+
+    plt.xlim([-9, 0.5])
+    plt.xticks(range(-9, 1))
+    plt.xlabel("Shieldings (ppm)")
+    axs[0].set_ylabel("TA")
+    axs[1].set_ylabel("TAI")
+    axs[2].set_ylabel("TAI3")
+
+    axs[0].set_yticks([])
+    axs[1].set_yticks([])
+    axs[2].set_yticks([])
+
+    axs[0].grid(axis='x')
+    axs[1].grid(axis='x')
+    axs[2].grid(axis='x')
+
+    axs[0].spines['top'].set_visible(False)
+    axs[0].spines['right'].set_visible(False)
+    axs[0].spines['left'].set_visible(False)
+    axs[0].spines['bottom'].set(linewidth=2)
+    axs[1].spines['top'].set_visible(False)
+    axs[1].spines['right'].set_visible(False)
+    axs[1].spines['left'].set_visible(False)
+    axs[1].spines['bottom'].set(linewidth=2)
+    axs[2].spines['top'].set_visible(False)
+    axs[2].spines['right'].set_visible(False)
+    axs[2].spines['left'].set_visible(False)
+    plt.show()

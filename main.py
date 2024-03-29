@@ -156,15 +156,68 @@ temp = base + "s4.in"
 # bg.recenter(temp, temp, 1, 0, 0, 0)
 
 # folder = "../../FHI-aims/Yi/S_S_Mixing/R_S/exp_bands_w_restart/"
-folder = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/"
-file = folder + "settings_final.in"
+# folder = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/"
+
 for i in range(1, 5):
     band = "band100" + str(i) + ".out"
     # print(bbo.band_info(folder, band, band_gap=True, spin_splitting=False, verbose=False))
-# pt.mulliken_plot(file, save=True)
 
-# ots.hybridization()
+theo = 0
+if not theo:
+    extra = "experimental"
+else:
+    extra = "theoretical"
+folder = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_4_6_" + extra
+file = folder + "/settings_plane.in"
+# pt.mulliken_plot(file, alt_geo=f'%s%s' % (folder, "/../plane_geos/n_4_6_" + extra), save=False)
 
-# ots.plot_dissociation_curves()
 
-ots.TA_NMR_calculations()
+# produce all figures for 1.5D project:
+# settings
+structure = "n_4_6"
+
+
+
+# 3D BZ visuals
+corner_file = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_experimental/BZ_corners.in' % structure
+corners = np.asarray(bf.read_BZ_corners(corner_file))
+names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
+geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/experimental/geometry.in' % structure
+file = f'../../FHI-aims/Yi/Yi_1_5_D/All_Figures/%s/experimental/BZ.png' % structure
+pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_exp, names, save=True, filename=file)
+
+corner_file = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_theoretical/BZ_corners.in' % structure
+corners = np.asarray(bf.read_BZ_corners(corner_file))
+geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/theoretical/geometry.in' % structure
+file = f'../../FHI-aims/Yi/Yi_1_5_D/All_Figures/%s/theoretical/BZ.png' % structure
+pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_theo, names, save=True, filename=file)
+
+# dos_shifts = [2.15, 2.13] # shifts for n=2, m=4
+# dos_shifts = [0.26, 1.3]  # shifts for n=3, m=3
+# dos_shifts = [1.2, 1.25] # shifts for n=4, m=
+# dos_shifts = [1.98, 2.2] # shifts for n=5, m=5
+# dos_shifts = [2.0, 1.85]  # shifts for n=4, m=6
+
+# dos plots
+i = 0
+for model in ["experimental", "theoretical"]:
+    dos_folder = f'../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/%s/' % model
+    file = f'../../FHI-aims/Yi/Yi_1_5_D/All_Figures/%s/%s/dos.png' % (structure, model)
+    title = f'%s %s' % (structure, model)
+    # pt.dos_plot(dos_folder, shift=dos_shifts[i], limits=[-1, 4], save=True, title=title, filename=file)
+    i += 1
+
+# normal band plots
+for model in ["experimental", "theoretical"]:
+    bands_folder = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_%s/' % (structure, model)
+    settings = bands_folder + "settings_final.in"
+    # pt.mulliken_plot(settings, save=True)
+
+# plane projected band plots
+for model in ["experimental", "theoretical"]:
+    bands_folder = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_%s/' % (structure, model)
+    settings = bands_folder + "settings_plane.in"
+    alt_geo = f'%s../plane_geos/%s_%s/' % (bands_folder, structure, model)
+    # pt.mulliken_plot(settings, alt_geo=alt_geo, save=True)
+
+
