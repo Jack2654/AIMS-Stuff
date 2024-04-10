@@ -505,13 +505,14 @@ def plot_dissociation_curves():
     plt.show()
 
 
+# sets up input files for an NMR calculation
 def TA_NMR_calculations():
-    base = "../../FHI-aims/French_NMR/NMR/"
-    TA_folder = base + "TAI3_NMR/"
+    base = "../../FHI-aims/French_NMR/step3/NMR/"
+    TA_folder = base + "I3/"
     TA_geometry = TA_folder + "geometry.in"
     TA_control = TA_folder + "control.in"
     TA_submit = TA_folder + "submit.sh"
-    for i in range(62):
+    for i in range(63):
         cur_dir = TA_folder + str(i) + "/"
         if i < 10:
             cur_dir = TA_folder + "0" + str(i) + "/"
@@ -543,7 +544,7 @@ def TA_NMR_calculations():
         with open(cur_sub, "w") as f:
             for line in ln:
                 if "name" in line:
-                    f.write("#SBATCH --job-name=TAI3_" + str(i) + "\n")
+                    f.write("#SBATCH --job-name=I3_N_" + str(i) + "\n")
                 else:
                     f.write(line)
 
@@ -566,5 +567,64 @@ def aims():
             f.write(line)
 
 
+def plots_for_ME511_ex_2():
+    folder = "../../Documents/23-24/ME511/In_Class/Ex_2/calcs/total_energies/"
+    constants = []
+    energies = []
+    for count, i in enumerate(["bcc", "fcc", "diamond"]):
+        constants.append([])
+        energies.append([])
+        all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder + i + "/"))]
+        all_dir.sort()
+        for dir in all_dir:
+            if os.path.isdir(folder + i + "/" + dir):
+                constants[count].append(float(dir))
+                if i == "diamond":
+                    energies[count].append(float(bao.find_total_energy(folder + i + "/" + dir + "/aims.out"))/2)
+                else:
+                    energies[count].append(float(bao.find_total_energy(folder + i + "/" + dir + "/aims.out")))
+    print(energies)
+    constants = [[y ** 3 for y in x] for x in constants]
+    constants[2] = [x/2 for x in constants[2]]
+    energies = [[y + 7868.877654655 for y in x] for x in energies]
+    print(constants)
+    for x in range(3):
+        plt.plot(constants[x], energies[x])
+    plt.legend(["bcc", "fcc", "diamond"])
+    plt.xlabel("Volume per Atom (Angstroms^3)")
+    plt.ylabel("Cohesive energy per atom (eV)")
+    plt.show()
 
 
+def more_plots_ME511_ex_2():
+    folder = "../../Documents/23-24/ME511/In_Class/Ex_2/calcs/murn/"
+    for y in [f'%sfit_%s.dat' % (folder, x) for x in ["bcc", "fcc", "diamond"]]:
+        volumes = []
+        energies = []
+        with open(y, "r") as f:
+            for line in f:
+                if "#" not in line:
+                    temp=line.split()
+                    volumes.append(float(temp[0]))
+                    energies.append(float(temp[1])+7868.877654655 )
+        plt.plot(volumes, energies)
+        plt.legend(["bcc", "fcc", "diamond"])
+        plt.xlabel("Volume per Atom (Angstroms^3)")
+        plt.ylabel("Cohesive energy per atom (eV)")
+    plt.show()
+
+
+def fix_setting_colors(folder):
+    colors = []
+    with open(folder + "settings_final.in", "r") as f:
+        for line in f.readlines():
+            if "color_dict" in line:
+                colors = "color_dict      Pb1 m Pb2 purple I1 g I2 lightgreen " + " ".join(line.split()[5:]) + "\n"
+    with open(folder + "settings_plane.in", "r") as f:
+        lines = f.readlines()
+    with open(folder + "settings_new_plane.in", "w") as f:
+        for line in lines:
+            if "color" not in line:
+                f.write(line)
+            else:
+                f.write(colors)

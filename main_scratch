@@ -1086,22 +1086,8 @@ names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_3/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
 
-# BZ plotting code for m=5, n=5 experimental
+# BZ plotting code for m=5, n=5
 corner_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/BZ_corners.in"
-corners = np.asarray(bf.read_BZ_corners(corner_file))
-adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
-             [], [9, 10], [11], [11], []]
-pathway = [[0, 0.5, 0, 0, 0, 0],
-           [-0.42151859, 0.21853893, -0.41079894, 0, 0, 0],
-           [0, 0, 0, -0.42151859, -0.22182749, -0.41079894],
-           [0, 0, 0, 0.3313480044, 0, 0.4298806893],
-           [0, 0, 0, -0.08894081792, 0, 0.5188215072]]
-names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
-geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/geometry.in"
-pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
-
-# BZ plotting code for m=4, n=6
-corner_file = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/BZ_corners.in"
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
              [], [9, 10], [11], [11], []]
@@ -1115,6 +1101,20 @@ pathway_theo = [[-0.000067637355, 0.5000000056, -0.000120866122, 0, 0, 0],
                 [0, 0, 0, -0.43125545, -0.21620539, -0.40899426],
                 [0, 0, 0, 0.3390895438, -0.000022592074, 0.4307783116],
                 [0, 0, 0, -0.086977208, -0.000014485761, 0.5177555196]]
+names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
+geo_file = "../../FHI-aims/Yi_1_5_D/Results/New_Results/n_5/experimental/geometry.in"
+pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=True)
+
+# BZ plotting code for m=4, n=6
+corner_file = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/BZ_corners.in"
+corners = np.asarray(bf.read_BZ_corners(corner_file))
+adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
+             [], [9, 10], [11], [11], []]
+pathway = [[0, 0.5, 0, 0, 0, 0],
+           [-0.42151859, 0.21853893, -0.41079894, 0, 0, 0],
+           [0, 0, 0, -0.42151859, -0.22182749, -0.41079894],
+           [0, 0, 0, 0.3313480044, 0, 0.4298806893],
+           [0, 0, 0, -0.08894081792, 0, 0.5188215072]]
 names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
 geo_file = "../../FHI-aims/Yi/Yi_1_5_D/n_4_6/bands/experimental/geometry.in"
 pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, save=False, setup=False)

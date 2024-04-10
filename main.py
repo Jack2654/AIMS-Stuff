@@ -176,21 +176,34 @@ file = folder + "/settings_plane.in"
 # settings
 structure = "n_4_6"
 
-
+adjacency = [[1, 6, 8], [7, 9], [3, 4, 10], [5, 11], [6, 5], [7], [7],
+             [], [9, 10], [11], [11], []]
+pathway_exp = [[0, 0.5, 0, 0, 0, 0],
+           [-0.42151859, 0.21853893, -0.41079894, 0, 0, 0],
+           [0, 0, 0, -0.42151859, -0.22182749, -0.41079894],
+           [0, 0, 0, 0.3313480044, 0, 0.4298806893],
+           [0, 0, 0, -0.08894081792, 0, 0.5188215072]]
+pathway_theo = [[0.00000428, 0.5, 0.00000048, 0, 0, 0],
+                [0.34988313, -0.19177205, 0.39008527, 0, 0, 0],
+                [0, 0, 0, -0.34988641, -0.19177503, -0.39008563],
+                [0, 0, 0, 0.40586882, -0.01768898, 0.37249828],
+                [0, 0, 0, -0.07563055, 0.00000003, 0.52375896]]
 
 # 3D BZ visuals
 corner_file = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_experimental/BZ_corners.in' % structure
 corners = np.asarray(bf.read_BZ_corners(corner_file))
 names = [['1', 'Γ'], ['2', 'Γ'], ['Γ', '3'], ['Γ', '4'], ['Γ', '5']]
-geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/experimental/geometry.in' % structure
+# geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/experimental/geometry.in' % structure
+geo_file = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_4_6_experimental/geometry.in"
 file = f'../../FHI-aims/Yi/Yi_1_5_D/All_Figures/%s/experimental/BZ.png' % structure
-pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_exp, names, save=True, filename=file)
+# pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_exp, names, save=True, filename=file)
 
 corner_file = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s_theoretical/BZ_corners.in' % structure
 corners = np.asarray(bf.read_BZ_corners(corner_file))
-geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/theoretical/geometry.in' % structure
+# geo_file = f'../../FHI-aims/Yi/Yi_1_5_D/Results/New_Results/%s/theoretical/geometry.in' % structure
+geo_file = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_4_6_theoretical/geometry.in"
 file = f'../../FHI-aims/Yi/Yi_1_5_D/All_Figures/%s/theoretical/BZ.png' % structure
-pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_theo, names, save=True, filename=file)
+# pt.plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway_theo, names, save=True, filename=file)
 
 # dos_shifts = [2.15, 2.13] # shifts for n=2, m=4
 # dos_shifts = [0.26, 1.3]  # shifts for n=3, m=3
@@ -220,4 +233,21 @@ for model in ["experimental", "theoretical"]:
     alt_geo = f'%s../plane_geos/%s_%s/' % (bands_folder, structure, model)
     # pt.mulliken_plot(settings, alt_geo=alt_geo, save=True)
 
+# ots.more_plots_ME511_ex_2()
 
+# pt.MD_plots("../../FHI-aims/French_NMR/step3/MD/I/MD.dat")
+
+base = "../../FHI-aims/French_NMR/"
+TA = base + "NMR_results/TA_NMR/"
+TA_I_3 = base + "step3/NMR/110/"
+TA_I3_3 = base + "step3/NMR/I3/"
+folders = [TA, TA_I_3, TA_I3_3]
+# pt.NMR_histogram(folders)
+
+structures = ["n_3_", "n_4_", "n_5_", "n_4_6_"]
+for structure in structures:
+    for model in ["theoretical", "experimental"]:
+        bands_folder = f'../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/%s%s/' % (structure, model)
+        settings = bands_folder + "settings_new_plane.in"
+        alt_geo = f'%s../plane_geos/%s%s/' % (bands_folder, structure, model)
+        pt.mulliken_plot(settings, alt_geo=alt_geo, save=True)

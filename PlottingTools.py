@@ -931,8 +931,8 @@ def NMR_histogram(folders):
     plt.xticks(range(-9, 1))
     plt.xlabel("Shieldings (ppm)")
     axs[0].set_ylabel("TA")
-    axs[1].set_ylabel("TAI")
-    axs[2].set_ylabel("TAI3")
+    axs[1].set_ylabel("TA(I)3")
+    axs[2].set_ylabel("TA(I3)3")
 
     axs[0].set_yticks([])
     axs[1].set_yticks([])
