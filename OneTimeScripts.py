@@ -338,22 +338,6 @@ def TMS_NMR_shielding_plot(data):
         plt.clf()
 
 
-def visualize_spin_texture_directions():
-    file = "../../FHI-aims/Double_Perovskites/sample_spin_text.in"
-    points = []
-    with open(file, "r") as f:
-        for line in f:
-            temp = line.split()
-            points.append([float(x) for x in temp[2:8]])
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    for point in points:
-        ax.plot([point[0], point[3]],
-                [point[1], point[4]],
-                [point[2], point[5]], 'k')
-    plt.show()
-
-
 def TA_crystal(additive):
     geo_file = "../../FHI-aims/French_NMR/TA_crystal/geo_full_crystal.in"
     write_file = "../../FHI-aims/French_NMR/TA_crystal/new_geo" + str(additive) + ".in"
@@ -619,7 +603,7 @@ def fix_setting_colors(folder):
     with open(folder + "settings_final.in", "r") as f:
         for line in f.readlines():
             if "color_dict" in line:
-                colors = "color_dict      Pb1 m Pb2 purple I1 g I2 lightgreen " + " ".join(line.split()[5:]) + "\n"
+                colors = "color_dict      Pb1 pink Pb2 purple I1 lightgreen I2 g I olive " + " ".join(line.split()[5:]) + "\n"
     with open(folder + "settings_plane.in", "r") as f:
         lines = f.readlines()
     with open(folder + "settings_new_plane.in", "w") as f:
@@ -628,3 +612,79 @@ def fix_setting_colors(folder):
                 f.write(line)
             else:
                 f.write(colors)
+
+
+def ethanol_j_plots():
+    # single ethanol per calculation
+    # eth_1_shieldings = [30.29, 30.03, 30.04, 27.19, 27.19, 30.72]
+    # eth_2_shieldings = [30.53, 29.90, 30.04, 27.28, 27.75, 31.26]
+
+    # two ethanol in one geometry.in file
+    # eth_1_shieldings = [30.19812, 29.91503, 29.5112, 27.04088, 27.12101, 30.23023]
+    eth_2_shieldings = [30.19076, 29.93676, 30.0316, 27.23627, 27.24359, 26.76537]
+
+    dmf_shieldings = [28.52817, 27.8061, 28.52855, 29.1626, 29.16272, 26.45794, 22.81182]
+    eth_1_shieldings = dmf_shieldings
+
+    eth_1_shieldings = [x - 31.1846 for x in eth_1_shieldings]
+    eth_2_shieldings = [x - 31.1846 for x in eth_2_shieldings]
+    plt.hist(eth_1_shieldings, bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.5)
+    plt.xlim([-9, 0])
+    plt.xlabel("ppm")
+    plt.show()
+    plt.clf()
+    plt.hist(eth_2_shieldings, bins=[-9 + 0.15 * x for x in range(100)], density=True, rwidth=0.5)
+    plt.xlim([-5, 0])
+    plt.xlabel("ppm")
+    plt.show()
+    plt.clf()
+
+    eth_1_j = [21.4764, 21.3296, 21.3291, 21.5257]
+    eth_2_j = [21.4216, 21.3043, 21.3439, 22.0600]
+    plt.hist(eth_1_j, bins=[20 + 0.15 * x for x in range(100)], density=True, rwidth=0.5)
+    plt.xlim([21, 22.5])
+    plt.xlabel("Hz")
+    plt.show()
+    plt.clf()
+    plt.hist(eth_2_j, bins=[20 + 0.15 * x for x in range(100)], density=True, rwidth=0.5)
+    plt.xlim([21, 22.5])
+    plt.xlabel("Hz")
+    plt.show()
+    plt.clf()
+
+
+def add_magnetic_response(file, write):
+    with open(file, "r") as f:
+        lines = f.readlines()
+    with open(write, "w") as f:
+        for line in lines:
+            f.write(line)
+            if "atom" in line and "H" in line:
+                f.write("magnetic_response\n")
+
+
+# creates magnetic response calculations from MD outputs for DMF-d7
+def make_MD_DMF(base_read, base_write):
+    for x in range(12):
+        temp = f'%s-0%5.f.in' % (base_read, x * 100)
+        temp = temp.replace(" ", "0")
+        current = str(x)
+        if len(current) == 1:
+            current = "0" + current
+        new_dir = f'%sShield_%s' % (base_write, str(current))
+        if not os.path.exists(new_dir):
+            os.mkdir(new_dir)
+        command = f'cp %scontrol.in %s' % (base_write, new_dir)
+        os.system(command)
+        command = f'cp %ssubmit.sh %s' % (base_write, new_dir)
+        os.system(command)
+        atoms = []
+        with open(temp, "r") as f:
+            for line in f.readlines():
+                if "atom" in line:
+                    atoms.append(line)
+        with open(new_dir + "/geometry.in", "w") as f:
+            for line in atoms:
+                f.write(line)
+                if "H" in line:
+                    f.write("magnetic_response\n")

@@ -35,18 +35,16 @@ def find_total_energy(aims):
     return "ERROR: no total energy found in" + aims
 
 
-def find_shielding(aims):
-    value = "ERROR"
-    with open(aims, "r") as f:
-        start = False
-        for line in f:
-            if "WELCOME TO MAGNETIC RESPONSE CALCULATIONS" in line:
-                start = True
-            if start:
-                if "Total" in line:
-                    value = float(line.split()[1])
-                    start = False
-    return value
+def all_energies(base):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(base))]
+    all_dir.sort()
+    data = []
+    for direct in all_dir:
+        if os.path.isdir(base + direct):
+            output = base + direct + "/aims.out"
+            # print(f'%s %f' % (direct, find_shielding(output)))
+            data.append(find_total_energy(output))
+    return data
 
 
 def analyze_band_path(filepath):
@@ -73,14 +71,18 @@ def NMR_shielding_values(output):
     with open(output, "r") as f:
         found_NMR = False
         results = []
+        atoms = []
         for line in f:
             if "NMR shielding tensors" in line:
                 found_NMR = True
             if "Memory report" in line:
                 found_NMR = False
-            if found_NMR and "Total:" in line:
-                results.append(float(line.split()[1]))
-    return "\t\t".join([str(x) for x in results])
+            if found_NMR:
+                if "atom" in line:
+                    atoms.append(int(line.split()[1]))
+                if "Total:" in line:
+                    results.append(float(line.split()[1]))
+    return [(atoms[x], results[x]) for x in range(len(atoms))]
 
 
 # returns all shielding values found in a given folder
@@ -92,5 +94,35 @@ def all_shieldings(base):
         if os.path.isdir(base + direct):
             output = base + direct + "/aims.out"
             # print(f'%s %f' % (direct, find_shielding(output)))
-            data.append(find_shielding(output))
+            data.append(NMR_shielding_values(output)[0])
     return data
+
+
+# creates shieldings.out file
+def create_shield_out(base):
+    with open(base + "aims.out", "r") as f:
+        found_NMR = False
+        values = []
+        temp = [0, 0, 0]
+        for line in f:
+            if "NMR shielding tensors" in line:
+                found_NMR = True
+            if "Memory report" in line:
+                if temp[0]:
+                    values.append(temp)
+                found_NMR = False
+            if found_NMR:
+                if "atom" in line:
+                    if temp[0]:
+                        values.append(temp)
+                        temp = [0, 0, 0]
+                    temp[0] = int(line.split()[1])
+                    temp[1] = line.split()[2].replace("(", "").replace(")", "").replace(":", "")
+                if "Total:" in line:
+                    temp[2] = float(line.split()[1])
+    with open(base + "shieldings.out", "w") as f:
+        f.write("# Computed total shielding values in ppm\n")
+        f.write("# Often results are referenced against TMS (~31.1846ppm)\n")
+        f.write("#\t Atom\t Species\t Shielding (ppm)\n")
+        for val in values:
+            f.write(f'\t %s\t %s\t\t %s\n' % (val[0], val[1], val[2]))

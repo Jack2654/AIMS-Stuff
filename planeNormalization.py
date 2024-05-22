@@ -178,7 +178,9 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
 base = "../../FHI-aims/Bi_substitution/Band_Inputs/"
 f = base + "/geometry.in"
 
-points = [(0.135302, 6.013165, 5.566197)]
+f = "../../FHI-aims/Double_Perovskites/New_Structures/random/bands_look_good/180_old_model/180_old_new_unit/geometry.in"
+
+points = [(0, 1, 0)]
 # points = [(0, 0, 1), (0, -1, 1), (0, 0.5, 1), (1, 0, 0)]
 for point in points:
     generate(f, (point[0], point[1], point[2]), lattice_defined=False, debug=False)

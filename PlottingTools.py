@@ -1,6 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
-import math
+from scipy.stats import norm
 import os
 from os import listdir
 from os.path import isfile, join
@@ -283,7 +283,7 @@ def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Spec
     matplotlib.rc('text', usetex='true')
     matplotlib.rcParams['axes.linewidth'] = 2
     matplotlib.rcParams.update({'font.size': 20})
-    colorkey = {"Pb": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
+    colorkey = {"Pb": "m", "Bi": "m", "I": "g", "N": "b", "C": "y", "H": "c", "F": "k"}
     ax = plt.axes()
     doses = []
     elements = []
@@ -309,7 +309,7 @@ def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Spec
         total_dos = [0 for x in doses[0]]
         organic_dos = [0 for x in doses[0]]
         for index, element in enumerate(elements):
-            if element == "Pb" or element == "I":
+            if element == "Pb" or element == "I" or element == "Bi":
                 ax.plot(doses[index], energy, color=colorkey[element], label=element)
             else:
                 organic_dos = [organic_dos[i] + doses[index][i] for i in range(len(organic_dos))]
@@ -332,7 +332,7 @@ def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Spec
 def MD_plots(file):
     lines = []
     with open(file, "r") as f:
-        for ln in f:
+        for count, ln in enumerate(f):
             if "#" not in ln:
                 lines.append(ln)
     times = [float(line.split()[0]) for line in lines]
@@ -658,6 +658,59 @@ def read_band_settings(settings_file, debug=False):
     return [filepath, figure_name, energyshift, ymin, ymax, substate, color_dict, labels, title, eq, bands, mod]
 
 
+def new_correlation_plot():
+    file = "../../FHI-aims/Double_Perovskites/Figures/correlations/new_IP.txt"
+    with open(file, "r") as f:
+        IP_raw = []
+        for line in f.readlines():
+            if "#" not in line:
+                IP_raw.append(line.split())
+    B_avg = [x[0] for x in IP_raw]
+    DB = [x[1] for x in IP_raw]
+    DE = [x[2] for x in IP_raw]
+    value_dict = {}
+    for count, value in enumerate(B_avg):
+        key = f'%s_%s' % (value, DB[count])
+        if key not in value_dict:
+            value_dict.update({key: [float(DE[count])]})
+        else:
+            arr = value_dict.pop(key)
+            value_dict.update({key: arr + [float(DE[count])]})
+
+    reduced_dict = {}
+    for key in value_dict.keys():
+        reduced_dict.update({key: sum(value_dict[key]) / len(value_dict[key])})
+
+    set_dict = {}
+    for key in reduced_dict.keys():
+        temp = key.split("_")
+        if temp[0] not in set_dict:
+            set_dict.update({temp[0]: [[int(temp[1])], [reduced_dict[key]]]})
+        else:
+            arr = set_dict.pop(temp[0])
+            new_arr = [arr[0] + [int(temp[1])], arr[1] + [reduced_dict[key]]]
+            set_dict.update({temp[0]: new_arr})
+
+    matplotlib.rc('text', usetex='true')
+    color_set = ['rosybrown', 'firebrick', 'red', 'lightsalmon', 'olive', 'green', 'mediumseagreen', 'lime',
+                 'teal', 'darkturquoise', 'cyan', 'royalblue', 'rebeccapurple', 'blueviolet', 'fuchsia', 'orchid']
+    i = 0
+    print(set_dict)
+    for key in set_dict:
+        current = set_dict[key]
+        if len(current[0]) == 1:
+            plt.plot(current[0], current[1], 'o', color='k', label="_")
+        else:
+            plt.plot(current[0], current[1], 'o', color=color_set[i], label=key)
+            a, b = np.polyfit(current[0], current[1], 1)
+            plt.plot(current[0], [a * x + b for x in current[0]], color=color_set[i], label="_")
+            i += 1
+    plt.ylabel('$\Delta E\pm$ (eV)')
+    plt.xlabel(r'$|\Delta\beta|$')
+    plt.legend()
+    plt.show()
+
+
 def correlation_plot():
     folder = "../../FHI-aims/Double_Perovskites/Figures/correlations/"
 
@@ -716,12 +769,13 @@ def correlation_plot():
 
     matplotlib.rc('text', usetex='true')
 
-    fig = plt.figure(figsize=(15, 8))
-    gs = fig.add_gridspec(4, 4, hspace=0.2, wspace=0.1)
-    axs = gs.subplots(sharey='row')
+    # fig = plt.figure(figsize=(15, 8))
+    # gs = fig.add_gridspec(4, 4, hspace=0.2, wspace=0.1)
+    # axs = gs.subplots(sharey='row')
 
     msize = 4
     alph = 0.7
+    # these seem to be cases of positive delta beta, negative delta beta, all, and then all while split
     if False:
         start1 = 0
         end1 = 5
@@ -740,7 +794,7 @@ def correlation_plot():
         end3 = 27
         start4 = 31
         end4 = 36
-    else:
+    elif False:
         start1 = 0
         end1 = 9
         start2 = 9
@@ -749,6 +803,65 @@ def correlation_plot():
         end3 = 27
         start4 = 27
         end4 = 36
+    else:
+        start1 = 0
+        end1 = 5
+        start2 = 9
+        end2 = 14
+        start3 = 18
+        end3 = 23
+        start4 = 27
+        end4 = 32
+
+        # plt.plot(DB_IP[start1:end1], SS_2_IP[start1:end1], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start2:end2], SS_2_IP[start2:end2], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start3:end3], SS_2_IP[start3:end3], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start4:end4], SS_2_IP[start4:end4], 'o', color='r', markersize=msize, alpha=alph)
+        # temp_domain = DB_IP[start1:end1] + DB_IP[start2:end2] + DB_IP[start3:end3] + DB_IP[start4:end4]
+        # temp_range = SS_2_IP[start1:end1] + SS_2_IP[start2:end2] + SS_2_IP[start3:end3] + SS_2_IP[start4:end4]
+
+        SS = [max([SS_1_IP[i], SS_2_IP[i], SS_3_IP[i], SS_4_IP[i], SS_5_IP[i], SS_6_IP[i]]) for i in
+              range(len(SS_1_IP))]
+
+        start = start4
+        end = end4
+
+        plt.plot(DB_IP[start:end], SS[start:end], 'o', color='r', markersize=msize, alpha=alph, label="_")
+        temp_domain = DB_IP[start:end]
+        temp_range = SS[start:end]
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        plt.plot(temp_domain, [a * x + b for x in temp_domain], color='r', label="negative")
+
+        start1 = 4
+        end1 = 9
+        start2 = 13
+        end2 = 18
+        start3 = 22
+        end3 = 27
+        start4 = 31
+        end4 = 36
+
+        start = start4
+        end = end4
+
+        # plt.plot(DB_IP[start1:end1], SS_2_IP[start1:end1], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start2:end2], SS_2_IP[start2:end2], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start3:end3], SS_2_IP[start3:end3], 'o', color='r', markersize=msize, alpha=alph)
+        # plt.plot(DB_IP[start4:end4], SS_2_IP[start4:end4], 'o', color='r', markersize=msize, alpha=alph)
+        # temp_domain = DB_IP[start1:end1] + DB_IP[start2:end2] + DB_IP[start3:end3] + DB_IP[start4:end4]
+        # temp_range = SS_2_IP[start1:end1] + SS_2_IP[start2:end2] + SS_2_IP[start3:end3] + SS_2_IP[start4:end4]
+
+        plt.plot(DB_IP[start:end], SS[start:end], 'o', color='b', markersize=msize, alpha=alph, label="_")
+        temp_domain = DB_IP[start:end]
+        temp_range = SS[start:end]
+        a, b = np.polyfit(temp_domain, temp_range, 1)
+        plt.plot(temp_domain, [a * x + b for x in temp_domain], color='b', label="positive")
+        plt.ylabel('$\Delta E\pm$ (eV)')
+        plt.xlabel(r'$|\Delta\beta|$')
+        plt.title(r'Base Structure: $150^{\circ}$')
+        plt.legend()
+        plt.ylim([0, 0.20])
+        plt.show()
 
     # IP graphs
     color_set = ['rosybrown', 'firebrick', 'red', 'lightsalmon']
@@ -831,12 +944,13 @@ def correlation_plot():
     axs[3, 0].set(ylabel='$\Delta E\pm$ (eV)')
 
     filename = "../../FHI-aims/Double_Perovskites/Figures/images/fig4_all.png"
-    plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
-    # plt.show()
+    # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+    plt.show()
 
 
 # noinspection PyTypeChecker
-def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False, filename=None):
+def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False,
+                                      filename=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -899,7 +1013,8 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
             ax.text(0.75 * recip[0] + x_offset, 0.75 * recip[1] + y_offset, 0.75 * recip[2] + z_offset, recip_labels[i],
                     color='k', fontsize=14)
         else:
-            ax.text(0.75 * recip[0] - 0.3 * x_offset, 0.75 * recip[1] + y_offset, 0.75 * recip[2] + z_offset, recip_labels[i],
+            ax.text(0.75 * recip[0] - 0.3 * x_offset, 0.75 * recip[1] + y_offset, 0.75 * recip[2] + z_offset,
+                    recip_labels[i],
                     color='k', fontsize=14)
 
     ax.set_axis_off()
@@ -923,9 +1038,9 @@ def NMR_histogram(folders):
     fig.set_figheight(6)
     fig.subplots_adjust(hspace=0)
 
-    axs[0].hist(datas[0], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
-    axs[1].hist(datas[1], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
-    axs[2].hist(datas[2], bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.8)
+    axs[0].hist(datas[0], bins=[-9 + 0.15 * x for x in range(100)], density=True, rwidth=0.8)
+    axs[1].hist(datas[1], bins=[-9 + 0.15 * x for x in range(100)], density=True, rwidth=0.8)
+    axs[2].hist(datas[2], bins=[-9 + 0.15 * x for x in range(100)], density=True, rwidth=0.8)
 
     plt.xlim([-9, 0.5])
     plt.xticks(range(-9, 1))
@@ -953,4 +1068,108 @@ def NMR_histogram(folders):
     axs[2].spines['top'].set_visible(False)
     axs[2].spines['right'].set_visible(False)
     axs[2].spines['left'].set_visible(False)
+    plt.show()
+
+
+def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.05):
+    shieldings = bao.NMR_shielding_values(folder + "aims.out")
+    # shieldings = bao.all_shieldings(folder)
+
+    atoms = [x[0] for x in shieldings]
+    shields = [x[1] for x in shieldings]
+    x_range = np.arange(min(shields) - 31.18460 - .2, max(shields) - 31.1846 + 0.2, 0.01)
+    x_range = np.arange(-9.5, 0.5, 0.01)
+
+    if atom_dict is None:
+        atom_dict = [atoms]
+
+    total = [0 for x in x_range]
+    if not color_dict:
+        color_dict = ['r', 'c', 'b', 'g']
+    for count, atom_set in enumerate(atom_dict):
+        y_values = [0 for x in x_range]
+        centers = []
+        for pair in shieldings:
+            if pair[0] in atom_set:
+                if not average:
+                    temp = [norm.pdf(x, pair[1] - 31.1846, width) for x in x_range]
+                    total = [total[x] + temp[x] for x in range(len(temp))]
+                    y_values = [y_values[x] + temp[x] for x in range(len(temp))]
+                else:
+                    centers.append(pair[1] - 31.1846)
+        if average:
+            val = sum(centers) / len(centers)
+            temp = [norm.pdf(x, val, width) for x in x_range]
+            total = [total[x] + temp[x] for x in range(len(temp))]
+            temp = [len(centers) * x for x in temp]
+            y_values = [y_values[x] + temp[x] for x in range(len(temp))]
+        plt.plot(x_range, y_values, color=color_dict[count])
+    # plt.fill_between(x_range, total, 0, color='k', alpha=0.25)
+    plt.plot(x_range, [0 for x in x_range], color='k')
+    plt.xticks([x for x in range(-10, 1)])
+    plt.yticks([])
+    plt.xlim([-9.5, 0.5])
+    # plt.ylim([0, 100])
+    plt.xlabel("ppm")
+    plt.show()
+
+
+def NMR_average(folder, atom_dict, color_dict=None):
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dir.sort()
+    data = {}
+    for direct in all_dir:
+        if os.path.isdir(folder + direct):
+            shields = folder + direct + "/shieldings.out"
+            if not os.path.exists(shields):
+                bao.create_shield_out(folder + direct + "/")
+            with open(shields, "r") as f:
+                for line in f.readlines():
+                    if "#" not in line:
+                        temp = line.split()
+                        if int(temp[0]) not in data:
+                            data.update({int(temp[0]): [float(temp[2])]})
+                        else:
+                            data[int(temp[0])].append(float(temp[2]))
+    for key in data:
+        data[key] = sum(data[key]) / len(data[key])
+
+    x_range = np.arange(-9.5, 0.5, 0.001)
+    if not color_dict:
+        color_dict = ['r', 'c', 'b', 'g']
+
+    for count, atom_set in enumerate(atom_dict):
+        y_values = [0 for x in x_range]
+        centers = []
+        for atom in atom_set:
+            centers.append(data[atom])
+        center = sum(centers) / len(centers)
+        temp = [norm.pdf(x, center - 31.1846, 0.005) for x in x_range]
+        temp = [len(centers) * x for x in temp]
+        y_values = [y_values[x] + temp[x] for x in range(len(temp))]
+        plt.plot(x_range, y_values, color=color_dict[count])
+    plt.plot(x_range, [0 for x in x_range], color='k')
+    plt.xticks([x for x in range(-10, 1)])
+    plt.yticks([])
+    plt.xlim([-9.5, 0.5])
+    # plt.ylim([0, 100])
+    plt.xlabel("ppm")
+    plt.show()
+
+
+
+def visualize_spin_texture_directions(file):
+    points = []
+    with open(file, "r") as f:
+        for line in f:
+            if "band_mulliken" in line:
+                temp = line.split()
+                points.append([float(x) for x in temp[2:8]])
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    print(points)
+    for point in points:
+        ax.plot([point[0], point[3]],
+                [point[1], point[4]],
+                [point[2], point[5]], 'k')
     plt.show()

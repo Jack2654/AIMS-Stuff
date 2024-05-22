@@ -62,6 +62,8 @@ def run_all(base, ignore=False):
                 current = time.time()
                 run_AIMS(directory + "/")
                 print("Completed calculation for " + directory + " in " + str(time.time() - current) + " seconds")
+                if not bao.calc_complete(directory + "/aims.out"):
+                    print("Calculation finished abnormally, check outputs")
 
 
 def mass(element):

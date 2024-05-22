@@ -169,3 +169,22 @@ def count_gaussian_bases(file):
             temp = gauss_counts.get(key)
         res.append(temp)
     return "\t".join([str(x) for x in res])
+
+
+def recip_to_real(folder):
+    control = folder + "control.in"
+    geometry = folder + "geometry.in"
+    rv = bg.reciprocal_vectors(geometry)
+    bands = []
+    with open(control, "r") as f:
+        for line in f:
+            if "band" in line:
+                if len(line.split()) == 11:
+                    temp = line.split()[2:8]
+                    bands.append([float(x) for x in temp])
+    for band in bands:
+        direction = [0.0, 0.0, 0.0]
+        for count, elem in enumerate(direction):
+            direction[count] += rv[0][count] * band[0]
+        print(direction)
+
