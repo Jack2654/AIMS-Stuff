@@ -13,43 +13,53 @@ import random
 import time
 import numpy as np
 import os
+import Methods2024 as M24
+
+options = ["180/", "170/", "160/", "150/", "150_low_Cs/"]
+for opt in options:
+    folder = "../../FHI-aims/Double_Perovskites/New_Structures/base_structures/bands/" + opt
+    # print(opt)
+    # bbo.band_info(folder, "band1001.out", band_gap=True)
+    # pt.mulliken_plot(folder + "settings.in", debug=False, quiet=False, save=False)
+
+base_angle = 150
+angles = [0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]
+directories = ["00.0/", "02.5/", "05.0/", "07.5/", "10.0/", "12.5/", "15.0/", "17.5/", "20.0/"]
+base = "../../FHI-aims/Double_Perovskites/New_Structures/base_structures/" + str(base_angle) + ".in"
+for count, angle in enumerate(angles):
+    continue
+    folder = "../../FHI-aims/Double_Perovskites/New_Structures/bands/" + str(base_angle) + "/" + directories[count]
+    print(folder)
+    print(bbo.band_info(folder, "band1001.out", spin_splitting=True, verbose=False))
+    print(bbo.band_info(folder, "band1002.out", spin_splitting=True, verbose=False))
+    print(bbo.band_info(folder, "band1003.out", spin_splitting=True, verbose=False))
+    print(bbo.band_info(folder, "band1004.out", spin_splitting=True, verbose=False))
+    print(bbo.band_info(folder, "band1005.out", spin_splitting=True, verbose=False))
+    # pt.mulliken_plot(folder + "settings.in", debug=False, quiet=False, save=True)
+
+read_folder = "../../FHI-aims/French_NMR/random/TMS_work/TMS_MD/MD/geometries/geometry"
+write_folder = "../../FHI-aims/French_NMR/random/TMS_work/TMS_MD/NMR_dense/"
+# bf.make_MD_DMF(read_folder, write_folder, calcs=10, step=10, species=["C", "H"])
+
+base_angle = 150
+angles = [0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]
+directories = ["00.0/", "02.5/", "05.0/", "07.5/", "10.0/", "12.5/", "15.0/", "17.5/", "20.0/"]
+base = "../../FHI-aims/Double_Perovskites/New_Structures/relaxations/height/" + str(base_angle) + "/geometry.in.next_step"
+for count, angle in enumerate(angles):
+    continue
+    ang1 = (base_angle + angle / 2) * math.pi / 180
+    ang2 = (base_angle - angle / 2) * math.pi / 180
+    write = "../../FHI-aims/Double_Perovskites/New_Structures/bands/" + str(base_angle) + "/" + \
+            directories[count] + "geometry.in"
+    print(write)
+    M24.induce_delta_beta(base, write, ang1, ang2)
+
+    test = write
+    print(bg.angle_info(test, (1, 7, 4), -1))
+    print(bg.angle_info(test, (4, 8, 1), [[0, 0, 0], [0, 0, 0], [0, 1, 0]]))
+    print(bg.angle_info(test, (4, 9, 1), [[0, 0, 0], [0, 0, 0], [1, 1, 0]]))
+    print(bg.angle_info(test, (4, 10, 1), [[0, 0, 0], [0, 0, 0], [1, 0, 0]]))
 
 
-settings = "../../FHI-aims/Double_Perovskites/New_Structures/random/bands_look_good/180_old_model/180_new2/settings_final.in"
-# pt.mulliken_plot(settings, debug=False, quiet=False, save=True)
-
-# atom dict for DMF
-atom_dict = [[9, 10, 11], [6, 7, 8], [12]]
-color_dict = ['b', 'r', 'g']
-# pt.NMR_average("../../FHI-aims/French_NMR/DMF/Shield_MD/", atom_dict, color_dict)
-
-NH2 = [1, 116, 2, 105, 3, 96, 4, 85, 5, 78, 6, 71]
-CH2 = [63, 64, 103, 104, 97, 98, 83, 84, 79, 80, 69, 70]
-Benzene = [65, 66, 67, 68, 99, 100, 101, 102, 61, 62, 81, 82]
-Cyclohexane = [106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
-                    72, 73, 74, 75, 76, 77, 117, 118, 119, 120]
-atom_dict = [NH2, CH2, Benzene, Cyclohexane]
-# atom dict for TA
-atom_dict[0] = [116, 105, 96, 85, 78, 71]
-atom_dict = [[x - 12 for x in part] for part in atom_dict]
-color_dict = ['r'] * 6 + \
-             ['c'] * 6 + \
-             ['b'] * 3 + \
-             ['g'] * 3
-new_atom_dict = [[atom_dict[0][0]], [atom_dict[0][1]], [atom_dict[0][2]],
-                 [atom_dict[0][3]], [atom_dict[0][4]], [atom_dict[0][5]],
-
-                 atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
-                 atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:],
-
-                 atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:],
-
-                 atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]
-
-
-# 1 NH group, 6 CH2 groups, 3 Benzene groups, 3 Cyclohexane groups
-folder = "../../FHI-aims/French_NMR/NMR_results/TA_NMR/"
-# pt.NMR_density(folder, new_atom_dict, color_dict, average=True, width=0.01)
-folder = "../../FHI-aims/French_NMR/TA_MD/MD_NMR/Shield_00/"
-pt.NMR_density(folder, new_atom_dict, color_dict, average=True, width=0.01)
+pt.plot_beta_avg_corr()
 

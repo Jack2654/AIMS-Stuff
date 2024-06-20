@@ -353,3 +353,31 @@ def count_all_bases(base):
         if os.path.isdir(base + direct):
             control = base + direct + "/control.in"
             print(bc.count_gaussian_bases(control))
+
+
+# creates magnetic response calculations from MD outputs
+def make_MD_DMF(base_read, base_write, calcs=0, step=100, species=["H"]):
+    for x in range(calcs):
+        temp = f'%s-0%5.f.in' % (base_read, x * step)
+        temp = temp.replace(" ", "0")
+        current = str(x)
+        if len(current) == 1:
+            current = "0" + current
+        new_dir = f'%sShield_%s' % (base_write, str(current))
+        if not os.path.exists(new_dir):
+            os.mkdir(new_dir)
+        command = f'cp %scontrol.in %s' % (base_write, new_dir)
+        os.system(command)
+        command = f'cp %ssubmit.sh %s' % (base_write, new_dir)
+        os.system(command)
+        atoms = []
+        with open(temp, "r") as f:
+            for line in f.readlines():
+                if "atom" in line:
+                    atoms.append(line)
+        with open(new_dir + "/geometry.in", "w") as f:
+            for line in atoms:
+                f.write(line)
+                for specie in species:
+                    if specie in line:
+                        f.write("magnetic_response\n")

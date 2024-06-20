@@ -663,28 +663,91 @@ def add_magnetic_response(file, write):
                 f.write("magnetic_response\n")
 
 
-# creates magnetic response calculations from MD outputs for DMF-d7
-def make_MD_DMF(base_read, base_write):
-    for x in range(12):
-        temp = f'%s-0%5.f.in' % (base_read, x * 100)
-        temp = temp.replace(" ", "0")
-        current = str(x)
-        if len(current) == 1:
-            current = "0" + current
-        new_dir = f'%sShield_%s' % (base_write, str(current))
+# creates relaxations for many FAI possibilities
+def make_FAI_relaxations():
+    folder = "../../FHI-aims/French_NMR/FA/FAI/relax_many/"
+    geo = folder + "geometry.in"
+    num_points = 50
+    geo = []
+    with open(folder + "geometry.in", "r") as f:
+        geo = f.readlines()
+    for x in range(num_points):
+        new_dir = folder + "relax_" + str(x)
+        if x < 10:
+            new_dir = folder + "relax_0" + str(x)
+        angle = ((360/num_points) * x) * (2 * math.pi) / 360
+        x_coord = 4 * math.cos(angle)
+        y_coord = 4 * math.sin(angle)
         if not os.path.exists(new_dir):
             os.mkdir(new_dir)
-        command = f'cp %scontrol.in %s' % (base_write, new_dir)
+        command = f'cp %scontrol.in %s' % (folder, new_dir)
         os.system(command)
-        command = f'cp %ssubmit.sh %s' % (base_write, new_dir)
+        command = f'cp %ssubmit.sh %s' % (folder, new_dir)
         os.system(command)
-        atoms = []
-        with open(temp, "r") as f:
-            for line in f.readlines():
-                if "atom" in line:
-                    atoms.append(line)
         with open(new_dir + "/geometry.in", "w") as f:
-            for line in atoms:
+            f.writelines(geo)
+            f.write(f'atom\t\t%s\t\t%s\t\t0 I' % (x_coord, y_coord))
+
+
+def move_FAI_geos():
+    folder = "../../FHI-aims/French_NMR/FA/FAI/relax_many/"
+    geo = folder + "geometries"
+    all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
+    all_dir.sort()
+    os.mkdir(geo)
+    i = 0
+    for direct in all_dir:
+        current = folder + direct
+        if os.path.isdir(folder + direct):
+            count = str(i)
+            if i < 10:
+                count = "0" + str(i)
+            command = f'cp %s/geometry.in.next_step %s/geometry_%s.in' % (current, geo, count)
+            os.system(command)
+            i += 1
+
+
+def constrain_base_relax(readfile, writefile):
+    with open(readfile, "r") as f:
+        lines = f.readlines()
+    count = 0
+    with open(writefile, "w") as f:
+        for line in lines:
+            if "lattice" in line:
                 f.write(line)
-                if "H" in line:
-                    f.write("magnetic_response\n")
+            elif "Bi" in line:
+                f.write(line)
+                f.write("\t constrain_relaxation .true. \n")
+            elif "Ag" in line:
+                f.write(line)
+                f.write("\t constrain_relaxation .true. \n")
+            elif "I" in line:
+                f.write(line)
+                count += 1
+                if count < 5:
+                    f.write("\t constrain_relaxation x \n")
+                    f.write("\t constrain_relaxation y \n")
+                else:
+                    f.write("\t constrain_relaxation .true. \n")
+            elif "Cs" in line:
+                f.write(line)
+                f.write("\t constrain_relaxation x \n")
+                f.write("\t constrain_relaxation y \n")
+
+
+def make_Si_EV():
+    folder = "../../FHI-aims/random/Si_EV/"
+    base = folder + "base/"
+    with open(base + "geometry.in", "r") as f:
+        lines = f.readlines()
+    for dist in ["5.25", "5.30", "5.35", "5.40", "5.45", "5.50", "5.55", "5.60", "5.65"]:
+        temp = folder + dist + "/"
+        if not os.path.exists(temp):
+            os.mkdir(temp)
+        command = "cp " + base + "control.in " + temp + "control.in"
+        os.system(command)
+        with open(temp + "geometry.in", "w") as f:
+            f.write(f'lattice_vector %s 0 0\n' % dist)
+            f.write(f'lattice_vector 0 %s 0\n' % dist)
+            f.write(f'lattice_vector 0 0 %s\n' % dist)
+            f.writelines(lines)

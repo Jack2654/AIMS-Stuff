@@ -247,6 +247,8 @@ def read_geo_for_bands(filepath, color_dict={}, flags=1):
         file = filepath + "geometry.in"
     else:
         file = filepath + "/geometry.in"
+    if ".in" in filepath:
+        file = filepath
 
     for line in open(file):
         words = line.strip().split()

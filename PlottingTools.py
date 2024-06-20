@@ -1,3 +1,5 @@
+import math
+
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.stats import norm
@@ -1072,13 +1074,13 @@ def NMR_histogram(folders):
 
 
 def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.05):
-    shieldings = bao.NMR_shielding_values(folder + "aims.out")
-    # shieldings = bao.all_shieldings(folder)
+    # shieldings = bao.NMR_shielding_values(folder + "aims.out")
+    shieldings = bao.all_shieldings(folder)
 
     atoms = [x[0] for x in shieldings]
     shields = [x[1] for x in shieldings]
     x_range = np.arange(min(shields) - 31.18460 - .2, max(shields) - 31.1846 + 0.2, 0.01)
-    x_range = np.arange(-9.5, 0.5, 0.01)
+    x_range = np.arange(-9.5, 0.5, 0.005)
 
     if atom_dict is None:
         atom_dict = [atoms]
@@ -1114,7 +1116,7 @@ def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.
     plt.show()
 
 
-def NMR_average(folder, atom_dict, color_dict=None):
+def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5), type='H'):
     all_dir = [os.fsdecode(x) for x in os.listdir(os.fsencode(folder))]
     all_dir.sort()
     data = {}
@@ -1124,7 +1126,10 @@ def NMR_average(folder, atom_dict, color_dict=None):
             if not os.path.exists(shields):
                 bao.create_shield_out(folder + direct + "/")
             with open(shields, "r") as f:
-                for line in f.readlines():
+                lines = f.readlines()
+                if len(lines) == 3:
+                    continue
+                for line in lines:
                     if "#" not in line:
                         temp = line.split()
                         if int(temp[0]) not in data:
@@ -1133,26 +1138,45 @@ def NMR_average(folder, atom_dict, color_dict=None):
                             data[int(temp[0])].append(float(temp[2]))
     for key in data:
         data[key] = sum(data[key]) / len(data[key])
+        # data[key] = data[key] - 31.1846
+        if type == 'H':
+            data[key] = data[key] - 31.0313
+        elif type == 'C':
+            continue
+            data[key] = data[key] - 177.4423
+        elif type == 'N':
+            # data[key] = data[key] - 257.1237
+            data[key] = data[key] + 143.3070
+        else:
+            print("Unrecognized species passed into 'type' parameter")
+            return
 
-    x_range = np.arange(-9.5, 0.5, 0.001)
+    x_range = np.arange(xlim[0], xlim[1], 0.001)
     if not color_dict:
         color_dict = ['r', 'c', 'b', 'g']
 
-    for count, atom_set in enumerate(atom_dict):
+    for count, structure_set in enumerate(atom_dict):
         y_values = [0 for x in x_range]
-        centers = []
-        for atom in atom_set:
-            centers.append(data[atom])
-        center = sum(centers) / len(centers)
-        temp = [norm.pdf(x, center - 31.1846, 0.005) for x in x_range]
-        temp = [len(centers) * x for x in temp]
-        y_values = [y_values[x] + temp[x] for x in range(len(temp))]
-        plt.plot(x_range, y_values, color=color_dict[count])
+        for atom_set in structure_set:
+            centers = []
+            for atom in atom_set:
+                centers.append(data[atom])
+            center = sum(centers) / len(centers)
+            print(atom_set)
+            print(center)
+            temp = [norm.pdf(x, center, width) for x in x_range]
+            factor = math.sqrt(len(centers))
+            temp = [factor * x for x in temp]
+            y_values = [y_values[x] + temp[x] for x in range(len(temp))]
+        plt.fill_between(x_range, y_values, color=color_dict[count])
     plt.plot(x_range, [0 for x in x_range], color='k')
-    plt.xticks([x for x in range(-10, 1)])
+    ticks = [x for x in range(int(xlim[0] - 1), int(xlim[1]) + 1)]
+    print(ticks)
+    while len(ticks) > 20:
+        ticks = [ticks[2 * x] for x in range(int(len(ticks) / 2))]
+    plt.xticks()
     plt.yticks([])
-    plt.xlim([-9.5, 0.5])
-    # plt.ylim([0, 100])
+    plt.xlim(xlim)
     plt.xlabel("ppm")
     plt.show()
 
@@ -1173,3 +1197,79 @@ def visualize_spin_texture_directions(file):
                 [point[1], point[4]],
                 [point[2], point[5]], 'k')
     plt.show()
+
+
+def plot_beta_avg_corr():
+    matplotlib.rc('text', usetex='true')
+    data_file = "../../FHI-aims/Double_Perovskites/New_Structures/bands/data.txt"
+    data = []
+    with open(data_file, "r") as f:
+        for line in f.readlines():
+            if "#" not in line:
+                data.append(line.split())
+    delta_beta = [float(x[0]) for x in data]
+    data_180_Y = [float(x[1]) for x in data]
+    data_170_Y = [float(x[2]) for x in data]
+    data_160_Y = [float(x[3]) for x in data]
+    data_150_Y = [float(x[4]) for x in data]
+    current_data = [data_180_Y, data_170_Y, data_160_Y, data_150_Y]
+    colors = ['r', 'g', 'b', 'y']
+    labels = ["180", "170", "160", "150"]
+    for count, series in enumerate(current_data):
+        plt.plot(delta_beta, series, color=colors[count], label=labels[count])
+        plt.scatter(delta_beta, series, color=colors[count], label="_")
+    plt.legend()
+    plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $Y\rightarrow\Gamma$')
+    plt.show()
+
+    data_180_X = [float(x[5]) for x in data]
+    data_170_X = [float(x[6]) for x in data]
+    data_160_X = [float(x[7]) for x in data]
+    data_150_X = [float(x[8]) for x in data]
+    current_data = [data_180_X, data_170_X, data_160_X, data_150_X]
+    colors = ['r', 'g', 'b', 'y']
+    labels = ["180", "170", "160", "150"]
+    for count, series in enumerate(current_data):
+        plt.plot(delta_beta, series, color=colors[count], label=labels[count])
+        plt.scatter(delta_beta, series, color=colors[count], label="_")
+    plt.legend()
+    plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $\Gamma\rightarrow X$')
+    plt.show()
+
+    data_180_M = [float(x[9]) for x in data]
+    data_170_M = [float(x[10]) for x in data]
+    data_160_M = [float(x[11]) for x in data]
+    data_150_M = [float(x[12]) for x in data]
+    current_data = [data_180_M, data_170_M, data_160_M, data_150_M]
+    colors = ['r', 'g', 'b', 'y']
+    labels = ["180", "170", "160", "150"]
+    for count, series in enumerate(current_data):
+        plt.plot(delta_beta, series, color=colors[count], label=labels[count])
+        plt.scatter(delta_beta, series, color=colors[count], label="_")
+    plt.legend()
+    plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $M\rightarrow\Gamma$')
+    plt.show()
+
+    data_180_P = [float(x[13]) for x in data]
+    data_170_P = [float(x[14]) for x in data]
+    data_160_P = [float(x[15]) for x in data]
+    data_150_P = [float(x[16]) for x in data]
+    current_data = [data_180_P, data_170_P, data_160_P, data_150_P]
+    colors = ['r', 'g', 'b', 'y']
+    labels = ["180", "170", "160", "150"]
+    for count, series in enumerate(current_data):
+        plt.plot(delta_beta, series, color=colors[count], label=labels[count])
+        plt.scatter(delta_beta, series, color=colors[count], label="_")
+    plt.legend()
+    plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $\Gamma\rightarrow P$')
+    plt.show()
+
+

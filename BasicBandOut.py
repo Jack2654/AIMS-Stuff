@@ -10,11 +10,12 @@ import math
 import numpy as np
 # from effmass import inputs, extrema
 import BasicGeo as bg
+import matplotlib.pyplot as plt
 
 
 # functions:
 def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=False,
-              effective_mass=False, verbose=True, debug=False):
+              effective_mass=False, verbose=True, debug=False, display=False):
     results = ""
     lines, kpoints, gamma, max_valence, min_conduction, \
         i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
@@ -141,6 +142,17 @@ def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=Fa
         above_coeff = bf.fit_poly(x_vals_CBM, points_above_CBM, 2)
         above_fit = above_coeff[0] + above_coeff[1] * min_x + above_coeff[2] * min_x * min_x
 
+        if display:
+            xrange = np.arange(min(x_vals_CBM), max(x_vals_CBM), (max(x_vals_CBM)-min(x_vals_CBM)) / 50)
+            print(points_about_CBM)
+            print(points_above_CBM)
+            plt.plot(xrange, [min_coeff[0] + min_coeff[1] * x + min_coeff[2] * x * x for x in xrange])
+            plt.plot(xrange, [above_coeff[0] + above_coeff[1] * x + above_coeff[2] * x * x for x in xrange])
+            plt.scatter(x_vals_CBM, points_about_CBM)
+            plt.scatter(x_vals_CBM, points_above_CBM)
+            plt.axvline(min_x)
+            plt.show()
+
         if above_fit < min_fit:
             if debug:
                 print("Incorrect spin splittings computed as a result of quadratic approximation.")
@@ -237,7 +249,9 @@ def read_band_out(file):
                     j_valence_max = j
                 elif float(energy) == max_valence:
                     num_same_max += 1
-            elif float(occupation) == 0:
+            elif float(occupation) == 0 or float(occupation) < 1:
+                if float(occupation) > 0:
+                    print("Partially filled states detected")
                 conduction_num += 1
                 # set conduction_num > 4 for m=3
                 # set conduction_num > 0 for anything else
@@ -249,6 +263,9 @@ def read_band_out(file):
                 elif float(energy) == min_conduction:
                     num_same_min += 1
             else:
+                # continue
+                # print(k_point)
+                print(occupation)
                 print("Partially filled states detected")
 
     lines_formatted = []
