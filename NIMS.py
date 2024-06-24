@@ -35,6 +35,50 @@ def make_calc(base, dest, cutoff=100, kpt=(1, 1, 1), lattice=None):
                     f.write(line)
 
 
+def change_elem_xyz(base, write, elem):
+    with open(base, "r") as f:
+        lines = f.readlines()
+    with open(write, "w") as f:
+        for line in lines:
+            temp = line.split()
+            if len(temp) == 4:
+                f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (elem, temp[1], temp[2], temp[3]))
+            else:
+                f.write(line)
+
+
+def xyz_to_cq(base, write, lattice=(0, 0, 0), move=False):
+    movem = "F F F"
+    if move:
+        movem = "T T T"
+    with open(base, "r") as f:
+        lines = f.readlines()
+    with open(write, "w") as f:
+        f.write(f'%s 0 0\n' % lattice[0])
+        f.write(f'0 %s 0\n' % lattice[1])
+        f.write(f'0 0 %s\n' % lattice[2])
+        elem_dict = {}
+        elem_count = 1
+        for line in lines:
+            temp = line.split()
+            if len(temp) == 1:
+                f.write(line.strip() + "\n")
+            if len(temp) == 4:
+                if temp[0] not in elem_dict:
+                    elem_dict[temp[0]] = elem_count
+                    elem_count += 1
+                f.write(f'%s\t\t%s %s\n' % (" ".join(temp[1:]), elem_dict[temp[0]], movem))
+
+name = "six"
+base = f'../../Documents/NIMS/nano/Pd/raw_inputs/%s.xyz' % name
+write = f'../../Documents/NIMS/nano/Pd/pure/%s.xyz' % name
+# change_elem_xyz(base, write, "Pd")
+
+name = "six"
+base = f'../../Documents/NIMS/nano/Pd/pure/%s.xyz' % name
+write = f'../../Documents/NIMS/nano/Pd/pure/%s.in' % name
+xyz_to_cq(base, write, lattice=(39, 39, 39), move=True)
+
 base = "../../Documents/NIMS/tmp/Pd/volume/base"
 dest_start = "../../Documents/NIMS/tmp/Pd/volume/"
 # values = [["111", (1, 1, 1)], ["222", (2, 2, 2)], ["333", (3, 3, 3)], ["444", (4, 4, 4)], ["555", (5, 5, 5)],
@@ -46,7 +90,7 @@ values = ["3.75", "3.76", "3.77", "3.78", "3.79", "3.80", "3.81", "3.82", "3.83"
 temp = 3.75
 for val in values:
     dest = dest_start + val
-    make_calc(base, dest, cutoff=100, kpt=(8, 8, 8), lattice=temp)
+    # make_calc(base, dest, cutoff=100, kpt=(8, 8, 8), lattice=temp)
     temp += 0.01
 
 

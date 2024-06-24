@@ -252,6 +252,7 @@ def read_band_out(file):
             elif float(occupation) == 0 or float(occupation) < 1:
                 if float(occupation) > 0:
                     print("Partially filled states detected")
+                    a = 0
                 conduction_num += 1
                 # set conduction_num > 4 for m=3
                 # set conduction_num > 0 for anything else

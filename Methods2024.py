@@ -20,6 +20,8 @@ import math
 # displacement of the midpoint (I)
 # derivation in yellow japanese notebook
 def make_angle(distA, distB, angle):
+    if 3.14159 < angle < 3.14160:
+        return 0
     temp = (distA + distB) ** 2
     temp = temp / (math.tan(angle) ** 2)
     temp = temp + 4 * distA * distB

@@ -729,10 +729,26 @@ def constrain_base_relax(readfile, writefile):
                     f.write("\t constrain_relaxation y \n")
                 else:
                     f.write("\t constrain_relaxation .true. \n")
+            elif "Pb" in line:
+                f.write(line)
+                f.write("\t constrain_relaxation .true. \n")
+            elif "Tl" in line:
+                f.write(line)
+                f.write("\t constrain_relaxation .true. \n")
+            elif "Br" in line:
+                f.write(line)
+                count += 1
+                if count < 5:
+                    f.write("\t constrain_relaxation x \n")
+                    f.write("\t constrain_relaxation y \n")
+                else:
+                    f.write("\t constrain_relaxation .true. \n")
             elif "Cs" in line:
                 f.write(line)
                 f.write("\t constrain_relaxation x \n")
                 f.write("\t constrain_relaxation y \n")
+            else:
+                print("Unrecognized species")
 
 
 def make_Si_EV():
