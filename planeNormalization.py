@@ -167,22 +167,8 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
     # t3 = input("Enter target multiples of third lattice vector: ")
 
 
-# elif lattice_defined == "False":
-# t1 = input("Enter x coordinate of target in cartesian space: ")
-# t2 = input("Enter y coordinate of target in cartesian space: ")
-# t3 = input("Enter z coordinate of target in cartesian space: ")
-# else:
-# print("Bad argument bassed to lattice defined parameter")
-# raise ValueError
-
 base = "../../FHI-aims/Bi_substitution/Band_Inputs/"
 f = base + "/geometry.in"
+points = (0, 0, 1)
 
-f = "../../FHI-aims/Double_Perovskites/New_Structures/random/bands_look_good/180_old_model/180_old_new_unit/geometry.in"
-
-points = [(0, 1, 0)]
-# points = [(0, 0, 1), (0, -1, 1), (0, 0.5, 1), (1, 0, 0)]
-for point in points:
-    generate(f, (point[0], point[1], point[2]), lattice_defined=False, debug=False)
-# points = (0, 0, 1)
-# generate(f, (points[0], points[1], points[2]), lattice_defined=True, debug=False)
+generate(f, (points[0], points[1], points[2]), lattice_defined=True, debug=True)

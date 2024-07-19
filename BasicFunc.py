@@ -104,14 +104,14 @@ def fit_poly(x, y, order):
     # print(printed)
 
 
-def minimize_func(coeff, guess=0.90, bnds=None):
+def minimize_func(coeff, guess=100, bnds=None):
     fun_fit = poly.Polynomial(coeff)
-    return minimize(fun_fit, x0=guess, bounds=bnds).x[0]
+    return minimize(fun_fit, x0=0, tol=0.0000001).x[0]
 
 
 def maximize_func(coeff):
-    fun_fit = poly.Polynomial(-1*coeff)
-    return minimize(fun_fit, x0=0).x[0]
+    fun_fit = poly.Polynomial([-1 * val for val in coeff])
+    return minimize(fun_fit, x0=0, tol=0.0000001).x[0]
 
 
 def copy_to_timewarp(source, destination):      # works :D

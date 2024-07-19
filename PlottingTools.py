@@ -644,7 +644,6 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
         plt.axvline(kpoint_x, color='k', linestyle='--', lw=linewidth).set_dashes([5, 5])
         plt.axhline(0, color='k', linestyle='--', lw=linewidth).set_dashes([5, 5])
     x_pts.append(tot_len)
-    # plt.yticks(range(ymin, ymax + 1), [])
     if labels == 0:
         print("No labels found")
     else:
@@ -1217,7 +1216,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
         plt.fill_between(x_range, y_values, color=color_dict[count])
     plt.plot(x_range, [0 for x in x_range], color='k')
     ticks = [x for x in range(int(xlim[0] - 1), int(xlim[1]) + 1)]
-    print(ticks)
+    # print(ticks)
     while len(ticks) > 20:
         ticks = [ticks[2 * x] for x in range(int(len(ticks) / 2))]
     plt.xticks()
@@ -1225,7 +1224,6 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
     plt.xlim(xlim)
     plt.xlabel("ppm")
     plt.show()
-
 
 
 def visualize_spin_texture_directions(file):

@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 
 
 # functions:
-def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=False,
+def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=False,
               effective_mass=False, verbose=True, debug=False, display=False):
     results = ""
     lines, kpoints, gamma, max_valence, min_conduction, \
-        i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
-
+    i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
+    print(kpoints)
     # sets up arrays of CBM, VBM, and the required number of points around both points set by the "steps" parameter
     points_about_CBM = [0] * (2 * steps + 1)
     points_about_CBM[steps] = min_conduction
@@ -143,7 +143,7 @@ def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=Fa
         above_fit = above_coeff[0] + above_coeff[1] * min_x + above_coeff[2] * min_x * min_x
 
         if display:
-            xrange = np.arange(min(x_vals_CBM), max(x_vals_CBM), (max(x_vals_CBM)-min(x_vals_CBM)) / 50)
+            xrange = np.arange(min(x_vals_CBM), max(x_vals_CBM), (max(x_vals_CBM) - min(x_vals_CBM)) / 50)
             print(points_about_CBM)
             print(points_above_CBM)
             plt.plot(xrange, [min_coeff[0] + min_coeff[1] * x + min_coeff[2] * x * x for x in xrange])
@@ -190,7 +190,9 @@ def band_info(folder, band, steps=1, band_gap=False, k0=False, spin_splitting=Fa
         eff_mass_del_E = eV_2_J * (points_about_CBM[0] - 2 * min_conduction + points_about_CBM[-1])
 
         if eff_mass_del_E == 0:
-            # print("NO change in delta E")
+            if verbose:
+                # print("NO change in delta E")
+                print("Effective Mass Value: inf")
             results += ' %.10f' % 10000
         else:
             eff_mass_dir = [eff_mass_constants * x / eff_mass_del_E for x in eff_mass_del_k]
@@ -252,9 +254,8 @@ def read_band_out(file):
             elif float(occupation) == 0 or float(occupation) < 1:
                 if float(occupation) > 0:
                     print("Partially filled states detected")
-                    a = 0
                 conduction_num += 1
-                # set conduction_num > 4 for m=3
+                # set conduction_num > 4 for m=3 to skip I2 interstitial
                 # set conduction_num > 0 for anything else
                 if float(energy) < min_conduction and conduction_num > 0:
                     num_same_min = 0
@@ -277,7 +278,7 @@ def read_band_out(file):
     i_valence_max += int(num_same_max / 2)
 
     return lines_formatted, kpoints, gamma, max_valence, min_conduction, \
-        i_conduction_min, j_conduction_min, i_valence_max, j_valence_max
+           i_conduction_min, j_conduction_min, i_valence_max, j_valence_max
 
 
 def eff_mass_package(filepath):
@@ -288,3 +289,149 @@ def eff_mass_package(filepath):
     #     print(str(ele))
     #     print(ele.finite_difference_effmass())
     print(0)
+
+
+def band_gap(folder, band, valence_offset=0, conduction_offset=0, display=False):
+    samples, kpoints, cutoff = [], [], 0
+    with open(folder + band, "r") as f:
+        for line in f.readlines():
+            temp = line.split()
+            samples.append(temp[4:])
+            kpoints.append([float(x) for x in temp[1:4]])
+    states = [[float(sample[x]) for sample in samples] for x in range(len(samples[0]))]
+    for i_state in range(len(states) // 2):
+        occupation = sum(states[2 * i_state]) / len(states[2 * i_state])
+        if occupation == 0.0 and cutoff == 0:
+            cutoff = i_state
+        elif 0.0 < occupation < 1.0:
+            print(f'Partially filled states detected at state %s' % (i_state + 1))
+            print(states[2 * i_state])
+    shift = max(states[2 * cutoff - 1])
+    states = [[val - shift for val in state] for state in states]
+
+    recip_vec = bg.reciprocal_vectors(folder + "geometry.in")
+    r_len = [abs(np.linalg.norm(recip_vec[i])) for i in range(3)]
+    x_vals = [np.linalg.norm([abs(val) * r_len[i] for i, val in enumerate(kp)]) for kp in kpoints]
+
+    cond_state = states[2 * cutoff + 1 + 2 * conduction_offset]
+    val_state = states[2 * cutoff - 1 - 2 * valence_offset]
+    min_x, fit_min, min_coeff, min_eff = data_fit(x_vals, cond_state, kpoints, r_len, conduction=True)
+    max_x, fit_max, max_coeff, max_eff = data_fit(x_vals, val_state, kpoints, r_len, conduction=False)
+
+    if display:
+        plt.plot(x_vals, states[2 * cutoff - 1], 'k')
+        plt.plot(x_vals, states[2 * cutoff + 1], 'k')
+        step_size = (x_vals[1] - x_vals[0]) / 10
+        new_x_range = []
+        for x in x_vals:
+            new_x_range = new_x_range + [x - i * step_size for i in range(10)]
+        plt.scatter(new_x_range, [min_coeff[0] + min_coeff[1] * x + min_coeff[2] * x * x for x in new_x_range],
+                 color='orange', s=1)
+        plt.scatter(new_x_range, [max_coeff[0] + max_coeff[1] * x + max_coeff[2] * x * x for x in new_x_range],
+                 color='orange', s=1)
+        plt.scatter(min_x, fit_min, color='purple', s=20)
+        plt.scatter(max_x, fit_max, color='purple', s=20)
+        plt.scatter(x_vals, states[2 * cutoff - 1 - 2 * valence_offset], color='r', s=5)
+        plt.scatter(x_vals, states[2 * cutoff + 1 + 2 * conduction_offset], color='b', s=5)
+        plt.ylim([-1, 4])
+        plt.ylabel("Energy (eV)")
+        plt.axhline()
+        plt.show()
+
+    return fit_min - fit_max, min_eff, max_eff
+
+
+def effective_mass(poly_coeff, kpt, num_kpts, r_len, y_vals):
+    h_bar = 1.054571817
+    m_0 = 9.109383702
+    eV_2_J = 1.602176565
+    eff_mass_constants = (100 * (h_bar ** 2)) / m_0
+    # constant powers of 10:
+    # numerator: h_bar^2 = 10^(-68), G^2 = 10^(20)
+    # denominator: m_0 = 10^(-31), eV/J conversion = 10^(-19)
+    # cancelling these terms leaves a factor of 100 in the numerator
+
+    # steps = (len(y_vals) - 1) / 2
+    # del_k = list(kpt[i] * steps / num_kpts for i in range(3))
+    # eff_mass_del_k = [(r_len[i] * del_k[i]) ** 2 for i in range(3)]
+    # eff_mass_del_E = eV_2_J * (y_vals[0] - 2 * min(y_vals) + y_vals[-1])
+    # if eff_mass_del_E == 0:
+    #     print(y_vals)
+    # eff_mass = eff_mass_constants * np.linalg.norm(eff_mass_del_k) / eff_mass_del_E
+
+    dE_dk = eV_2_J * poly_coeff[2] * 2
+    eff_mass = eff_mass_constants / dE_dk
+
+    return eff_mass
+
+
+def data_fit(x_vals, data, kpoints, r_len, conduction=True):
+    extrema = 10000 if conduction else -10000
+    startdex = -1
+    enddex = -1
+    for index, val in enumerate(data):
+        if conduction:
+            if val < extrema:
+                extrema = val
+                startdex = index
+                enddex = index
+            elif val == extrema:
+                enddex = index
+        else:
+            if val > extrema:
+                extrema = val
+                startdex = index
+                enddex = index
+            elif val == extrema:
+                enddex = index
+    step_size = x_vals[1] - x_vals[0]
+    x_range = [x_vals[startdex] - 2 * step_size, x_vals[startdex] - step_size] + x_vals[startdex: enddex + 1] + \
+              [x_vals[enddex] + step_size, x_vals[enddex] + 2 * step_size]
+    if startdex >= 2:
+        y_vals = data[startdex - 2: enddex + 1]
+    elif startdex == 1 and enddex >= len(data) - 2:
+        y_vals = [data[startdex - 1]] + data[startdex - 1: enddex + 1]
+    elif startdex == 1:
+        y_vals = [data[enddex + 2]] + data[startdex - 1: enddex + 1]
+    elif startdex == 0 and enddex == len(data) - 1:
+        y_vals = data[startdex: startdex + 2] + data[startdex: enddex + 1]
+    elif startdex == 0 and enddex == len(data) - 2:
+        y_vals = [data[enddex + 1]] * 2 + data[startdex: enddex + 1]
+    else:
+        y_vals = [data[enddex + 2], data[enddex + 1]] + data[startdex: enddex + 1]
+
+    if enddex <= len(data) - 3:
+        y_vals = y_vals + data[enddex + 1: enddex + 3]
+    elif enddex == len(data) - 2 and startdex <= 1:
+        y_vals = y_vals + data[enddex + 1] * 2
+    elif enddex == len(data) - 2:
+        y_vals = y_vals + [data[enddex + 1]] + [data[startdex - 2]]
+    elif enddex == len(data) - 1 and startdex == 0:
+        y_vals = y_vals + data[startdex: startdex + 2]
+    elif enddex == len(data) - 1 and startdex == 1:
+        y_vals = y_vals + [data[startdex - 1]] * 2
+    else:
+        y_vals = y_vals + [data[startdex - 1], data[startdex - 2]]
+
+    poly_coeff = bf.fit_poly(x_range, y_vals, 2)
+    extrema_x = bf.minimize_func(poly_coeff) if conduction else bf.maximize_func(poly_coeff)
+    direct_extrema = min(data) if conduction else max(data)
+    fit_ext = poly_coeff[0] + poly_coeff[1] * extrema_x + poly_coeff[2] * extrema_x * extrema_x
+    plt.scatter(extrema_x, fit_ext, color='g', s=20)
+    if conduction and (fit_ext > direct_extrema or fit_ext < direct_extrema - 0.01):
+        fit_ext = direct_extrema
+        extrema_x = x_vals[data.index(direct_extrema)]
+    elif not conduction and (fit_ext < direct_extrema or fit_ext > direct_extrema + 0.01):
+        fit_ext = direct_extrema
+        extrema_x = x_vals[data.index(direct_extrema)]
+
+    gamma = sum(kpoints[0])
+    kpt = kpoints[0]
+    if gamma == 0:
+        kpt = kpoints[-1]
+
+    eff_mass = 0
+    if conduction:
+        eff_mass = effective_mass(poly_coeff, kpt, len(kpoints) - 1, r_len, y_vals)
+
+    return extrema_x, fit_ext, poly_coeff, eff_mass
