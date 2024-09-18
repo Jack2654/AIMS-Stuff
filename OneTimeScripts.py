@@ -10,7 +10,7 @@ import math
 import BasicAimsOut as bao
 from scipy import interpolate
 import numpy as np
-
+from scipy.optimize import curve_fit
 
 
 # code
@@ -462,7 +462,7 @@ def plot_dissociation_curves():
     sigma = 1.6 / (2 ** (1 / 6))
     alpha = 1.55
     LJ_pw_lda = [4 * epsilon * (((sigma / x)) ** 12 - ((sigma / x) ** 6)) for x in xs]
-    morse_pw_lda = [epsilon * ((1 - (math.e ** (alpha * (1.6 - x))))**2 - 1) for x in xs]
+    morse_pw_lda = [epsilon * ((1 - (math.e ** (alpha * (1.6 - x)))) ** 2 - 1) for x in xs]
     plt.plot(xs, spline_pw_lda(xs))
     plt.plot(xs, LJ_pw_lda)
     plt.plot(xs, morse_pw_lda)
@@ -564,12 +564,12 @@ def plots_for_ME511_ex_2():
             if os.path.isdir(folder + i + "/" + dir):
                 constants[count].append(float(dir))
                 if i == "diamond":
-                    energies[count].append(float(bao.find_total_energy(folder + i + "/" + dir + "/aims.out"))/2)
+                    energies[count].append(float(bao.find_total_energy(folder + i + "/" + dir + "/aims.out")) / 2)
                 else:
                     energies[count].append(float(bao.find_total_energy(folder + i + "/" + dir + "/aims.out")))
     print(energies)
     constants = [[y ** 3 for y in x] for x in constants]
-    constants[2] = [x/2 for x in constants[2]]
+    constants[2] = [x / 2 for x in constants[2]]
     energies = [[y + 7868.877654655 for y in x] for x in energies]
     print(constants)
     for x in range(3):
@@ -588,9 +588,9 @@ def more_plots_ME511_ex_2():
         with open(y, "r") as f:
             for line in f:
                 if "#" not in line:
-                    temp=line.split()
+                    temp = line.split()
                     volumes.append(float(temp[0]))
-                    energies.append(float(temp[1])+7868.877654655 )
+                    energies.append(float(temp[1]) + 7868.877654655)
         plt.plot(volumes, energies)
         plt.legend(["bcc", "fcc", "diamond"])
         plt.xlabel("Volume per Atom (Angstroms^3)")
@@ -603,7 +603,8 @@ def fix_setting_colors(folder):
     with open(folder + "settings_final.in", "r") as f:
         for line in f.readlines():
             if "color_dict" in line:
-                colors = "color_dict      Pb1 pink Pb2 purple I1 lightgreen I2 g I olive " + " ".join(line.split()[5:]) + "\n"
+                colors = "color_dict      Pb1 pink Pb2 purple I1 lightgreen I2 g I olive " + " ".join(
+                    line.split()[5:]) + "\n"
     with open(folder + "settings_plane.in", "r") as f:
         lines = f.readlines()
     with open(folder + "settings_new_plane.in", "w") as f:
@@ -628,7 +629,7 @@ def ethanol_j_plots():
 
     eth_1_shieldings = [x - 31.1846 for x in eth_1_shieldings]
     eth_2_shieldings = [x - 31.1846 for x in eth_2_shieldings]
-    plt.hist(eth_1_shieldings, bins=[-9 + 0.15*x for x in range(100)], density=True, rwidth=0.5)
+    plt.hist(eth_1_shieldings, bins=[-9 + 0.15 * x for x in range(100)], density=True, rwidth=0.5)
     plt.xlim([-9, 0])
     plt.xlabel("ppm")
     plt.show()
@@ -675,7 +676,7 @@ def make_FAI_relaxations():
         new_dir = folder + "relax_" + str(x)
         if x < 10:
             new_dir = folder + "relax_0" + str(x)
-        angle = ((360/num_points) * x) * (2 * math.pi) / 360
+        angle = ((360 / num_points) * x) * (2 * math.pi) / 360
         x_coord = 4 * math.cos(angle)
         y_coord = 4 * math.sin(angle)
         if not os.path.exists(new_dir):
@@ -767,3 +768,68 @@ def make_Si_EV():
             f.write(f'lattice_vector 0 %s 0\n' % dist)
             f.write(f'lattice_vector 0 0 %s\n' % dist)
             f.writelines(lines)
+
+
+def exponential_func(x, a, b):
+    return a * np.exp(b * x)
+
+
+def ME431_lab1():
+    pos = np.array([0, 60, 120, 180, 240, 300, 360])
+    polished = np.array([75.53730117, 57.18318535, 42.52891284, 28.62567035, 20.26701245, 13.06427753, 11.18923853])
+    painted = np.array([65.47410525, 47.08603857, 32.52502248, 21.47837276, 15.98674103, 10.52241235, 8.797268541])
+
+    # Fit the exponential model
+    params_pol, covariance_pol = curve_fit(exponential_func, pos, polished, p0=(1, -0.1))
+    params_pain, covariance_pain = curve_fit(exponential_func, pos, painted, p0=(1, -0.1))
+
+    # Extract parameters a and b
+    a_pol, b_pol = params_pol
+    a_pain, b_pain = params_pain
+
+    # Standard deviations of the parameters (square root of the diagonal of covariance matrix)
+    perr_pol = np.sqrt(np.diag(covariance_pol))
+    a_pol_err, b_pol_err = perr_pol
+    perr_pain = np.sqrt(np.diag(covariance_pain))
+    a_pain_err, b_pain_err = perr_pain
+
+    # Compute 95% confidence intervals (assuming a normal distribution, 1.96 * standard error gives approx. 95%)
+    confidence_interval = 1.96
+
+    # Predict y values for the fit
+    y_fit_pol = exponential_func(pos, a_pol, b_pol)
+    y_fit_pain = exponential_func(pos, a_pain, b_pain)
+
+    # Upper and lower bounds of the 95% confidence interval for the y-values
+    y_fit_upper_pol = exponential_func(pos, a_pol + confidence_interval * a_pol_err,
+                                       b_pol + confidence_interval * b_pol_err)
+    y_fit_lower_pol = exponential_func(pos, a_pol - confidence_interval * a_pol_err,
+                                       b_pol - confidence_interval * b_pol_err)
+    y_fit_upper_pain = exponential_func(pos, a_pain + confidence_interval * a_pain_err,
+                                        b_pain + confidence_interval * b_pain_err)
+    y_fit_lower_pain = exponential_func(pos, a_pain - confidence_interval * a_pain_err,
+                                        b_pain - confidence_interval * b_pain_err)
+
+    # Plot the original data, best fit, and the 95% confidence interval
+    plt.scatter(pos, polished, label='Polished Rod')
+    plt.plot(pos, y_fit_pol, label=f'Fit: y = {a_pol:.2f} * exp({b_pol:.2f} * x)', color='red')
+
+    plt.scatter(pos, painted, label='Painted Rod')
+    plt.plot(pos, y_fit_pain, label=f'Fit: y = {a_pain:.2f} * exp({b_pain:.2f} * x)', color='red')
+
+    # Plot the confidence intervals
+    plt.fill_between(pos, y_fit_lower_pol, y_fit_upper_pol, color='gray', alpha=0.3, label='_')
+    plt.fill_between(pos, y_fit_lower_pain, y_fit_upper_pain, color='gray', alpha=0.3, label='_')
+
+    # Add legend and labels
+    plt.legend()
+    plt.xlabel('Distance from heater (mm)')
+    plt.ylabel('Temperature above ambient (C)')
+    plt.title('Exponential Fit with 95% Confidence Interval')
+    plt.show()
+
+    print(f"a = {a_pol} ± {a_pol_err}")
+    print(f"b = {b_pol} ± {b_pol_err}")
+
+    print(f"a = {a_pain} ± {a_pain_err}")
+    print(f"b = {b_pain} ± {b_pain_err}")

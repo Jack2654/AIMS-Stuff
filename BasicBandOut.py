@@ -19,7 +19,7 @@ def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=Fal
     results = ""
     lines, kpoints, gamma, max_valence, min_conduction, \
     i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
-    print(kpoints)
+    # print(kpoints)
     # sets up arrays of CBM, VBM, and the required number of points around both points set by the "steps" parameter
     points_about_CBM = [0] * (2 * steps + 1)
     points_about_CBM[steps] = min_conduction
@@ -291,7 +291,7 @@ def eff_mass_package(filepath):
     print(0)
 
 
-def band_gap(folder, band, valence_offset=0, conduction_offset=0, display=False):
+def band_gap(folder, band, valence_offset=0, conduction_offset=0, steps=2, display=False):
     samples, kpoints, cutoff = [], [], 0
     with open(folder + band, "r") as f:
         for line in f.readlines():
@@ -315,8 +315,8 @@ def band_gap(folder, band, valence_offset=0, conduction_offset=0, display=False)
 
     cond_state = states[2 * cutoff + 1 + 2 * conduction_offset]
     val_state = states[2 * cutoff - 1 - 2 * valence_offset]
-    min_x, fit_min, min_coeff, min_eff = data_fit(x_vals, cond_state, kpoints, r_len, conduction=True)
-    max_x, fit_max, max_coeff, max_eff = data_fit(x_vals, val_state, kpoints, r_len, conduction=False)
+    min_x, fit_min, min_coeff, min_eff = data_fit(x_vals, cond_state, kpoints, r_len, steps, conduction=True)
+    max_x, fit_max, max_coeff, max_eff = data_fit(x_vals, val_state, kpoints, r_len, steps, conduction=False)
 
     if display:
         plt.plot(x_vals, states[2 * cutoff - 1], 'k')
@@ -326,9 +326,9 @@ def band_gap(folder, band, valence_offset=0, conduction_offset=0, display=False)
         for x in x_vals:
             new_x_range = new_x_range + [x - i * step_size for i in range(10)]
         plt.scatter(new_x_range, [min_coeff[0] + min_coeff[1] * x + min_coeff[2] * x * x for x in new_x_range],
-                 color='orange', s=1)
+                    color='orange', s=1)
         plt.scatter(new_x_range, [max_coeff[0] + max_coeff[1] * x + max_coeff[2] * x * x for x in new_x_range],
-                 color='orange', s=1)
+                    color='orange', s=1)
         plt.scatter(min_x, fit_min, color='purple', s=20)
         plt.scatter(max_x, fit_max, color='purple', s=20)
         plt.scatter(x_vals, states[2 * cutoff - 1 - 2 * valence_offset], color='r', s=5)
@@ -365,7 +365,7 @@ def effective_mass(poly_coeff, kpt, num_kpts, r_len, y_vals):
     return eff_mass
 
 
-def data_fit(x_vals, data, kpoints, r_len, conduction=True):
+def data_fit(x_vals, data, kpoints, r_len, steps, conduction=True):
     extrema = 10000 if conduction else -10000
     startdex = -1
     enddex = -1
@@ -385,33 +385,27 @@ def data_fit(x_vals, data, kpoints, r_len, conduction=True):
             elif val == extrema:
                 enddex = index
     step_size = x_vals[1] - x_vals[0]
-    x_range = [x_vals[startdex] - 2 * step_size, x_vals[startdex] - step_size] + x_vals[startdex: enddex + 1] + \
-              [x_vals[enddex] + step_size, x_vals[enddex] + 2 * step_size]
-    if startdex >= 2:
-        y_vals = data[startdex - 2: enddex + 1]
-    elif startdex == 1 and enddex >= len(data) - 2:
-        y_vals = [data[startdex - 1]] + data[startdex - 1: enddex + 1]
-    elif startdex == 1:
-        y_vals = [data[enddex + 2]] + data[startdex - 1: enddex + 1]
-    elif startdex == 0 and enddex == len(data) - 1:
-        y_vals = data[startdex: startdex + 2] + data[startdex: enddex + 1]
-    elif startdex == 0 and enddex == len(data) - 2:
-        y_vals = [data[enddex + 1]] * 2 + data[startdex: enddex + 1]
-    else:
-        y_vals = [data[enddex + 2], data[enddex + 1]] + data[startdex: enddex + 1]
+    x_range = [x_vals[startdex] - (steps - i) * step_size for i in range(steps)] + \
+              x_vals[startdex: enddex + 1] + [x_vals[enddex] + (i + 1) * step_size for i in range(steps)]
 
-    if enddex <= len(data) - 3:
-        y_vals = y_vals + data[enddex + 1: enddex + 3]
-    elif enddex == len(data) - 2 and startdex <= 1:
-        y_vals = y_vals + data[enddex + 1] * 2
-    elif enddex == len(data) - 2:
-        y_vals = y_vals + [data[enddex + 1]] + [data[startdex - 2]]
-    elif enddex == len(data) - 1 and startdex == 0:
-        y_vals = y_vals + data[startdex: startdex + 2]
-    elif enddex == len(data) - 1 and startdex == 1:
-        y_vals = y_vals + [data[startdex - 1]] * 2
-    else:
-        y_vals = y_vals + [data[startdex - 1], data[startdex - 2]]
+    left_vals, right_vals = [], []
+    for i in range(steps):
+        reached_left = True if startdex - i <= 0 else False
+        reached_right = True if enddex + i >= len(data) - 1 else False
+        if reached_left and reached_right:
+            print("Requested steps setting reached both left and right sides at once, check this behavior")
+            left_vals = left_vals[:1] + left_vals if len(left_vals) > 0 else [data[startdex]]
+            right_vals = right_vals + right_vals[-1:] if len(right_vals) > 0 else [data[enddex]]
+        elif reached_left:
+            left_vals = [data[enddex + 1 + i]] + left_vals
+            right_vals = right_vals + [data[enddex + 1 + i]]
+        elif reached_right:
+            left_vals = [data[startdex - 1 - i]] + left_vals
+            right_vals = right_vals + [data[startdex - 1 - i]]
+        else:
+            left_vals = [data[startdex - 1 - i]] + left_vals
+            right_vals = right_vals + [data[enddex + 1 + i]]
+    y_vals = left_vals + data[startdex: enddex + 1] + right_vals
 
     poly_coeff = bf.fit_poly(x_range, y_vals, 2)
     extrema_x = bf.minimize_func(poly_coeff) if conduction else bf.maximize_func(poly_coeff)

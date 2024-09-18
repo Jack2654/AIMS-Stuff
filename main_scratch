@@ -1620,3 +1620,174 @@ atom_dict = [NH2, CH2, Benzene, Cyclohexane]
 
 pt.NMR_average(folder, atom_dict, color_dict, width=0.005, xlim=xlim, type=type)
 
+#################### Info for TA + 3H + 3I3 ####################
+# 1H info
+folder = "../../FHI-aims/French_NMR/step3/I3/NMR/"
+NH2 = [10, 116, 11, 96, 12, 78, 71, 85, 105]
+CH2 = [63, 64, 103, 104, 97, 98, 83, 84, 79, 80, 69, 70]
+Benzene = [65, 66, 67, 68, 99, 100, 101, 102, 61, 62, 81, 82]
+Cyclohexane = [106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+               72, 73, 74, 75, 76, 77, 117, 118, 119, 120]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [[[10, 105, 116], [12, 71, 78], [11, 85, 96]],
+
+             [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+              atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+             [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+             [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-9, 0]
+
+# pt.NMR_average(folder, atom_dict, color_dict, width=0.005, xlim=xlim, type=type)
+
+#################### Info for TA + 3H + 1I3 + 2I ####################
+# 1H info
+folder = "../../FHI-aims/French_NMR/step3/I3/2I_I3/NMR/"
+NH2 = [10, 116, 11, 96, 12, 78, 71, 85, 105]
+CH2 = [63, 64, 103, 104, 97, 98, 83, 84, 79, 80, 69, 70]
+Benzene = [65, 66, 67, 68, 99, 100, 101, 102, 61, 62, 81, 82]
+Cyclohexane = [106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+               72, 73, 74, 75, 76, 77, 117, 118, 119, 120]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [[val - 4 for val in sset] for sset in atom_dict]
+atom_dict = [[atom_dict[0][0:2], atom_dict[0][2:4], atom_dict[0][4:6],
+              [atom_dict[0][6]], [atom_dict[0][7]], [atom_dict[0][8]]],
+
+             [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+              atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+             [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+             [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-14, 0]
+
+# pt.NMR_average(folder, atom_dict, color_dict, width=0.005, xlim=xlim, type=type)
+
+#################### Info for TA + 1H + 1I3 ####################
+# 1H info
+folder = "../../FHI-aims/French_NMR/I3/NMR/"
+NH2 = [17, 71, 116, 96, 78, 85, 105]
+CH2 = [63, 64, 103, 104, 97, 98, 83, 84, 79, 80, 69, 70]
+Benzene = [65, 66, 67, 68, 99, 100, 101, 102, 61, 62, 81, 82]
+Cyclohexane = [106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+               72, 73, 74, 75, 76, 77, 117, 118, 119, 120]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [[val - 8 for val in sset] for sset in atom_dict]
+atom_dict = [  # [atom_dict[0][0:2], [atom_dict[0][2]], [atom_dict[0][3]],
+    # [atom_dict[0][4]], [atom_dict[0][5]], [atom_dict[0][6]]],
+    [[9, 63, 70], [atom_dict[0][2]], [atom_dict[0][3]],
+     [atom_dict[0][5]], [atom_dict[0][6]]],
+
+    [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+     atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+    [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+    [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-8.5, 0]
+
+#################### Info for my TA  + 6H + 6I- ####################
+folder = "../../FHI-aims/French_NMR/new_multi/NMR/6I/"
+NH2 = [1 - 12, 2 - 12, 3 - 12, 4 - 12, 5 - 12, 6 - 12, 18, 33, 55, 70, 91, 105]
+NH2 = [x + 12 for x in NH2]
+CH2 = [20, 21, 35, 36, 72, 73, 57, 58, 93, 94, 107, 108]
+CH2 = [x + 12 for x in CH2]
+Benzene = [24, 26, 29, 31, 61, 63, 66, 68, 97, 99, 101, 103]
+Benzene = [x + 12 for x in Benzene]
+Cyclohexane = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16,
+               39, 40, 42, 43, 45, 47, 49, 50, 52, 53,
+               75, 76, 78, 79, 81, 83, 85, 86, 88, 89]
+Cyclohexane = [x + 12 for x in Cyclohexane]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [[atom_dict[0][0:2], atom_dict[0][2:4], atom_dict[0][4:6],
+              atom_dict[0][6:8], atom_dict[0][8:10], atom_dict[0][10:]],
+
+                 [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+                 atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+                 [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+                 [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-14, 0]
+
+#################### Info for my TA  + 3H + 3 I3- ####################
+folder = "../../FHI-aims/French_NMR/new_multi/NMR/I3/mix/"
+offset = 12
+NH2 = [1 - offset, 2 - offset, 3 - offset, 18, 33, 55, 70, 91, 105]
+NH2 = [x + offset for x in NH2]
+CH2 = [20, 21, 35, 36, 72, 73, 57, 58, 93, 94, 107, 108]
+CH2 = [x + offset for x in CH2]
+Benzene = [24, 26, 29, 31, 61, 63, 66, 68, 97, 99, 101, 103]
+Benzene = [x + offset for x in Benzene]
+Cyclohexane = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16,
+               39, 40, 42, 43, 45, 47, 49, 50, 52, 53,
+               75, 76, 78, 79, 81, 83, 85, 86, 88, 89]
+Cyclohexane = [x + offset for x in Cyclohexane]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [[[1, 30, 45], [2, 67, 82], [3, 103, 117]],
+
+             [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+              atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+             [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+             [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-14, 0]
+
+#################### Info for my TA  + 3H + 3 I5- ####################
+folder = "../../FHI-aims/French_NMR/new_multi/NMR/I5/all/"
+offset = 18
+NH2 = [1 - offset, 2 - offset, 3 - offset, 18, 33, 55, 70, 91, 105]
+NH2 = [x + offset for x in NH2]
+CH2 = [20, 21, 35, 36, 72, 73, 57, 58, 93, 94, 107, 108]
+CH2 = [x + offset for x in CH2]
+Benzene = [24, 26, 29, 31, 61, 63, 66, 68, 97, 99, 101, 103]
+Benzene = [x + offset for x in Benzene]
+Cyclohexane = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16,
+               39, 40, 42, 43, 45, 47, 49, 50, 52, 53,
+               75, 76, 78, 79, 81, 83, 85, 86, 88, 89]
+Cyclohexane = [x + offset for x in Cyclohexane]
+atom_dict = [NH2, CH2, Benzene, Cyclohexane]
+atom_dict = [  # [[1, 36, 51], [2, 73, 88], [3, 109, 123]],
+    [[1], [36], [51], [2], [73], [88], [3], [109], [123]],
+    [atom_dict[1][0:2], atom_dict[1][2:4], atom_dict[1][4:6],
+     atom_dict[1][6:8], atom_dict[1][8:10], atom_dict[1][10:]],
+
+    [atom_dict[2][0:4], atom_dict[2][4:8], atom_dict[2][8:]],
+
+    [atom_dict[3][0:10], atom_dict[3][10:20], atom_dict[3][20:]]]
+color_dict = ['r', 'c', 'b', 'g']
+type = 'H'
+xlim = [-11, 0]
+
+pt.NMR_average(folder, atom_dict, color_dict, width=0.005, xlim=xlim, type=type)
+
+base_angle = 180
+angles = [0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]
+directories = ["00.0/", "02.5/", "05.0/", "07.5/", "10.0/", "12.5/", "15.0/", "17.5/", "20.0/"]
+base = "../../FHI-aims/Double_Perovskites/New_Structures/AgBi/structures/" + str(base_angle) + ".in"
+for count, angle in enumerate(angles):
+    ang1 = (base_angle + angle / 2) * math.pi / 180
+    ang2 = (base_angle - angle / 2) * math.pi / 180
+    write = "../../FHI-aims/Double_Perovskites/New_Structures/AgBi/bands/" + str(base_angle) + "/" + \
+            directories[count] + "geometry.in"
+    print(write)
+    M24.induce_delta_beta(base, write, ang1, ang2)
+
+    test = write
+    print(round(bg.angle_info(test, (1, 7, 4), -1)[0], 4))
+    print(round(bg.angle_info(test, (4, 8, 1), [[0, 0, 0], [0, 0, 0], [0, 1, 0]])[0], 4))
+    print(round(bg.angle_info(test, (4, 9, 1), [[0, 0, 0], [0, 0, 0], [1, 1, 0]])[0], 4))
+    print(round(bg.angle_info(test, (4, 10, 1), [[0, 0, 0], [0, 0, 0], [1, 0, 0]])[0], 4))
+

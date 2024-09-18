@@ -92,9 +92,13 @@ def bohr_to_a(base):
             temp = line.split()
             if "lattice" in temp[0]:
                 val = [0.529177 * float(x) for x in temp[1:]]
+                lat = max(val)
                 f.write(f'lattice_vector %s %s %s\n' % (val[0], val[1], val[2]))
             elif "atom" in temp[0]:
                 val = [0.529177 * float(x) for x in temp[1:4]]
+                for elem in range(len(val)):
+                    if val[elem] > lat / 2:
+                        val[elem] = val[elem] - lat
                 f.write(f'atom %s %s %s %s\n' % (val[0], val[1], val[2], temp[4]))
             else:
                 print("Unexpected:")
@@ -118,11 +122,12 @@ def a_to_bohr(base, write):
             counter += 1
 
 
-base = f'../../Documents/NIMS/nano/2L/starting/Ag.in'
-xyz_to_cq(base, base, lattice=(40, 40, 40), move=True)
-a_to_bohr(base, base)
-# cq_to_aims(base, write)
-# bohr_to_a(write)
+base = f'../../Documents/NIMS/nano/6L/Pd/Pd5Ag1.in'
+write = f'../../Documents/NIMS/nano/6L/Pd/Pd5Ag1.in.in'
+# xyz_to_cq(base, base, lattice=(40, 40, 40), move=True)
+# a_to_bohr(base, base)
+cq_to_aims(base, write)
+bohr_to_a(write)
 
 # directories = ["Pd1Ag5", "Pd2Ag4", "Pd3Ag3", "Pd4Ag2", "Pd5Ag1"]
 directories = ["purePd", "pureAg"]

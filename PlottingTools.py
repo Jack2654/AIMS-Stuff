@@ -64,6 +64,7 @@ def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
 
 setattr(Axes3D, 'arrow3D', _arrow3D)
 
+
 def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Species Projected DOS", filename=None):
     if limits is None:
         limits = [-10, 10]
@@ -457,6 +458,7 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
     if not substate == 0:
         sub_st = True  # 0, s; 1, p; 2, d; ...
 
+    plt.clf()
     linewidth = 1
     black_bands = 1
     markersizeunit = 2
@@ -510,7 +512,7 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
             occ_ene = words[4:]
             for i in range(0, len(occ_ene), 2):
                 occupation = occ_ene[i]
-                cur_energy = float(occ_ene[i+1])
+                cur_energy = float(occ_ene[i + 1])
                 if occupation == "1.00000":
                     if cur_energy > max_occ:
                         max_occ = cur_energy
@@ -536,7 +538,8 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
             band = []
             for j in range(len(path)):
                 band.append(path[j][i])
-            plt.plot(xvals[count], band, color='k', lw=black_bands)
+            if ymin - 1 < band[0] < ymax + 1:
+                plt.plot(xvals[count], band, color='k', lw=black_bands)
     print(str(time.time() - curTime) + " seconds")
 
     ############################################
@@ -633,8 +636,9 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
                 # if 0.5 < cur_E < 2.7 and abs(cur_x - (0.5 * round(cur_x / 0.5))) < 0.05:
                 #     print(str(cur_x) + ", " + str(cur_E))
                 if plot_dot:  # this if statement exists just so "dots" are not too close together in output
-                    plt.plot(cur_x, cur_E, 'o', color=species_color[max_spec], markersize=markersizeunit,
-                             markeredgecolor=species_color[max_spec])
+                    if ymin - 1 < cur_E < ymax + 1:
+                        plt.plot(cur_x, cur_E, 'o', color=species_color[max_spec], markersize=markersizeunit,
+                                 markeredgecolor=species_color[max_spec])
             i += 1
         print(str(time.time() - curTime) + " seconds")
 
@@ -1001,19 +1005,12 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    for count, corner in enumerate(corners):
-        ax.scatter(corner[0], corner[1], corner[2], c='red', marker='o', alpha=0.3)
-        # Text for determining adjacency matrix
-        if setup:
-            ax.text(corner[0], corner[1], corner[2] + 0.05, str(count), color='r', fontsize=14)
-        for ind in adjacency[count]:
-            ax.plot([corners[ind][0], corner[0]],
-                    [corners[ind][1], corner[1]],
-                    [corners[ind][2], corner[2]], 'k')
+
     if setup:
         plt.show()
     # Plot pathway
     color_dict = ['r', 'orange', 'y', 'g', 'b']
+    color_dict = color_dict * 50
     reciprocal = bg.reciprocal_vectors(geo_file)
     pathway_recip = []
     for i in range(len(pathway)):
@@ -1030,24 +1027,20 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
                 [temp_z1, temp_z2], color_dict[i], linewidth=2, marker='o', markersize=7)
         pathway_recip.append([temp_x1, temp_y1, temp_z1, temp_x2, temp_y2, temp_z2])
 
+    for count, corner in enumerate(corners):
+        ax.scatter(corner[0], corner[1], corner[2], c='red', marker='o', alpha=0.3)
+        # Text for determining adjacency matrix
+        if setup:
+            ax.text(corner[0], corner[1], corner[2] + 0.05, str(count), color='r', fontsize=14)
+        for ind in adjacency[count]:
+            ax.plot([corners[ind][0], corner[0]],
+                    [corners[ind][1], corner[1]],
+                    [corners[ind][2], corner[2]], 'k')
+
     # Plot names near points
     x_offset = -0.03
     y_offset = 0.02
     z_offset = 0.02
-    outline_width = 1
-    for i, point in enumerate(pathway_recip):
-        if sum([abs(x) for x in point[0:3]]) != 0:
-            ax.text(point[0] + x_offset, point[1] + y_offset, point[2] + z_offset,
-                    names[i][0], color=color_dict[i], fontsize=14,
-                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
-        if sum([abs(x) for x in point[3:]]) != 0:
-            ax.text(point[3] + x_offset, point[4] + y_offset, point[5] + z_offset,
-                    names[i][1], color=color_dict[i], fontsize=14,
-                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
-
-    ax.text(x_offset, y_offset, z_offset, 'Γ', color='k', fontsize=14)
-    ax.scatter(0, 0, 0, c='k', marker='o', s=70)
-
     recip_labels = ["x*", "y*", "z*"]
     for i, recip in enumerate(reciprocal):
         ax.arrow3D(0, 0, 0, 0.75 * recip[0], 0.75 * recip[1], 0.75 * recip[2],
@@ -1067,6 +1060,25 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
     ax.set_axis_off()
     ax.set_proj_type('ortho')
     ax.view_init(elev=65, azim=70, roll=160)
+    plt.show()
+
+    outline_width = 1
+    for i, point in enumerate(pathway_recip):
+        if sum([abs(x) for x in point[0:3]]) != 0:
+            ax.text(point[0] + x_offset, point[1] + y_offset, point[2] + z_offset,
+                    names[i][0], color=color_dict[i], fontsize=14,
+                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
+        if sum([abs(x) for x in point[3:]]) != 0:
+            ax.text(point[3] + x_offset, point[4] + y_offset, point[5] + z_offset,
+                    names[i][1], color=color_dict[i], fontsize=14,
+                    path_effects=[pe.withStroke(linewidth=outline_width, foreground="black")])
+
+    ax.text(x_offset, y_offset, z_offset, 'Γ', color='k', fontsize=14)
+    ax.scatter(0, 0, 0, c='k', marker='o', s=70)
+
+
+
+
     if save:
         if filename is None:
             filename = "/".join(geo_file.split("/")[:-1]) + "/BZ.png"
@@ -1181,6 +1193,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
                             data.update({int(temp[0]): [float(temp[2])]})
                         else:
                             data[int(temp[0])].append(float(temp[2]))
+
     for key in data:
         data[key] = sum(data[key]) / len(data[key])
         # data[key] = data[key] - 31.1846
@@ -1195,6 +1208,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
         else:
             print("Unrecognized species passed into 'type' parameter")
             return
+
 
     x_range = np.arange(xlim[0], xlim[1], 0.001)
     if not color_dict:
@@ -1217,9 +1231,9 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
     plt.plot(x_range, [0 for x in x_range], color='k')
     ticks = [x for x in range(int(xlim[0] - 1), int(xlim[1]) + 1)]
     # print(ticks)
-    while len(ticks) > 20:
-        ticks = [ticks[2 * x] for x in range(int(len(ticks) / 2))]
-    plt.xticks()
+    # while len(ticks) > 20:
+    #     ticks = [ticks[2 * x] for x in range(int(len(ticks) / 2))]
+    plt.xticks(ticks)
     plt.yticks([])
     plt.xlim(xlim)
     plt.xlabel("ppm")
@@ -1265,6 +1279,7 @@ def plot_beta_avg_corr(data_file):
     plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
     plt.ylabel(r'$\Delta E\pm$ (eV)')
     plt.title(r'Band Path: $Y\rightarrow\Gamma$')
+    plt.ylim([0, 0.4])
     plt.show()
 
     data_180_X = [float(x[17]) for x in data]
@@ -1281,6 +1296,7 @@ def plot_beta_avg_corr(data_file):
     plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
     plt.ylabel(r'$\Delta E\pm$ (eV)')
     plt.title(r'Band Path: $\Gamma\rightarrow X$')
+    plt.ylim([0, 0.4])
     plt.show()
 
     data_180_M = [float(x[18]) for x in data]
@@ -1297,6 +1313,7 @@ def plot_beta_avg_corr(data_file):
     plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
     plt.ylabel(r'$\Delta E\pm$ (eV)')
     plt.title(r'Band Path: $M\rightarrow\Gamma$')
+    plt.ylim([0, 0.4])
     plt.show()
 
     data_180_P = [float(x[19]) for x in data]
@@ -1313,6 +1330,5 @@ def plot_beta_avg_corr(data_file):
     plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
     plt.ylabel(r'$\Delta E\pm$ (eV)')
     plt.title(r'Band Path: $\Gamma\rightarrow P$')
+    plt.ylim([0, 0.4])
     plt.show()
-
-
