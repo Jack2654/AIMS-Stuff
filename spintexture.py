@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.colors as colors
 import pandas as pd
+import BasicBandOut as bbo
 
 
 # reads stateXXXX.out output file
@@ -82,7 +83,7 @@ def extra_states(full_file, write_file, state):
         f.writelines(res)
 
 
-base = "../../FHI-aims/Double_Perovskites/real-systems/spin_textures/"
+base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/spin_textures/"
 structure = base + "selwoz/"
 states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
 
@@ -93,6 +94,7 @@ states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
 # states = [1707, 1708, 1709, 1710]  # VBM lower and upper, CBM lower and upper
 
 for state in states:
+    continue
     cur_state = structure + "state" + str(state)
     output = cur_state + ".dat"
     extra_states(structure + "spin_texture.dat", output, state)
@@ -112,3 +114,10 @@ for state in states:
 
     plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_shift, cur_state + ".png", title=title,
                          save=True)
+
+base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/"
+options = ['experimental-bs-selwoz/', 'experimental-bs-selwuf/', 'ijayuq/']
+for opt in options:
+    print(opt)
+    for i in range(1, 2):
+        print(bbo.band_info(base + opt, f'band100{i}.out', band_gap=True, spin_splitting=True, verbose=False))

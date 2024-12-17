@@ -2,6 +2,7 @@ import math
 import os
 import numpy as np
 import BasicGeo as bg
+import matplotlib.pyplot as plt
 
 
 # This function writes constrain relaxation flags on all types of atoms specified in the atom field using the flag
@@ -1069,3 +1070,151 @@ def flipYandZ(readfile, writefile):
             outp = "atom\t" + temp[1] + "\t" + temp[3] + "\t" + temp[2] + "\t" + temp[4] + "\n"
             f.write(outp)
         print("Flipped Y and Z :)")
+
+
+# this function takes in the base geometry of a 2d double perovskite and then induces a diagonal maurer distortion
+def make_Maurer(base, write, fraction):
+    at_info = bg.atoms(base)
+    lv = bg.lattice_vectors(base)
+    distance_1 = bg.distance(base, 1, base, 7)
+    distance_2 = bg.distance(base, 4, base, 7)
+    disp_1 = distance_1 * fraction
+    disp_2 = distance_2 * fraction
+    with open(write, "w") as f:
+        for lat in lv:
+            f.write(f'lattice_vector %s\n' % " ".join([str(x) for x in lat]))
+        for count, atom in enumerate(at_info):
+            if count != 0 and count != 3:
+                f.write(atom + "\n")
+            else:
+                cur = atom.split()
+                coords = [float(x) for x in cur[1:4]]
+                if count == 0:
+                    coords = [round(coords[0] + disp_1, 8), round(coords[1] + disp_1, 8), coords[2]]
+                else:
+                    coords = [round(coords[0] + disp_2, 8), round(coords[1] + disp_2, 8), coords[2]]
+                f.write(f'atom %s %s\n' % (" ".join([str(x) for x in coords]), cur[-1]))
+
+
+# this function computes the delta_d descriptor
+def new_delt_d(geometry):
+    lv = bg.lattice_vectors(geometry)
+    at = bg.atoms_trimmed(geometry)
+    metal_1 = at[0]
+    halides_1 = [at[1], at[2], at[6]]
+    shiftmap = [[0, -1, 0], [-1, -1, 0], [-1, 0, 0]]
+    points = [at[7].copy(), at[8].copy(), at[9].copy()]
+    for i in range(3):
+        for j in range(3):
+            points[i][0] += shiftmap[i][j] * lv[j][0]
+            points[i][1] += shiftmap[i][j] * lv[j][1]
+            points[i][2] += shiftmap[i][j] * lv[j][2]
+        halides_1.append(points[i])
+
+    metal_2 = at[3]
+    halides_2 = [at[4], at[5], at[6], at[7], at[8], at[9]]
+
+    dist_1 = [np.linalg.norm([metal_1[i] - halide[i] for i in range(3)]) for halide in halides_1]
+    dist_2 = [np.linalg.norm([metal_2[i] - halide[i] for i in range(3)]) for halide in halides_2]
+    avg_1 = np.average(dist_1)
+    avg_2 = np.average(dist_2)
+    delt_d_1 = np.average([((dist - avg_1) ** 2) / (avg_1 ** 2) for dist in dist_1])
+    delt_d_2 = np.average([((dist - avg_2) ** 2) / (avg_2 ** 2) for dist in dist_2])
+
+    return (delt_d_1 + delt_d_2) / 2
+
+
+# this function computes the sigma^2 descriptor
+def new_sigma_sq(geometry):
+    angles_1 = [bg.angle_info(geometry, (9, 1, 10), [[-1, -1, 0], [0, 0, 0], [-1, 0, 0]]),
+                bg.angle_info(geometry, (10, 1, 7), [[-1, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (7, 1, 8), [[0, 0, 0], [0, 0, 0], [0, -1, 0]]),
+                bg.angle_info(geometry, (8, 1, 9), [[0, -1, 0], [0, 0, 0], [-1, -1, 0]]),
+                bg.angle_info(geometry, (9, 1, 2), [[-1, -1, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (10, 1, 2), [[-1, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (7, 1, 2), [[-1, -1, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (8, 1, 2), [[0, -1, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (9, 1, 3), [[-1, -1, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (10, 1, 3), [[-1, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (7, 1, 3), [[-1, -1, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (8, 1, 3), [[0, -1, 0], [0, 0, 0], [0, 0, 0]])]
+
+    angles_2 = [bg.angle_info(geometry, (7, 4, 8), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (8, 4, 9), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (9, 4, 10), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (10, 4, 7), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (7, 4, 5), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (8, 4, 5), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (9, 4, 5), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (10, 4, 5), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (7, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (8, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (9, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+                bg.angle_info(geometry, (10, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]])]
+
+    sig_sq_1 = np.average([(angle[0] - 90) * (angle[0] - 90) / 12 for angle in angles_1])
+    sig_sq_2 = np.average([(angle[0] - 90) * (angle[0] - 90) / 12 for angle in angles_2])
+    return str((sig_sq_1 + sig_sq_2) / 2)
+
+
+# this function computes the diagonal displacement descriptor
+def ddiag_val(geometry):
+    lv = bg.lattice_vectors(geometry)
+    at = bg.atoms_trimmed(geometry)
+    metal_1 = at[0]
+    halides_1 = [at[6]]
+    shiftmap = [[0, -1, 0], [-1, -1, 0], [-1, 0, 0]]
+    points = [at[7].copy(), at[8].copy(), at[9].copy()]
+    for i in range(3):
+        for j in range(3):
+            points[i][0] += shiftmap[i][j] * lv[j][0]
+            points[i][1] += shiftmap[i][j] * lv[j][1]
+            points[i][2] += shiftmap[i][j] * lv[j][2]
+        halides_1.append(points[i])
+
+    metal_2 = at[3]
+    halides_2 = [at[6], at[7], at[8], at[9]]
+
+    centroid_1 = [np.average([atom[0] for atom in halides_1]), np.average([atom[1] for atom in halides_1])]
+    centroid_2 = [np.average([atom[0] for atom in halides_2]), np.average([atom[1] for atom in halides_2])]
+
+    # plt.scatter(centroid_2[0], centroid_2[1], color='k')
+    # plt.plot([centroid_2[0] + x for x in [-1, 1]], [centroid_2[1] + y for y in [-1, 1]], color='k')
+    # plt.plot([centroid_2[0] + x for x in [-1, 1]], [centroid_2[1] + y for y in [1, -1]], color='k')
+    # plt.scatter(metal_2[0], metal_2[1], color='g')
+
+    intercept_1_1 = metal_1[1] - metal_1[0]
+    intercept_1_2 = metal_1[1] + metal_1[0]
+    intercept_2_1 = metal_2[1] - metal_2[0]
+    intercept_2_2 = metal_2[1] + metal_2[0]
+    # plt.plot([-1 + centroid_2[0], 1 + centroid_2[0]],
+    #          [x + intercept_2_1 for x in [-1 + centroid_2[0], 1 + centroid_2[0]]], color='b')
+    # plt.plot([-1 + centroid_2[0], 1 + centroid_2[0]],
+    #         [x * -1 + intercept_2_2 for x in [-1 + centroid_2[0], 1 + centroid_2[0]]], color='b')
+
+    x_temp = (intercept_1_1 - centroid_1[1] + centroid_1[0]) / 2
+    y_temp = -1 * x_temp + intercept_1_1
+    diag_dist_1_1 = np.linalg.norm([metal_1[i] - [x_temp, y_temp][i] for i in range(2)])
+
+    x_temp = (centroid_1[0] + centroid_1[1] - intercept_1_2) / 2
+    y_temp = x_temp + intercept_1_2
+    diag_dist_1_2 = np.linalg.norm([metal_1[i] - [x_temp, y_temp][i] for i in range(2)])
+
+    x_temp = (-1 * intercept_2_1 + centroid_2[1] + centroid_2[0]) / 2
+    y_temp = x_temp + intercept_2_1
+    # plt.scatter(x_temp, y_temp, color='r')
+    diag_dist_2_1 = np.linalg.norm([metal_2[i] - [x_temp, y_temp][i] for i in range(2)])
+
+    x_temp = (centroid_2[0] - centroid_2[1] + intercept_2_2) / 2
+    y_temp = -1 * x_temp + intercept_2_2
+    # plt.scatter(x_temp, y_temp, color='orange')
+    diag_dist_2_2 = np.linalg.norm([metal_2[i] - [x_temp, y_temp][i] for i in range(2)])
+
+    # plt.xlim(-10, 10)
+    # plt.ylim(-10, 10)
+    # plt.show()
+
+    dist_1 = np.linalg.norm([metal_1[i] - centroid_1[i] for i in range(2)])
+    dist_2 = np.linalg.norm([metal_2[i] - centroid_2[i] for i in range(2)])
+
+    return [dist_1, dist_2, diag_dist_1_1, diag_dist_1_2, diag_dist_2_1, diag_dist_2_2]

@@ -126,3 +126,6 @@ def create_shield_out(base):
         f.write("#\t Atom\t Species\t Shielding (ppm)\n")
         for val in values:
             f.write(f'\t %s\t %s\t\t %s\n' % (val[0], val[1], val[2]))
+    shieldings = [val[2] for val in values]
+    print(base)
+    print(" ".join([str(x) for x in shieldings]))

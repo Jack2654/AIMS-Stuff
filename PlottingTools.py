@@ -10,11 +10,14 @@ import numpy as np
 import BasicGeo as bg
 import BasicControl as bc
 import BasicAimsOut as bao
+import BasicBandOut as bbo
 import time
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d.proj3d import proj_transform
 import matplotlib.patheffects as pe
+import scipy
+import Geometry
 
 
 # reimagined arguments: python3 *.py a1 a2 a3 a4 a5 a6 a7 a8 a9
@@ -476,7 +479,7 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
     band_mlkfiles = [f for f in all_files if 'bandmlk' in f and f.endswith('.out')]
     band_mlkfiles.sort()
     mlk = False
-    if len(band_mlkfiles):
+    if len(band_mlkfiles) and False:
         mlk = True
         band_mlkfiles = [band_mlkfiles[x] for x in bands]
 
@@ -531,7 +534,8 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
                 return
             print(f'Max occupied state found at %s eV' % max_occ)
 
-    print("Plotting bands", end='\t\t')
+    if not flags == 2:
+        print("Plotting bands", end='\t\t')
     curTime = time.time()
     for count, path in enumerate(energys):
         for i in range(len(path[0])):
@@ -540,7 +544,8 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
                 band.append(path[j][i])
             if ymin - 1 < band[0] < ymax + 1:
                 plt.plot(xvals[count], band, color='k', lw=black_bands)
-    print(str(time.time() - curTime) + " seconds")
+    if not flags == 2:
+        print(str(time.time() - curTime) + " seconds")
 
     ############################################
     # output non-mlk						   #
@@ -1092,7 +1097,8 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
 def NMR_histogram(folders):
     datas = [bao.all_shieldings(folder) for folder in folders]
     # TMS reference is 31.1846 ppm
-    datas = [[x - 31.1846 for x in data] for data in datas]
+    # TMS reference new is 31.03126 ppm
+    datas = [[x - 31.03126 for x in data] for data in datas]
     fig, axs = plt.subplots(3, 1, sharex=True)
     fig.set_figheight(6)
     fig.subplots_adjust(hspace=0)
@@ -1130,13 +1136,13 @@ def NMR_histogram(folders):
     plt.show()
 
 
-def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.05):
-    # shieldings = bao.NMR_shielding_values(folder + "aims.out")
-    shieldings = bao.all_shieldings(folder)
+def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.01):
+    shieldings = bao.NMR_shielding_values(folder + "aims.out")
+    # shieldings = bao.all_shieldings(folder)
 
     atoms = [x[0] for x in shieldings]
     shields = [x[1] for x in shieldings]
-    x_range = np.arange(min(shields) - 31.18460 - .2, max(shields) - 31.1846 + 0.2, 0.01)
+    x_range = np.arange(min(shields) - 31.03126 - .2, max(shields) - 31.03126 + 0.2, 0.01)
     x_range = np.arange(-9.5, 0.5, 0.005)
 
     if atom_dict is None:
@@ -1144,7 +1150,8 @@ def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.
 
     total = [0 for x in x_range]
     if not color_dict:
-        color_dict = ['r', 'c', 'b', 'g']
+        color_dict = ['r', 'g', 'b', 'purple']
+        color_dict = ['lightgreen', 'b', 'r']
     for count, atom_set in enumerate(atom_dict):
         y_values = [0 for x in x_range]
         centers = []
@@ -1163,11 +1170,12 @@ def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.
             temp = [len(centers) * x for x in temp]
             y_values = [y_values[x] + temp[x] for x in range(len(temp))]
         plt.plot(x_range, y_values, color=color_dict[count])
-    # plt.fill_between(x_range, total, 0, color='k', alpha=0.25)
+        plt.fill_between(x_range, y_values, 0, color=color_dict[count])
     plt.plot(x_range, [0 for x in x_range], color='k')
     plt.xticks([x for x in range(-10, 1)])
     plt.yticks([])
     plt.xlim([-9.5, 0.5])
+    plt.xlim([-4.25, 0.25])
     # plt.ylim([0, 100])
     plt.xlabel("ppm")
     plt.show()
@@ -1198,7 +1206,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
         data[key] = sum(data[key]) / len(data[key])
         # data[key] = data[key] - 31.1846
         if type == 'H':
-            data[key] = data[key] - 31.0313
+            data[key] = data[key] - 31.03126
         elif type == 'C':
             continue
             data[key] = data[key] - 177.4423
@@ -1213,6 +1221,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
     x_range = np.arange(xlim[0], xlim[1], 0.001)
     if not color_dict:
         color_dict = ['r', 'c', 'b', 'g']
+        color_dict = ['r', 'g', 'b']
 
     for count, structure_set in enumerate(atom_dict):
         y_values = [0 for x in x_range]
@@ -1222,6 +1231,7 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
                 centers.append(data[atom])
             center = sum(centers) / len(centers)
             print(atom_set)
+            print(centers)
             print(center)
             temp = [norm.pdf(x, center, width) for x in x_range]
             factor = math.sqrt(len(centers))
@@ -1332,3 +1342,250 @@ def plot_beta_avg_corr(data_file):
     plt.title(r'Band Path: $\Gamma\rightarrow P$')
     plt.ylim([0, 0.4])
     plt.show()
+
+
+def plot_correlations(folder, mode="dd", band_path=1, title="put in a title"):
+    matplotlib.rc('text', usetex='true')
+    base_structures = ["180/", "170/", "160/", "150/"]
+    colors = ['r', 'g', 'b', 'y']
+    labels = ["180", "170", "160", "150"]
+    for count, base in enumerate(base_structures):
+        print(base)
+        cur_x_vals = []
+        if mode == "db":
+            cur_x_vals = [0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]
+        cur_y_vals = []
+        all_dir = ['00.0', '02.5', '05.0', '07.5', '10.0', '12.5', '15.0', '17.5', '20.0']
+        for directory in all_dir:
+            print(directory)
+            if mode == "dd":
+                cur_x_vals.append(Geometry.new_delt_d(folder + base + directory + "/geometry.in"))
+            elif mode == "ss":
+                cur_x_vals.append(float(Geometry.new_sigma_sq(folder + base + directory + "/geometry.in")))
+            cur_y_vals.append(float(bbo.band_info(folder + base + directory + "/", f'band100{band_path}.out',
+                                                  band_gap=False, spin_splitting=True, verbose=False)))
+
+        plt.plot(cur_x_vals, cur_y_vals, color=colors[count], label=labels[count])
+        plt.scatter(cur_x_vals, cur_y_vals, color=colors[count], label="_")
+    plt.legend()
+    if mode == "db":
+        plt.xlabel(r'$$\Delta\beta (^{\circ})$$')
+    elif mode == "dd":
+        plt.xlabel(r'$$\Delta d$$')
+    elif mode == "ss":
+        plt.xlabel(r'$$\sigma^2$$')
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(title)
+    plt.ylim([-0.01, 0.40])
+    plt.show()
+
+
+def plot_maurer_structures(folders, path, mode='ddiag'):
+    matplotlib.rc('text', usetex='true')
+    colors = ['b', 'orange', 'g']
+    labels = ["AgBi", "TlBi", "Pb"]
+    for count, folder in enumerate(folders):
+        maurer_x, all_splits, _, _, xlab = get_maurer_data(folder, mode, labels[count])
+        plt.plot(maurer_x[:10], all_splits[path][:10], color=colors[count], label=labels[count])
+        plt.scatter(maurer_x[:10], all_splits[path][:10], color=colors[count], label="_")
+    plt.xlabel(xlab)
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    if path == 0:
+        plt.title(r'Band Path: $Y\rightarrow\Gamma$')
+    elif path == 1:
+        plt.title(r'Band Path: $X\rightarrow\Gamma$')
+    elif path == 2:
+        plt.title(r'Band Path: $M\rightarrow\Gamma$')
+    elif path == 3:
+        plt.title(r'Band Path: $P\rightarrow\Gamma$')
+    plt.legend()
+    plt.show()
+
+
+def plot_maurer_structure(folder, x_axis="ddiag", type="AgBi"):
+    matplotlib.rc('text', usetex='true')
+    maurer_x, all_splits, db_x, db_splits, xlab = get_maurer_data(folder, x_axis, type)
+    # band path 1
+    plt.xlabel(xlab)
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $Y\rightarrow\Gamma$')
+    plt.scatter(maurer_x, all_splits[0], color='r')
+    plt.scatter(db_x, db_splits[0], color='k')
+    plt.legend(["Maurer data", r'$\Delta\beta$ structure data'])
+    plt.show()
+
+    # band path 2
+    plt.xlabel(xlab)
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $X\rightarrow\Gamma$')
+    plt.scatter(maurer_x, all_splits[1], color='r')
+    plt.scatter(db_x, db_splits[1], color='k')
+    plt.legend(["Maurer data", r'$\Delta\beta$ structure data'])
+    plt.show()
+
+    # band path 3
+    plt.xlabel(xlab)
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $M\rightarrow\Gamma$')
+    plt.scatter(maurer_x, all_splits[2], color='r')
+    plt.scatter(db_x, db_splits[2], color='k')
+    plt.legend(["Maurer data", r'$\Delta\beta$ structure data'])
+    plt.show()
+
+    # band path 4
+    plt.xlabel(xlab)
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.title(r'Band Path: $P\rightarrow\Gamma$')
+    plt.scatter(maurer_x, all_splits[3], color='r')
+    plt.scatter(db_x, db_splits[3], color='k')
+    plt.legend(["Maurer data", r'$\Delta\beta$ structure data'])
+    plt.show()
+
+
+def get_maurer_data(folder, x_axis="ddiag", type="AgBi"):
+    write_base = folder
+    all_splits = [[], [], [], []]
+    dbs = []
+    dds = []
+    sigmas = []
+    for i in range(21):
+        band_base = write_base + "s" + str(i) + "/"
+        for j in range(1, 5):
+            all_splits[j - 1].append(float(bbo.band_info(band_base, f'band100%s.out' % j,
+                                                         band_gap=False, spin_splitting=True, verbose=False)))
+        angles = [bg.angle_info(band_base + "geometry.in", (1, 7, 4), [[0, 0, 0], [0, 0, 0], [0, 0, 0]])[0],
+                  bg.angle_info(band_base + "geometry.in", (4, 10, 1), [[0, 0, 0], [0, 0, 0], [1, 0, 0]])[0],
+                  360 - bg.angle_info(band_base + "geometry.in", (4, 8, 1), [[0, 0, 0], [0, 0, 0], [0, 1, 0]])[0],
+                  360 - bg.angle_info(band_base + "geometry.in", (4, 9, 1), [[0, 0, 0], [0, 0, 0], [1, 1, 0]])[0]]
+        dbs.append(abs(np.average(angles[0:2]) - np.average(angles[2:])))
+        dds.append(Geometry.new_delt_d(band_base + "geometry.in"))
+        sigmas.append(float(Geometry.new_sigma_sq(band_base + "geometry.in")))
+
+    if x_axis == "db":
+        maurer_x = dbs
+        db_x = [0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0]
+        xlab = r'$$\Delta\beta (^{\circ})$$'
+    elif x_axis == "dd":
+        maurer_x = dds
+        xlab = r'$$\Delta d$$'
+        if type == "AgBi":
+            db_x = [0.0005514869028169361, 0.0005501529081437721, 0.0005461605279851626,
+                    0.0005395385800108273, 0.0005303351139641667, 0.000518617442115841,
+                    0.0005044721819242762, 0.00048800531092865903, 0.00046934223390719524]
+        elif type == "Pb":
+            db_x = [0.00027677247337772547, 0.0002758293590776476, 0.0002730095569457845,
+                    0.0002683416952875836, 0.00026187350794989306, 0.00025367186433927324,
+                    0.0002438228114710582, 0.000232431628072491, 0.00021962289077003672]
+        elif type == "TlBi":
+            db_x = [0.001115427028095635, 0.0011136361190813597, 0.0011082729916257015,
+                    0.001099366450796213, 0.0010869645260631132, 0.0010711345028494134,
+                    0.0010519629667287461, 0.00102955586029827, 0.0010040385527622653]
+    elif x_axis == "ddiag":
+        maurer_x = [i * math.sqrt(2) * 0.01 for i in range(21)]
+        xlab = r'$$\mbox{Displacement Proportion: }(d_{diag}/d_{MH})$$'
+        db_x = [0 for i in range(21)]
+    elif x_axis == "ss":
+        maurer_x = sigmas
+        xlab = r'$$\sigma^2$$'
+        if type == "AgBi":
+            db_x = [0.0, 0.017054138260774294, 0.06821612824867226, 0.1534846954767971, 0.27285771545426807,
+                    0.4263322131655902, 0.6139043623387497, 0.8355694844988036, 1.0913220478035366]
+        elif type == "Pb":
+            db_x = [0.0, 0.01687883704959059, 0.067515093119297, 0.1519080027357202, 0.27005628932233194,
+                    0.42195816401746966, 0.6076113240167413, 0.8270129504381312, 1.0801597057064776]
+        elif type == "TlBi":
+            db_x = [0.0, 0.017001365867382292, 0.0680050909942368, 0.15301005780769691, 0.2720144031951563,
+                    0.425015517766429, 0.61201004481777, 0.8329938789952098, 1.0879621646535345]
+    if type == "AgBi":
+        y_sp = [0.000000000, 0.001978047, 0.007910668, 0.017736152, 0.033331424,
+                0.048738543, 0.068330372, 0.090566254, 0.121037926]
+        x_sp = [0.000000000, 0.001984659, 0.007954340, 0.017762658, 0.033311418,
+                0.048747455, 0.068220740, 0.090601591, 0.121028108]
+        m_sp = [0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000,
+                0.000000000, 0.000000000, 0.000000000, 0.000000000]
+        p_sp = [0.000000000, 0.003996148, 0.015753161, 0.035129993, 0.064213747,
+                0.091035655, 0.130201712, 0.173199313, 0.218628156]
+    elif type == "Pb":
+        y_sp = [0.000000000, 0.003651229, 0.014492939, 0.032241702, 0.056427182,
+                0.086511194, 0.122028863, 0.162165650, 0.206240499]
+        x_sp = [0.000000000, 0.003651221, 0.014462439, 0.032233604, 0.056410237,
+                0.086589006, 0.121991426, 0.162074105, 0.206117388]
+        m_sp = [0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000,
+                0.000000000, 0.000000000, 0.000000000, 0.000000000]
+        p_sp = [0.000000000, 0.007286301, 0.028664433, 0.063268560, 0.109288709,
+                0.165281619, 0.229255956, 0.299524430, 0.374601416]
+    elif type == "TlBi":
+        y_sp = [0.000000000, 0.005262417, 0.020270133, 0.043109369, 0.071773425,
+                0.104614053, 0.140621992, 0.179258340, 0.219193419]
+        x_sp = [0.000000000, 0.005292400, 0.020301555, 0.043137159, 0.071756205,
+                0.104624037, 0.140624206, 0.179268290, 0.219398904]
+        m_sp = [0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000,
+                0.000000000, 0.000000000, 0.000000000, 0.000000000]
+        p_sp = [0.000000000, 0.010452739, 0.039593492, 0.082461978, 0.134546223,
+                0.192984300, 0.255323007, 0.318973109, 0.382150808]
+    return maurer_x, all_splits, db_x, [y_sp, x_sp, m_sp, p_sp], xlab
+
+
+def plot_random_structures(folders, mode='ddiagmax'):
+    matplotlib.rc('text', usetex='true')
+    labels = ["AgBi"]
+    for count, folder in enumerate(folders):
+        x_data, all_splits = get_random_data(folder, mode, labels[count])
+        colors = ['r', 'g', 'b', 'orange']
+        for index, direction in enumerate(all_splits):
+            slope, intercept, r_value, _, _ = scipy.stats.linregress(x_data, direction)
+            plt.plot([min(x_data), max(x_data)], [x * slope + intercept for x in [min(x_data), max(x_data)]],
+                     color=colors[index], label=f'path {index+1}, $r^2$={r_value ** 2}')
+            plt.scatter(x_data, direction, color=colors[index], label="_")
+    mode_dict = {"dbmax": r'$\Delta\beta_{max}$', "dbavg": r'$\Delta\beta_{avg}$',
+                 "ss": r'$\sigma^2$', "dd": r'$\Delta d$', "ddiagmax": r'$d_{diag,max}$',
+                 "ddiagAg": r'$d_{diag,Ag}$', "ddiagBi": r'd_{diag,Bi}', "ddisp": r'$d_{disp}$',
+                 "ddiagavg": r'$d_{diag,avg}$'}
+    plt.xlabel(mode_dict[mode])
+    plt.ylabel(r'$\Delta E\pm$ (eV)')
+    plt.legend()
+    plt.title("Random Structures")
+    plt.show()
+
+
+def get_random_data(folder, mode, type):
+    write_base = folder
+    all_splits = [[], [], [], []]
+    dbs = [[], []]
+    dds = []
+    ddiags = []
+    sigmas = []
+    for i in ["05", "10", "15", "20"]:
+        for j in range(1, 11):
+            band_base = write_base + i + "/" + str(j).rjust(2, "0") + "/"
+            for k in range(1, 5):
+                all_splits[k - 1].append(float(bbo.band_info(band_base, f'band100%s.out' % k, band_gap=False,
+                                                             spin_splitting=True, verbose=False)))
+
+            angles = bg.random_angle_info(band_base + "geometry.in")
+            dbs[0].append(abs(np.average([angles[0], angles[1]]) - np.average([angles[2], angles[3]])))
+            dbs[1].append(abs(np.average([angles[0], angles[2]]) - np.average([angles[1], angles[3]])))
+            dds.append(Geometry.new_delt_d(band_base + "geometry.in"))
+            sigmas.append(float(Geometry.new_sigma_sq(band_base + "geometry.in")))
+            ddiags.append(Geometry.ddiag_val(band_base + "geometry.in"))
+
+    if mode == "dbmax":
+        x_data = [max(dbs[0][i], dbs[1][i]) for i in range(len(dbs[0]))]
+    elif mode == "dbavg":
+        x_data = [np.average([dbs[0][i], dbs[1][i]]) for i in range(len(dbs[0]))]
+    elif mode == "dd":
+        x_data = dds
+    elif mode == "ddisp":
+        x_data = [(data_set[0] + data_set[1]) / 2 for data_set in ddiags]
+    elif mode == "ddiagmax":
+        x_data = [max(data_set[2:]) for data_set in ddiags]
+    elif mode == "ddiagAg":
+        x_data = [max(data_set[4:]) for data_set in ddiags]
+    elif mode == "ddiagBi":
+        x_data = [max([data_set[2], data_set[3]]) for data_set in ddiags]
+    elif mode == "ddiagavg":
+        x_data = [np.average(data_set[2:]) for data_set in ddiags]
+    elif mode == "ss":
+        x_data = sigmas
+    return x_data, all_splits
+

@@ -34,7 +34,7 @@
 # imports:
 import math
 import random
-
+import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from ase.io import read, write
 import VectorToolkit as vt
@@ -92,7 +92,7 @@ def distance(fileA, a, fileB, b):
     return vt.dist(x1, x2)
 
 
-def recenter(filepath, writepath, index, x, y, z):
+def recenter(filepath, writepath, index, x=0, y=0, z=0):
     with open(filepath, "r") as f:
         j = 0
         lv = []
@@ -526,7 +526,7 @@ def angle_info_old(readfile, pts):
         return res
 
 
-def disturb_positions(readfile, writefile, max_disturbance):
+def disturb_positions(readfile, writefile, max_disturbance, change_Cs=False):
     lv = lattice_vectors(readfile)
     at = atoms(readfile)
     with open(writefile, "w") as f:
@@ -534,7 +534,7 @@ def disturb_positions(readfile, writefile, max_disturbance):
             f.write('lattice_vector\t%.8f\t%.8f\t%.8f\n' % (lat[0], lat[1], lat[2]))
         for atom in at:
             temp = atom.split()
-            if "Cs" in temp:
+            if not change_Cs and "Cs" in temp:
                 f.write('atom\t%s\t%s\t%s\t%s\n' % (temp[1], temp[2], temp[3], temp[-1]))
                 continue
             coords = [float(x) for x in temp[1:4]]
@@ -725,3 +725,55 @@ def rename_species(readfile, writefile, indices, original, changed):
     with open(writefile, "w") as f:
         f.writelines(full_lv)
         f.writelines(["\t".join(x) + "\n" for x in at_expanded])
+
+
+def random_angle_info(readfile):
+    point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
+    shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                 [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
+                 [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
+                 [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+    angles = []
+    # direction 1 = vertical, 2 = horizontal
+    directions = [1, 2, 2, 1]
+    # 1 = should be + coordinate direction, -1 = should be - coordinate direction
+    desired_polarity = [1, 1, -1, -1]
+    for count, points in enumerate(point_sets):
+        debug = False
+        # pulls information from geometry.in and pulls three desired points
+        lv = lattice_vectors(readfile)
+        at = atoms_trimmed(readfile)
+        pts = [at[points[0] - 1], at[points[1] - 1], at[points[2] - 1]]
+        # moves points so they are positioned adequately
+        for i in range(3):
+            for j in range(3):
+                pts[i][0] += shiftmaps[count][i][j] * lv[j][0]
+                pts[i][1] += shiftmaps[count][i][j] * lv[j][1]
+                pts[i][2] += shiftmaps[count][i][j] * lv[j][2]
+        p1, p2, p3 = pts
+
+        slope = (p3[1] - p1[1]) / (p3[0] - p1[0])
+        intercept = p3[1] - p3[0] * slope
+
+        # case of vertical angle
+        if directions[count] == 1:
+            polarity = 1 if p2[0] > (p2[1] - intercept) / slope else -1
+            temp_angle = angle(p1, p2, p3) if polarity == desired_polarity[count] else 360 - angle(p1, p2, p3)
+        # case of vertical angle
+        elif directions[count] == 2:
+            polarity = 1 if p2[1] > p2[0] * slope + intercept else -1
+            temp_angle = angle(p1, p2, p3) if polarity == desired_polarity[count] else 360 - angle(p1, p2, p3)
+        angles.append(temp_angle)
+        # print(temp_angle)
+        # x_vals = [p1[0], p3[0]]
+        # plt.plot(x_vals, [x * slope + intercept for x in x_vals], label=temp_angle)
+        # plt.scatter([p1[0], p3[0]], [p1[1], p3[1]], color='green', label="_")
+        # if polarity == desired_polarity[count]:
+        #     plt.scatter(p2[0], p2[1], color='b', label="_")
+        # else:
+        #     plt.scatter(p2[0], p2[1], color='r', label="_")
+    # plt.xlim(-7, 7)
+    # plt.ylim(-1, 13)
+    # plt.legend()
+    # plt.show()
+    return angles
