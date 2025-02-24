@@ -13,7 +13,7 @@
 
 # imports:
 import os
-
+import numpy as np
 
 # functions:
 def calc_complete(filepath):
@@ -94,8 +94,20 @@ def all_shieldings(base):
         if os.path.isdir(base + direct):
             output = base + direct + "/aims.out"
             # print(f'%s %f' % (direct, find_shielding(output)))
-            data.append(NMR_shielding_values(output)[0])
-    return data
+            temp = NMR_shielding_values(output)
+            print(temp)
+            data.append(temp)
+    shield_dict = {}
+    for data_set in data:
+        for datum in data_set:
+            if datum[0] in shield_dict.keys():
+                shield_dict[datum[0]].append(datum[1])
+            else:
+                shield_dict[datum[0]] = [datum[1]]
+    ret_data = []
+    for key in shield_dict.keys():
+        ret_data.append([key, np.average(shield_dict[key])])
+    return ret_data
 
 
 # creates shieldings.out file

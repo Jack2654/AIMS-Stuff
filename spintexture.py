@@ -94,7 +94,7 @@ states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
 # states = [1707, 1708, 1709, 1710]  # VBM lower and upper, CBM lower and upper
 
 for state in states:
-    continue
+    # continue
     cur_state = structure + "state" + str(state)
     output = cur_state + ".dat"
     extra_states(structure + "spin_texture.dat", output, state)
@@ -113,7 +113,7 @@ for state in states:
     title += f'(%s)' % state
 
     plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_shift, cur_state + ".png", title=title,
-                         save=True)
+                         save=False)
 
 base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/"
 options = ['experimental-bs-selwoz/', 'experimental-bs-selwuf/', 'ijayuq/']

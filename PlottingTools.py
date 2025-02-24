@@ -118,6 +118,7 @@ def dos_plot(folder, shift=0, limits=None, combine=True, save=False, title="Spec
         for index, element in enumerate(elements):
             ax.plot(doses[index], energy, color=colorkey[element], label=element)
     plt.legend(fontsize="15")
+    plt.tight_layout()
     if save:
         if filename is None:
             filename = "/".join(files[0].split("/")[:-1]) + "/dos.png"
@@ -479,7 +480,7 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
     band_mlkfiles = [f for f in all_files if 'bandmlk' in f and f.endswith('.out')]
     band_mlkfiles.sort()
     mlk = False
-    if len(band_mlkfiles) and False:
+    if len(band_mlkfiles):
         mlk = True
         band_mlkfiles = [band_mlkfiles[x] for x in bands]
 
@@ -1007,9 +1008,9 @@ def correlation_plot():
 # noinspection PyTypeChecker
 def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, names, setup=False, save=False,
                                       filename=None):
+    # use: https://lampz.tugraz.at/~hadley/ss1/bzones/drawing_BZ.php
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
 
     if setup:
         plt.show()
@@ -1065,7 +1066,7 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
     ax.set_axis_off()
     ax.set_proj_type('ortho')
     ax.view_init(elev=65, azim=70, roll=160)
-    plt.show()
+    # plt.show()
 
     outline_width = 1
     for i, point in enumerate(pathway_recip):
@@ -1080,9 +1081,6 @@ def plot_3d_solid_with_path_and_names(geo_file, corners, adjacency, pathway, nam
 
     ax.text(x_offset, y_offset, z_offset, 'Γ', color='k', fontsize=14)
     ax.scatter(0, 0, 0, c='k', marker='o', s=70)
-
-
-
 
     if save:
         if filename is None:
@@ -1136,14 +1134,66 @@ def NMR_histogram(folders):
     plt.show()
 
 
-def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.01):
-    shieldings = bao.NMR_shielding_values(folder + "aims.out")
-    # shieldings = bao.all_shieldings(folder)
+def plot_chem_book(width=0.001):
+    fig, ax = plt.subplots()
+    signals = [(3.811, 109), (3.730, 427), (3.652, 469), (3.576, 132), (2.607, 199), (2.599, 168),
+               (1.303, 430), (1.286, 23), (1.226, 1000), (1.207, 36), (1.199, 25), (1.146, 376)]
+    red = -4.087999375000001
+    blue = -2.6221356250000003
+    green = -1.4276929166666676
+
+    offset = 0.0725 / 2
+    # signals = [(red + 3 * offset, 4), (red + offset, 12), (red - offset, 12), (red - 3 * offset, 4),
+    #            (blue, 3), (blue, 3),
+    #            (green + 2 * offset, 9), (green, 18), (green - 2 * offset, 9)]
+    x_range = np.arange(-5, 0.5, 0.0005)
+    red_total = [0 for x in x_range]
+    blue_total = [0 for x in x_range]
+    green_total = [0 for x in x_range]
+    for count, signal in enumerate(signals):
+        if count < 4:
+            red_total = [red_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in enumerate(x_range)]
+        elif count < 6:
+            blue_total = [blue_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in enumerate(x_range)]
+        else:
+            green_total = [green_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in enumerate(x_range)]
+
+    ax.plot(x_range, red_total, color='r')
+    ax.fill_between(x_range, red_total, 0, color='r')
+
+    ax.plot(x_range, blue_total, color='b')
+    ax.fill_between(x_range, blue_total, 0, color='b')
+
+    ax.plot(x_range, green_total, color='g')
+    ax.fill_between(x_range, green_total, 0, color='g')
+
+    ax.plot(x_range, [0 for x in x_range], color='k')
+    plt.xticks([x for x in range(-10, 1)], [20, 40, 60, 80, 100, 5, 4, 3, 2, 1, 0])
+    plt.ylim([0, None])
+    plt.yticks([])
+    plt.xlim([-5, 0.5])
+    plt.xlabel("ppm")
+    for spine in ax.spines.values():
+        spine.set_linewidth(3)  # Adjust the thickness here
+    # plt.box(False)
+    plt.tight_layout()
+    plt.show()
+
+
+def NMR_density(folder, atom_dict=None, color_dict=None, average=False, MD=False, width=0.01):
+    fig, ax = plt.subplots()
+    if MD:
+        shieldings = bao.all_shieldings(folder)
+    else:
+        shieldings = bao.NMR_shielding_values(folder + "aims.out")
+
+    print(shieldings)
 
     atoms = [x[0] for x in shieldings]
     shields = [x[1] for x in shieldings]
     x_range = np.arange(min(shields) - 31.03126 - .2, max(shields) - 31.03126 + 0.2, 0.01)
-    x_range = np.arange(-9.5, 0.5, 0.005)
+    x_range = np.arange(-5, 0.5, 0.0001)
+    # x_range = np.arange(-5, 0.5, 0.01)
 
     if atom_dict is None:
         atom_dict = [atoms]
@@ -1165,19 +1215,23 @@ def NMR_density(folder, atom_dict=None, color_dict=None, average=False, width=0.
                     centers.append(pair[1] - 31.1846)
         if average:
             val = sum(centers) / len(centers)
+            # print(val)
             temp = [norm.pdf(x, val, width) for x in x_range]
             total = [total[x] + temp[x] for x in range(len(temp))]
             temp = [len(centers) * x for x in temp]
             y_values = [y_values[x] + temp[x] for x in range(len(temp))]
-        plt.plot(x_range, y_values, color=color_dict[count])
-        plt.fill_between(x_range, y_values, 0, color=color_dict[count])
-    plt.plot(x_range, [0 for x in x_range], color='k')
-    plt.xticks([x for x in range(-10, 1)])
+        # y_values = [val if val > 0.0001 else -1 for val in y_values]
+        ax.plot(x_range, y_values, color=color_dict[count])
+        ax.fill_between(x_range, y_values, 0, color=color_dict[count])
+    ax.plot(x_range, [0 for x in x_range], color='k')
+    plt.xticks([x for x in range(-10, 1)], [20, 40, 60, 80, 100, 5, 4, 3, 2, 1, 0])
+    plt.xlim([-5, 0.5])
+    plt.ylim([0, None])
     plt.yticks([])
-    plt.xlim([-9.5, 0.5])
-    plt.xlim([-4.25, 0.25])
-    # plt.ylim([0, 100])
     plt.xlabel("ppm")
+    for spine in ax.spines.values():
+        spine.set_linewidth(3)  # Adjust the thickness here
+    plt.tight_layout()
     plt.show()
 
 
@@ -1526,66 +1580,105 @@ def get_maurer_data(folder, x_axis="ddiag", type="AgBi"):
     return maurer_x, all_splits, db_x, [y_sp, x_sp, m_sp, p_sp], xlab
 
 
-def plot_random_structures(folders, mode='ddiagmax'):
+# Possible modes:
+# db_avg          - delta beta average
+# db_max          - delta beta max
+# disp_diag_ag    - d_diag displacement of Ag octahedra
+# disp_diag_bi    - d_diag displacement of Bi octahedra
+# disp_diag_avg   - d_diag average
+# disp_diag_max   - d_diag max
+# disp_avg        - d_disp average
+# disp_max        - d_disp max
+# ss_avg          - sigma squared average
+# ss_max          - sigma squared max
+# dd_avg          - delta d average
+# dd_max          - delta d max
+def plot_random_structures(folders, title="Random Structures"):
     matplotlib.rc('text', usetex='true')
-    labels = ["AgBi"]
+    mode_dict = {"db_avg": r'$\Delta\beta_{avg}$', "db_max": r'$\Delta\beta_{max}$', "delta_db": r'$\Delta\Delta\beta$',
+                 "disp_diag_ag": r'$d_{diag,Ag}$', "disp_diag_bi": r'$d_{diag,Bi}$', "disp_diag_avg": r'$d_{diag,avg}$',
+                 "disp_diag_max": r'$d_{diag,max}$', "disp_avg": r'$d_{disp,avg}$', "disp_max": r'$d_{disp,max}$',
+                 "ss_avg": r'$\sigma^2_{avg}$', "ss_max": r'$\sigma^2_{max}$',
+                 "dd_avg": r'$\Delta d_{avg}$', "dd_max": r'$\Delta d_{max}$',
+                 "dl_avg": r'$\Delta L_{avg}$', "dl_max": r'$\Delta L_{max}$', "L2": r'$L^2$'}
     for count, folder in enumerate(folders):
-        x_data, all_splits = get_random_data(folder, mode, labels[count])
+        all_x, all_splits = get_random_data(folder)
         colors = ['r', 'g', 'b', 'orange']
+
+    # code for 2D intensity maps
+    dbs = ["db_avg", "db_max"]
+    dls = ["dl_avg", "dl_max", "L2"]
+    for path in range(4):
+        for db in dbs:
+            for dl in dls:
+                plt.scatter(all_x[db], all_x[dl], c=all_splits[path], cmap='jet', edgecolors='k')
+                plt.colorbar(label='Spin Splitting (eV)')
+                plt.xlabel(mode_dict[db])
+                plt.ylabel(mode_dict[dl])
+                plt.title(f'Path {path + 1}')
+                plt.show()
+                plt.clf()
+
+    for key in all_x.keys():
+        x_data = all_x[key]
         for index, direction in enumerate(all_splits):
             slope, intercept, r_value, _, _ = scipy.stats.linregress(x_data, direction)
             plt.plot([min(x_data), max(x_data)], [x * slope + intercept for x in [min(x_data), max(x_data)]],
                      color=colors[index], label=f'path {index+1}, $r^2$={r_value ** 2}')
             plt.scatter(x_data, direction, color=colors[index], label="_")
-    mode_dict = {"dbmax": r'$\Delta\beta_{max}$', "dbavg": r'$\Delta\beta_{avg}$',
-                 "ss": r'$\sigma^2$', "dd": r'$\Delta d$', "ddiagmax": r'$d_{diag,max}$',
-                 "ddiagAg": r'$d_{diag,Ag}$', "ddiagBi": r'd_{diag,Bi}', "ddisp": r'$d_{disp}$',
-                 "ddiagavg": r'$d_{diag,avg}$'}
-    plt.xlabel(mode_dict[mode])
-    plt.ylabel(r'$\Delta E\pm$ (eV)')
-    plt.legend()
-    plt.title("Random Structures")
-    plt.show()
+        plt.xlabel(mode_dict[key])
+        plt.ylabel(r'$\Delta E\pm$ (eV)')
+        plt.legend()
+        plt.title(title)
+        filename = folders[0] + key + ".png"
+        # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
+        plt.show()
+        plt.clf()
 
 
-def get_random_data(folder, mode, type):
+def get_random_data(folder):
     write_base = folder
     all_splits = [[], [], [], []]
     dbs = [[], []]
     dds = []
     ddiags = []
     sigmas = []
-    for i in ["05", "10", "15", "20"]:
+    dls = []
+    l2 = []
+    for i in ["05", "10", "15", "20", "25"]:
+    # for i in ["25"]:
         for j in range(1, 11):
             band_base = write_base + i + "/" + str(j).rjust(2, "0") + "/"
             for k in range(1, 5):
                 all_splits[k - 1].append(float(bbo.band_info(band_base, f'band100%s.out' % k, band_gap=False,
                                                              spin_splitting=True, verbose=False)))
 
-            angles = bg.random_angle_info(band_base + "geometry.in")
+            angles = bg.random_angle_info(band_base + "geometry.in", method="flat")
             dbs[0].append(abs(np.average([angles[0], angles[1]]) - np.average([angles[2], angles[3]])))
             dbs[1].append(abs(np.average([angles[0], angles[2]]) - np.average([angles[1], angles[3]])))
             dds.append(Geometry.new_delt_d(band_base + "geometry.in"))
-            sigmas.append(float(Geometry.new_sigma_sq(band_base + "geometry.in")))
+            sigmas.append(Geometry.new_sigma_sq(band_base + "geometry.in"))
             ddiags.append(Geometry.ddiag_val(band_base + "geometry.in"))
+            dls.append(bg.Delta_L(band_base + "geometry.in"))
+            l2.append(np.average(bg.Delta_L(band_base + "geometry.in", mode="L2")))
+            # print(f'{all_splits[0][-1]} {all_splits[1][-1]} {all_splits[2][-1]} {all_splits[3][-1]}')
+            # mulliken_plot(f'{band_base}settings_final.in', quiet=True)
 
-    if mode == "dbmax":
-        x_data = [max(dbs[0][i], dbs[1][i]) for i in range(len(dbs[0]))]
-    elif mode == "dbavg":
-        x_data = [np.average([dbs[0][i], dbs[1][i]]) for i in range(len(dbs[0]))]
-    elif mode == "dd":
-        x_data = dds
-    elif mode == "ddisp":
-        x_data = [(data_set[0] + data_set[1]) / 2 for data_set in ddiags]
-    elif mode == "ddiagmax":
-        x_data = [max(data_set[2:]) for data_set in ddiags]
-    elif mode == "ddiagAg":
-        x_data = [max(data_set[4:]) for data_set in ddiags]
-    elif mode == "ddiagBi":
-        x_data = [max([data_set[2], data_set[3]]) for data_set in ddiags]
-    elif mode == "ddiagavg":
-        x_data = [np.average(data_set[2:]) for data_set in ddiags]
-    elif mode == "ss":
-        x_data = sigmas
-    return x_data, all_splits
+    all_x = {"db_avg": [np.average([dbs[0][i], dbs[1][i]]) for i in range(len(dbs[0]))],
+             "db_max": [max([dbs[0][i], dbs[1][i]]) for i in range(len(dbs[0]))],
+             "disp_diag_ag": [max(data_set[4:]) for data_set in ddiags],
+             "disp_diag_bi": [max([data_set[2], data_set[3]]) for data_set in ddiags],
+             "disp_diag_avg": [np.average(data_set[2:]) for data_set in ddiags],
+             "disp_diag_max": [max(data_set[2:]) for data_set in ddiags],
+             "disp_avg": [(data_set[0] + data_set[1]) / 2 for data_set in ddiags],
+             "disp_max": [max(data_set[0], data_set[1]) for data_set in ddiags],
+             "ss_avg": [(sigma[0] + sigma[1]) / 2 for sigma in sigmas],
+             "ss_max": [max(sigma[0], sigma[1]) for sigma in sigmas], "dd_avg": [(dd[0] + dd[1]) / 2 for dd in dds],
+             "dd_max": [max(dd) for dd in dds],
+             "delta_db": [abs(dbs[0][i] - dbs[1][i]) for i in range(len(dbs[0]))],
+             "dl_avg": [sum(data_set) / 4 for data_set in dls],
+             "dl_max": [max(data_set) for data_set in dls],
+             "L2": l2}
+
+    return all_x, all_splits
 

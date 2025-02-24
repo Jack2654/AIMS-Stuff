@@ -535,6 +535,7 @@ def disturb_positions(readfile, writefile, max_disturbance, change_Cs=False):
         for atom in at:
             temp = atom.split()
             if not change_Cs and "Cs" in temp:
+            # if -0.1 < float(temp[3]) < 0.1: <- appears to be wrong
                 f.write('atom\t%s\t%s\t%s\t%s\n' % (temp[1], temp[2], temp[3], temp[-1]))
                 continue
             coords = [float(x) for x in temp[1:4]]
@@ -727,7 +728,7 @@ def rename_species(readfile, writefile, indices, original, changed):
         f.writelines(["\t".join(x) + "\n" for x in at_expanded])
 
 
-def random_angle_info(readfile):
+def random_angle_info(readfile, method="normal"):
     point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
     shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
                  [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
@@ -750,6 +751,12 @@ def random_angle_info(readfile):
                 pts[i][0] += shiftmaps[count][i][j] * lv[j][0]
                 pts[i][1] += shiftmaps[count][i][j] * lv[j][1]
                 pts[i][2] += shiftmaps[count][i][j] * lv[j][2]
+
+        if method == "flat":
+            pts[0][2] = 0
+            pts[1][2] = 0
+            pts[2][2] = 0
+
         p1, p2, p3 = pts
 
         slope = (p3[1] - p1[1]) / (p3[0] - p1[0])
@@ -777,3 +784,49 @@ def random_angle_info(readfile):
     # plt.legend()
     # plt.show()
     return angles
+
+
+def flatten(readfile, writefile):
+    lv = lattice_vectors(readfile)
+    at = atoms(readfile)
+    with open(writefile, "w") as f:
+        for lat in lv:
+            f.write("lattice_vector " + " ".join([str(x) for x in lat]) + "\n")
+        for atom in at:
+            temp = atom.split()
+            value = abs(float(temp[3]))
+            if value < 2:
+                f.write(" ".join(temp[:3]) + " 0.0 " + temp[-1] + "\n")
+            else:
+                f.write(atom + "\n")
+
+
+# computes the four components needed for the Delta_L descriptor as described in the Group Meeting v4 Slides
+def Delta_L(readfile, mode="Delta"):
+    point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
+    shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                 [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
+                 [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
+                 [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+    L_vals = []
+    lv = lattice_vectors(readfile)
+    at = atoms_trimmed(readfile)
+    for count, points in enumerate(point_sets):
+        at = atoms_trimmed(readfile)
+        pts = [at[points[0] - 1], at[points[1] - 1], at[points[2] - 1]]
+        # moves points so they are positioned adequately
+        for i in range(3):
+            for j in range(3):
+                pts[i][0] += shiftmaps[count][i][j] * lv[j][0]
+                pts[i][1] += shiftmaps[count][i][j] * lv[j][1]
+                pts[i][2] += shiftmaps[count][i][j] * lv[j][2]
+        p1, p2, p3 = pts
+        plt.plot()
+        L_1 = np.linalg.norm([p1[i] - p2[i] for i in range(3)])
+        L_2 = np.linalg.norm([p2[i] - p3[i] for i in range(3)])
+        if mode == "Delta":
+            L_vals.append((L_1 - L_2) ** 2)
+        elif mode == "L2":
+            L_vals.append((L_1 - 2.88196731) ** 2)
+            L_vals.append((L_2 - 2.88196731) ** 2)
+    return L_vals

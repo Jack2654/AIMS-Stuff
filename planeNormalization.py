@@ -168,7 +168,43 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
 
 
 base = "../../FHI-aims/Bi_substitution/Band_Inputs/"
+base = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/2D_theoretical"
+# base = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_2_experimental"
 f = base + "/geometry.in"
-points = (0, 0, 1)
+points = [[0, 1, 0],  # used for 2D experimental, all lattice defined
+          [0, 0, 1],
+          [0, 1, 1],
+          [0, -1, 1],
+          [1, 0, 0]]
 
-generate(f, (points[0], points[1], points[2]), lattice_defined=True, debug=True)
+# points = [[0, 0, 1],  # lattice defined
+#           [1.005351, -4.699185, -4.557428],  # NOT lat defined
+#           [1.005352, 4.699185, -4.55743],  # NOT lat defined
+#           [0, 1, 0],  # lattice defined
+#           [1, 0, 0]]  # lattice defined
+
+f = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/spin_textures/selwuf/geometry.in"
+points = [(0.5, -0.5, 0),
+(0.45, -0.5, 0),
+(0.4, -0.5, 0),
+(0.35, -0.5, 0),
+(0.3, -0.5, 0),
+(0.25, -0.5, 0),
+(0.2, -0.5, 0),
+(0.15, -0.5, 0),
+(0.1, -0.5, 0),
+(0.05, -0.5, 0),
+(0, -0.5, 0),
+(-0.05, -0.5, 0),
+(-0.1, -0.5, 0),
+(-0.15, -0.5, 0),
+(-0.2, -0.5, 0),
+(-0.25, -0.5, 0),
+(-0.3, -0.5, 0),
+(-0.35, -0.5, 0),
+(-0.4, -0.5, 0),
+(-0.45, -0.5, 0),
+(-0.5, -0.5, 0)]
+
+for point in points:
+    generate(f, point, lattice_defined=True, debug=False)

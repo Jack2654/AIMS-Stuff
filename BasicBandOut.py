@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 
 
 # functions:
-def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=False,
+def band_info(folder, band, steps=1, conduction_offset=0, band_gap=True, k0=False, spin_splitting=False,
               effective_mass=False, verbose=True, debug=False, display=False):
     results = ""
     lines, kpoints, gamma, max_valence, min_conduction, \
-    i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band)
+    i_conduction_min, j_conduction_min, i_valence_max, j_valence_max = read_band_out(folder + band, conduction_offset)
     # print(kpoints)
     # sets up arrays of CBM, VBM, and the required number of points around both points set by the "steps" parameter
     points_about_CBM = [0] * (2 * steps + 1)
@@ -213,7 +213,7 @@ def band_info(folder, band, steps=1, band_gap=True, k0=False, spin_splitting=Fal
         return results.strip()
 
 
-def read_band_out(file):
+def read_band_out(file, conduction_offset=0):
     kpoints = []
     gamma = -1
     max_valence = -100
@@ -257,7 +257,7 @@ def read_band_out(file):
                 conduction_num += 1
                 # set conduction_num > 4 for m=3 to skip I2 interstitial
                 # set conduction_num > 0 for anything else
-                if float(energy) < min_conduction and conduction_num > 0:
+                if float(energy) < min_conduction and conduction_num > conduction_offset:
                     num_same_min = 0
                     min_conduction = float(energy)
                     i_conduction_min = i

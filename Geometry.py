@@ -1121,7 +1121,7 @@ def new_delt_d(geometry):
     delt_d_1 = np.average([((dist - avg_1) ** 2) / (avg_1 ** 2) for dist in dist_1])
     delt_d_2 = np.average([((dist - avg_2) ** 2) / (avg_2 ** 2) for dist in dist_2])
 
-    return (delt_d_1 + delt_d_2) / 2
+    return [delt_d_1, delt_d_2]
 
 
 # this function computes the sigma^2 descriptor
@@ -1152,9 +1152,9 @@ def new_sigma_sq(geometry):
                 bg.angle_info(geometry, (9, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
                 bg.angle_info(geometry, (10, 4, 6), [[0, 0, 0], [0, 0, 0], [0, 0, 0]])]
 
-    sig_sq_1 = np.average([(angle[0] - 90) * (angle[0] - 90) / 12 for angle in angles_1])
-    sig_sq_2 = np.average([(angle[0] - 90) * (angle[0] - 90) / 12 for angle in angles_2])
-    return str((sig_sq_1 + sig_sq_2) / 2)
+    sig_sq_1 = np.average([(ang[0] - 90) * (ang[0] - 90) for ang in angles_1])
+    sig_sq_2 = np.average([(ang[0] - 90) * (ang[0] - 90) for ang in angles_2])
+    return [sig_sq_1, sig_sq_2]
 
 
 # this function computes the diagonal displacement descriptor
