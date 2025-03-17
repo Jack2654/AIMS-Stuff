@@ -535,7 +535,7 @@ def disturb_positions(readfile, writefile, max_disturbance, change_Cs=False):
         for atom in at:
             temp = atom.split()
             if not change_Cs and "Cs" in temp:
-            # if -0.1 < float(temp[3]) < 0.1: <- appears to be wrong
+                # if -0.1 < float(temp[3]) < 0.1: <- appears to be wrong
                 f.write('atom\t%s\t%s\t%s\t%s\n' % (temp[1], temp[2], temp[3], temp[-1]))
                 continue
             coords = [float(x) for x in temp[1:4]]
@@ -685,7 +685,6 @@ def geo_to_poscar(readfile, writefile):
                 if a.split()[-1] == key:
                     f.write("\t".join(str(x) for x in a.split()[1:4]) + "\n")
 
-
     with open(writefile, "r") as f:
         lines = f.readlines()
     for ln in lines:
@@ -718,7 +717,7 @@ def rename_species(readfile, writefile, indices, original, changed):
     at = atoms(readfile)
     at_expanded = [x.split() for x in at]
     for i, atom in enumerate(at_expanded):
-        if i+1 in indices:
+        if i + 1 in indices:
             if atom[-1] == original:
                 atom[-1] = changed
             else:
@@ -728,12 +727,17 @@ def rename_species(readfile, writefile, indices, original, changed):
         f.writelines(["\t".join(x) + "\n" for x in at_expanded])
 
 
-def random_angle_info(readfile, method="normal"):
-    point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
-    shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                 [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
-                 [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
-                 [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+def random_angle_info(readfile, method="normal", bonds=""):
+    if bonds == "":
+        point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
+        shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+    else:
+        point_sets = [[atom[0] for atom in bond] for bond in bonds]
+        shiftmaps = [[[0, 0, 0] if len(atom) == 1 else [int(x) for x in list(atom[1])] for atom in bond] for bond in
+                     bonds]
     angles = []
     # direction 1 = vertical, 2 = horizontal
     directions = [1, 2, 2, 1]
@@ -758,6 +762,10 @@ def random_angle_info(readfile, method="normal"):
             pts[2][2] = 0
 
         p1, p2, p3 = pts
+
+        if method == "ignore":
+            angles.append(angle(p1, p2, p3))
+            continue
 
         slope = (p3[1] - p1[1]) / (p3[0] - p1[0])
         intercept = p3[1] - p3[0] * slope
@@ -802,15 +810,21 @@ def flatten(readfile, writefile):
 
 
 # computes the four components needed for the Delta_L descriptor as described in the Group Meeting v4 Slides
-def Delta_L(readfile, mode="Delta"):
-    point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
-    shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                 [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
-                 [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
-                 [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+def Delta_L(readfile, mode="Delta", bonds="", flag=""):
+    if bonds == "":
+        point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
+        shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+    else:
+        point_sets = [[atom[0] for atom in bond] for bond in bonds]
+        shiftmaps = [[[0, 0, 0] if len(atom) == 1 else [int(x) for x in list(atom[1])] for atom in bond] for bond in
+                     bonds]
+
     L_vals = []
+    lengths = []
     lv = lattice_vectors(readfile)
-    at = atoms_trimmed(readfile)
     for count, points in enumerate(point_sets):
         at = atoms_trimmed(readfile)
         pts = [at[points[0] - 1], at[points[1] - 1], at[points[2] - 1]]
@@ -821,12 +835,34 @@ def Delta_L(readfile, mode="Delta"):
                 pts[i][1] += shiftmaps[count][i][j] * lv[j][1]
                 pts[i][2] += shiftmaps[count][i][j] * lv[j][2]
         p1, p2, p3 = pts
-        plt.plot()
         L_1 = np.linalg.norm([p1[i] - p2[i] for i in range(3)])
         L_2 = np.linalg.norm([p2[i] - p3[i] for i in range(3)])
+        if flag == "debug":
+            print(pts)
         if mode == "Delta":
             L_vals.append((L_1 - L_2) ** 2)
         elif mode == "L2":
             L_vals.append((L_1 - 2.88196731) ** 2)
             L_vals.append((L_2 - 2.88196731) ** 2)
+            lengths.append(L_1)
+            lengths.append(L_2)
+    if mode == "L2" and not bonds == "":
+        avg_len = np.average(lengths)
+        L_vals = []
+        for leng in lengths:
+            L_vals.append((leng - avg_len)**2)
     return L_vals
+
+
+# computes the average in-plane Ag-halide length for AgBi-I model structures
+def Ag_len(readfile):
+    # want 4 -> 7, 8, 9, 10
+    # in base structure length is 2.890625
+    Ag_lens = []
+    lv = lattice_vectors(readfile)
+    at = atoms_trimmed(readfile)
+    center = at[4 - 1]
+    for point in [7, 8, 9, 10]:
+        current = at[point - 1]
+        Ag_lens.append((np.linalg.norm([center[i] - current[i] for i in range(3)]) - 2.890625) ** 2)
+    return sum(Ag_lens)

@@ -252,8 +252,8 @@ def read_band_out(file, conduction_offset=0):
                 elif float(energy) == max_valence:
                     num_same_max += 1
             elif float(occupation) == 0 or float(occupation) < 1:
-                if float(occupation) > 0:
-                    print("Partially filled states detected")
+                # if float(occupation) > 0:
+                #     print("Partially filled states detected")
                 conduction_num += 1
                 # set conduction_num > 4 for m=3 to skip I2 interstitial
                 # set conduction_num > 0 for anything else

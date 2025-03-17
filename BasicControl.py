@@ -113,6 +113,9 @@ def read_control_for_bands(filepath, rlatvec, bands, eq=False, debug=False):
         print(kpoint)
         print(n_sample)
 
+    # xvals[0].reverse()
+    # xvals[2].reverse()
+
     return xvals, band_len_tot, tot_len
 
 

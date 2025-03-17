@@ -1218,3 +1218,31 @@ def ddiag_val(geometry):
     dist_2 = np.linalg.norm([metal_2[i] - centroid_2[i] for i in range(2)])
 
     return [dist_1, dist_2, diag_dist_1_1, diag_dist_1_2, diag_dist_2_1, diag_dist_2_2]
+
+
+def sig_sq_general(geometry, octahedra):
+    center = [octahedra[0][0], [0, 0, 0] if len(octahedra[0]) == 1 else octahedra[0][1]]
+    edges = [[octa[0], [0, 0, 0] if len(octa) == 1 else octa[1]] for octa in octahedra[1:]]
+    angles = []
+    for i in range(5):
+        for j in range(i + 1, 6):
+            angles.append(bg.angle_info(geometry, (edges[i][0], center[0], edges[j][0]), [edges[i][1], center[1], edges[j][1]]))
+    angles.sort()
+    return sum([(ang[0] - 90) * (ang[0] - 90) for ang in angles[:12]]) / 11
+
+
+def delt_d_general(geometry, octahedra):
+    lv = bg.lattice_vectors(geometry)
+    at = bg.atoms_trimmed(geometry)
+    center = [at[octahedra[0][0] - 1], [0, 0, 0] if len(octahedra[0]) == 1 else octahedra[0][1]]
+    edges = [[at[octa[0] - 1], [0, 0, 0] if len(octa) == 1 else octa[1]] for octa in octahedra[1:]]
+    for edge in edges:
+        for j in range(3):
+            edge[0][0] += edge[1][j] * lv[j][0]
+            edge[0][1] += edge[1][j] * lv[j][1]
+            edge[0][2] += edge[1][j] * lv[j][2]
+
+    distances = [np.linalg.norm([center[0][i] - edge[0][i] for i in range(3)]) for edge in edges]
+    avg = np.average(distances)
+    delt_d = np.average([((dist - avg) ** 2) / (avg ** 2) for dist in distances])
+    return delt_d

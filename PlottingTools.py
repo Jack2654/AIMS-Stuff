@@ -661,7 +661,8 @@ def mulliken_plot(settings_file, alt_geo=False, debug=False, quiet=False, save=F
     plt.ylabel('Energy (eV)')
     plt.xlabel("Wave vector, $k$")
     plt.title(title, weight='bold')
-    plt.axis([0, xvals[len(xvals) - 1][len(xvals[len(xvals) - 1]) - 1], ymin, ymax])
+    plt.axis([0, xvals[-1][len(xvals[-1]) - 1], ymin, ymax])
+    # plt.axis([0, xvals[-1][0], ymin, ymax])
     plt.tight_layout()
     if save and not filename == 0:
         plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
@@ -1156,7 +1157,8 @@ def plot_chem_book(width=0.001):
         elif count < 6:
             blue_total = [blue_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in enumerate(x_range)]
         else:
-            green_total = [green_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in enumerate(x_range)]
+            green_total = [green_total[i] + signal[1] * norm.pdf(x, -1 * signal[0], width) for i, x in
+                           enumerate(x_range)]
 
     ax.plot(x_range, red_total, color='r')
     ax.fill_between(x_range, red_total, 0, color='r')
@@ -1270,7 +1272,6 @@ def NMR_average(folder, atom_dict, color_dict=None, width=0.01, xlim=(-9.5, 0.5)
         else:
             print("Unrecognized species passed into 'type' parameter")
             return
-
 
     x_range = np.arange(xlim[0], xlim[1], 0.001)
     if not color_dict:
@@ -1600,37 +1601,59 @@ def plot_random_structures(folders, title="Random Structures"):
                  "disp_diag_max": r'$d_{diag,max}$', "disp_avg": r'$d_{disp,avg}$', "disp_max": r'$d_{disp,max}$',
                  "ss_avg": r'$\sigma^2_{avg}$', "ss_max": r'$\sigma^2_{max}$',
                  "dd_avg": r'$\Delta d_{avg}$', "dd_max": r'$\Delta d_{max}$',
-                 "dl_avg": r'$\Delta L_{avg}$', "dl_max": r'$\Delta L_{max}$', "L2": r'$L^2$'}
+                 "dl_avg": r'$\Delta L_{avg}$', "dl_max": r'$\Delta L_{max}$', "L2": r'$L^2$', "Ag_len": r'$Ag_{len}$'}
     for count, folder in enumerate(folders):
         all_x, all_splits = get_random_data(folder)
         colors = ['r', 'g', 'b', 'orange']
 
     # code for 2D intensity maps
     dbs = ["db_avg", "db_max"]
+    dbs = ["db_max"]
     dls = ["dl_avg", "dl_max", "L2"]
-    for path in range(4):
-        for db in dbs:
-            for dl in dls:
-                plt.scatter(all_x[db], all_x[dl], c=all_splits[path], cmap='jet', edgecolors='k')
-                plt.colorbar(label='Spin Splitting (eV)')
-                plt.xlabel(mode_dict[db])
-                plt.ylabel(mode_dict[dl])
-                plt.title(f'Path {path + 1}')
-                plt.show()
-                plt.clf()
+    # dls = ["Ag_len"]
+    average_splits = [max([all_splits[i][j] for i in range(4)]) for j in range(len(all_splits[0]))]
+    for count, split in enumerate(average_splits):
+        if all_x["db_max"][count] > 13:
+            print(count)
+            print(all_x["db_max"][count])
+            print(split)
+    # for path in range(4):
+    for db in dbs:
+        for dl in dls:
+            # plt.scatter(all_x[db], all_x[dl], c=all_splits[path], cmap='jet', edgecolors='k')
+            plt.scatter(all_x[db], all_x[dl], c=average_splits, cmap='jet', edgecolors='k')
+            plt.colorbar(label='Max Spin Splitting (eV)')
+            plt.xlabel(mode_dict[db])
+            plt.ylabel(mode_dict[dl])
+            # plt.title(f'Path {path + 1}')
+            plt.title("Max Spin Splitting")
+            plt.show()
+            plt.clf()
 
     for key in all_x.keys():
         x_data = all_x[key]
+        maxes = [max([all_splits[j][i] for j in range(len(all_splits))]) for i in range(len(all_splits[0]))]
+        slope, intercept, r_value, _, _ = scipy.stats.linregress(x_data, maxes)
+        plt.plot([min(x_data), max(x_data)], [x * slope + intercept for x in [min(x_data), max(x_data)]],
+                 color='r', label=f'max spin splitting, $r^2$={r_value ** 2}')
+        plt.scatter(x_data, maxes, color='r', label=f'_')
+        plt.xlabel(mode_dict[key])
+        plt.ylabel(r'$\Delta E\pm$ (eV)')
+        plt.legend()
+        plt.title(title)
+        plt.show()
+        plt.clf()
+
         for index, direction in enumerate(all_splits):
             slope, intercept, r_value, _, _ = scipy.stats.linregress(x_data, direction)
             plt.plot([min(x_data), max(x_data)], [x * slope + intercept for x in [min(x_data), max(x_data)]],
-                     color=colors[index], label=f'path {index+1}, $r^2$={r_value ** 2}')
+                     color=colors[index], label=f'path {index + 1}, $r^2$={r_value ** 2}')
             plt.scatter(x_data, direction, color=colors[index], label="_")
         plt.xlabel(mode_dict[key])
         plt.ylabel(r'$\Delta E\pm$ (eV)')
         plt.legend()
         plt.title(title)
-        filename = folders[0] + key + ".png"
+        # filename = folders[0] + key + ".png"
         # plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
         plt.show()
         plt.clf()
@@ -1645,8 +1668,10 @@ def get_random_data(folder):
     sigmas = []
     dls = []
     l2 = []
-    for i in ["05", "10", "15", "20", "25"]:
-    # for i in ["25"]:
+    ag_lens = []
+    for i in ["05", "10", "15", "20", "25"]:  # for Pb
+        # for i in ["05", "10", "15", "20"]: # for AgBi
+        # for i in ["25"]:
         for j in range(1, 11):
             band_base = write_base + i + "/" + str(j).rjust(2, "0") + "/"
             for k in range(1, 5):
@@ -1661,6 +1686,7 @@ def get_random_data(folder):
             ddiags.append(Geometry.ddiag_val(band_base + "geometry.in"))
             dls.append(bg.Delta_L(band_base + "geometry.in"))
             l2.append(np.average(bg.Delta_L(band_base + "geometry.in", mode="L2")))
+            ag_lens.append(bg.Ag_len(band_base + "geometry.in"))
             # print(f'{all_splits[0][-1]} {all_splits[1][-1]} {all_splits[2][-1]} {all_splits[3][-1]}')
             # mulliken_plot(f'{band_base}settings_final.in', quiet=True)
 
@@ -1678,7 +1704,7 @@ def get_random_data(folder):
              "delta_db": [abs(dbs[0][i] - dbs[1][i]) for i in range(len(dbs[0]))],
              "dl_avg": [sum(data_set) / 4 for data_set in dls],
              "dl_max": [max(data_set) for data_set in dls],
-             "L2": l2}
+             "L2": l2,
+             "Ag_len": ag_lens}
 
     return all_x, all_splits
-
