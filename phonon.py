@@ -4,6 +4,7 @@ import matplotlib.animation as animation
 import numpy as np
 import os
 
+
 def gen_paths(height):
     ret_str = "BAND = "
     for i in range(21):
@@ -42,7 +43,7 @@ def plot_bands(file, energy):
                 if next_point + points_per_band >= current_point > next_point:
                     points.append([float(x.replace(",", "")) for x in lines[index - 2].split()[3:6]])
                     for i in range(freq_count):
-                        frequencies[path][i].append(float(lines[index + 2*(i+1)].split()[1]))
+                        frequencies[path][i].append(float(lines[index + 2 * (i + 1)].split()[1]))
         locations = [round(-0.5 + i * 0.01, 2) for i in range(101)]
         for level in frequencies[path]:
             crosses = crossings(level, energy)
@@ -115,9 +116,9 @@ for i in range(1, 37):
     # plot_isosurface("../../Documents/24-25/Classes/ME490/tmp/phonopy_work/new_bands/", i, save=False)
 
 
-def update(index):
-    im.set_array(image_array[index])
-    return im,
+# def update(index):
+#     im.set_array(image_array[index])
+#     return im,
 
 
 # files = [f'../../Documents/24-25/Classes/ME490/tmp/phonopy_work/new_bands/%s.npy' % str(i).rjust(2,'0') for i in range(1,37)]
@@ -136,22 +137,49 @@ def update(index):
 
 base = "../../Documents/24-25/Classes/ME490/tmp/new_point_cloud/python_meshes/"
 files = [f'{base}{str(i).rjust(2, "0")}meV.png' for i in range(1, 37)]
-files = [f'../../Documents/24-25/Classes/ME490/tmp/phonopy_work/qpoint_res/optimized/%smeV.png' % str(i).rjust(2,"0") for i in range(1, 37)]
-# files.sort()
-print(files)
+files = [f'../../Documents/24-25/Classes/ME490/tmp/phonopy_work/qpoint_res/optimized/%smeV.png' % str(i).rjust(2, "0")
+         for i in range(1, 37)]
 
-image_array = []
-for my_file in files:
-    image = Image.open(my_file)
-    image_array.append(image)
-fig, ax = plt.subplots()
+
+def create_gif(image_paths, output_path, duration=500, loop=0):
+    """
+    Create a GIF from a list of image file paths.xq
+
+    Args:
+        image_paths (list of str): Paths to image files.
+        output_path (str): File path to save the resulting GIF.
+        duration (int): Duration between frames in milliseconds.
+        loop (int): Number of loops (0 = infinite).
+    """
+    # Open images and convert to RGB to ensure consistency
+    images = [Image.open(img_path) for img_path in image_paths]
+
+    # Save the first image and append the rest
+    images[0].save(
+        output_path,
+        save_all=True,
+        append_images=images[1:],
+        duration=duration,
+        loop=loop
+    )
+
+
+base = "../../Documents/24-25/Fall/ME490/tmp/point_cloud/new_density/final_figures/scatter_"
+files = [f'{base}{str(x).rjust(2, "0")}meV.png' for x in range(1, 37)]
+create_gif(files, '../../Documents/24-25/Fall/ME490/tmp/point_cloud/new_density/final_figures/res.gif', duration=1000)
+
+# image_array = []
+# for my_file in files:
+#     image = Image.open(my_file)
+#     image_array.append(image)
+# fig, ax = plt.subplots()
 # Set the initial image
-im = ax.imshow(image_array[0], animated=True)
+# im = ax.imshow(image_array[0], animated=True)
 # Create the animation object
-animation_fig = animation.FuncAnimation(fig, update, frames=len(image_array),
-                                        interval=1000, blit=True)
+# animation_fig = animation.FuncAnimation(fig, update, frames=len(image_array),
+#                                         interval=1000, blit=True)
 
 # Show the animation
 # plt.show()
-animation_fig.save(f'../../Documents/24-25/Classes/ME490/tmp/phonopy_work/qpoint_res/optimized/iso.gif')
+# animation_fig.save(f'../../Documents/24-25/Classes/ME490/tmp/phonopy_work/qpoint_res/optimized/iso.gif')
 # animation_fig.save(f'{base}iso.gif')

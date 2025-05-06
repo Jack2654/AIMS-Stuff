@@ -69,40 +69,50 @@ def xyz_to_cq(base, write, lattice=(0, 0, 0), move=False):
                 f.write(f'%s\t\t%s %s\n' % (" ".join(temp[1:]), elem_dict[temp[0]], movem))
 
 
-def cq_to_aims(base, write):
+def cq_to_aims(base, write, frac=False):
+    extra = "_frac" if frac else ""
     with open(base, "r") as f:
         lines = f.readlines()
     with open(write, "w") as f:
         f.write(f'lattice_vector %s' % lines[0])
         f.write(f'lattice_vector %s' % lines[1])
         f.write(f'lattice_vector %s' % lines[2])
-        for line in lines[4:]:
+        for line in lines[4:-1]:
             temp = line.split()
-            if temp[3] == "1":
-                f.write(f'atom %s\t\t Pd\n' % " ".join(temp[:3]))
-            else:
-                f.write(f'atom %s\t\t Ag\n' % " ".join(temp[:3]))
+            # if temp[3] == "1":
+            #     f.write(f'atom{extra} %s\t\t Pd\n' % " ".join(temp[:3]))
+            # else:
+            #     f.write(f'atom{extra} %s\t\t Ag\n' % " ".join(temp[:3]))
+            f.write(f'atom{extra} %s\t\t Ag\n' % " ".join(temp[:3]))
+        temp = lines[-1].split()
+        f.write(f'atom{extra} %s\t\t O\n' % " ".join(temp[:3]))
+
+    print(f'Transformed Input File: {base}')
+    print(f'Into aims file: {write}')
 
 
-def bohr_to_a(base):
+def bohr_to_a(base, frac=False):
+    extra = "_frac" if frac else ""
     with open(base, "r") as f:
         lines = f.readlines()
     with open(base, "w") as f:
         for line in lines:
             temp = line.split()
             if "lattice" in temp[0]:
-                val = [0.529177 * float(x) for x in temp[1:]]
+                val = [0.529177249 * float(x) for x in temp[1:]]
                 lat = max(val)
                 f.write(f'lattice_vector %s %s %s\n' % (val[0], val[1], val[2]))
             elif "atom" in temp[0]:
-                val = [0.529177 * float(x) for x in temp[1:4]]
+                val = [0.529177249 * float(x) for x in temp[1:4]] if not frac else [float(x) for x in temp[1:4]]
                 for elem in range(len(val)):
                     if val[elem] > lat / 2:
                         val[elem] = val[elem] - lat
-                f.write(f'atom %s %s %s %s\n' % (val[0], val[1], val[2], temp[4]))
+                f.write(f'atom{extra} %s %s %s %s\n' % (val[0], val[1], val[2], temp[4]))
             else:
                 print("Unexpected:")
                 print(line)
+    print(f'Translated Bohr to Angstrom: {base}')
+    print()
 
 
 def a_to_bohr(base, write):
@@ -122,12 +132,30 @@ def a_to_bohr(base, write):
             counter += 1
 
 
-base = f'../../Documents/NIMS/nano/6L/Pd/Pd5Ag1.in'
-write = f'../../Documents/NIMS/nano/6L/Pd/Pd5Ag1.in.in'
+base = f'../../Documents/NIMS/Scripts/adsorbates/Pd_Ag/Pd5Ag1.dat'
+write = f'../../Documents/NIMS/Scripts/adsorbates/Pd5Ag1.in'
+
+path = "../../Documents/NIMS/Adsorbates_partial_results/coord_next/test/"
+files = ["top", "bridge", "hollow"]
+for file in files:
+    base = f'{path}{file}.in'
+    write = f'{path}{file}.aims.in'
+    cq_to_aims(base, write, frac="True")
+    bohr_to_a(write, frac="True")
+
+# site 6
+energies = [-0.1886, -0.1876, -0.1846, -0.1849, -0.1830, -0.1800]
+# site 7
+energies = [-0.1892, -0.1881, -0.1832, -0.1845, -0.1840, -0.1813]
+plt.scatter([0, 1, 2, 3, 4, 5], energies)
+plt.xlabel("Palladium Layers")
+plt.ylabel("Adsorption Energy (Ha)")
+plt.title("Adsorption Energy of Bridge Site 7")
+plt.tight_layout()
+plt.show()
+
 # xyz_to_cq(base, base, lattice=(40, 40, 40), move=True)
 # a_to_bohr(base, base)
-cq_to_aims(base, write)
-bohr_to_a(write)
 
 # directories = ["Pd1Ag5", "Pd2Ag4", "Pd3Ag3", "Pd4Ag2", "Pd5Ag1"]
 directories = ["purePd", "pureAg"]
@@ -141,28 +169,28 @@ layer_matrix = [[1, 0,  0,   0,  0],
                 [0, 12, 96,  48, 96],
                 [0, 12, 120, 80, 150]]
 
-layers = 2
-with open(directory + f'labels_%s.txt' % layers, "w") as f:
-    f.write("iatom\t\tNPtype\t\tposition\tilayer\n")
-    cur_layer = 0
-    atom_no = 1
-    while cur_layer <= layers:
-        for val in range(layer_matrix[cur_layer][0]):
-            f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 0, cur_layer))
-            atom_no += 1
-        for val in range(layer_matrix[cur_layer][1]):
-            f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 1, cur_layer))
-            atom_no += 1
-        for val in range(layer_matrix[cur_layer][2]):
-            f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 2, cur_layer))
-            atom_no += 1
-        for val in range(layer_matrix[cur_layer][4]):
-            f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 4, cur_layer))
-            atom_no += 1
-        for val in range(layer_matrix[cur_layer][3]):
-            f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 3, cur_layer))
-            atom_no += 1
-        cur_layer += 1
+# layers = 2
+# with open(directory + f'labels_%s.txt' % layers, "w") as f:
+#     f.write("iatom\t\tNPtype\t\tposition\tilayer\n")
+#     cur_layer = 0
+#     atom_no = 1
+#     while cur_layer <= layers:
+#         for val in range(layer_matrix[cur_layer][0]):
+#             f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 0, cur_layer))
+#             atom_no += 1
+#         for val in range(layer_matrix[cur_layer][1]):
+#             f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 1, cur_layer))
+#             atom_no += 1
+#         for val in range(layer_matrix[cur_layer][2]):
+#             f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 2, cur_layer))
+#             atom_no += 1
+#         for val in range(layer_matrix[cur_layer][4]):
+#             f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 4, cur_layer))
+#             atom_no += 1
+#         for val in range(layer_matrix[cur_layer][3]):
+#             f.write(f'%s\t\t%s\t\t%s\t\t%s\n' % (atom_no, 3, 3, cur_layer))
+#             atom_no += 1
+#         cur_layer += 1
 
 
 for dir in directories:

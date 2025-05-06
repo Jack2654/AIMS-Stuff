@@ -1601,16 +1601,17 @@ def plot_random_structures(folders, title="Random Structures"):
                  "disp_diag_max": r'$d_{diag,max}$', "disp_avg": r'$d_{disp,avg}$', "disp_max": r'$d_{disp,max}$',
                  "ss_avg": r'$\sigma^2_{avg}$', "ss_max": r'$\sigma^2_{max}$',
                  "dd_avg": r'$\Delta d_{avg}$', "dd_max": r'$\Delta d_{max}$',
-                 "dl_avg": r'$\Delta L_{avg}$', "dl_max": r'$\Delta L_{max}$', "L2": r'$L^2$', "Ag_len": r'$Ag_{len}$'}
+                 "dl_avg": r'$\Delta L_{avg}$', "dl_max": r'$\Delta L_{max}$', "L2": r'$L^2$', "Ag_len": r'$Ag_{len}$',
+                 "L_diff": r'$L_{diff}$'}
     for count, folder in enumerate(folders):
         all_x, all_splits = get_random_data(folder)
         colors = ['r', 'g', 'b', 'orange']
 
     # code for 2D intensity maps
-    dbs = ["db_avg", "db_max"]
+    # dbs = ["db_avg", "db_max"]
+    # dls = ["dl_avg", "dl_max", "L2"]
     dbs = ["db_max"]
-    dls = ["dl_avg", "dl_max", "L2"]
-    # dls = ["Ag_len"]
+    dls = ["L_diff"]
     average_splits = [max([all_splits[i][j] for i in range(4)]) for j in range(len(all_splits[0]))]
     for count, split in enumerate(average_splits):
         if all_x["db_max"][count] > 13:
@@ -1621,7 +1622,17 @@ def plot_random_structures(folders, title="Random Structures"):
     for db in dbs:
         for dl in dls:
             # plt.scatter(all_x[db], all_x[dl], c=all_splits[path], cmap='jet', edgecolors='k')
-            plt.scatter(all_x[db], all_x[dl], c=average_splits, cmap='jet', edgecolors='k')
+            x_vals = []
+            y_vals = []
+            colors = []
+            print(np.average(all_x[dl]))
+            for i in range(len(average_splits)):
+                if average_splits[i] < 1.0: # could set to 0.1 to filter out high spin splitting values
+                    x_vals.append(all_x[db][i])
+                    y_vals.append(all_x[dl][i])
+                    colors.append(average_splits[i])
+
+            plt.scatter(x_vals, y_vals, c=colors, cmap='jet', edgecolors='k')
             plt.colorbar(label='Max Spin Splitting (eV)')
             plt.xlabel(mode_dict[db])
             plt.ylabel(mode_dict[dl])
@@ -1669,8 +1680,9 @@ def get_random_data(folder):
     dls = []
     l2 = []
     ag_lens = []
-    for i in ["05", "10", "15", "20", "25"]:  # for Pb
-        # for i in ["05", "10", "15", "20"]: # for AgBi
+    L_diffs = []
+    # for i in ["05", "10", "15", "20", "25"]:  # for Pb
+    for i in ["05", "10", "15", "20"]:  # for AgBi
         # for i in ["25"]:
         for j in range(1, 11):
             band_base = write_base + i + "/" + str(j).rjust(2, "0") + "/"
@@ -1687,6 +1699,7 @@ def get_random_data(folder):
             dls.append(bg.Delta_L(band_base + "geometry.in"))
             l2.append(np.average(bg.Delta_L(band_base + "geometry.in", mode="L2")))
             ag_lens.append(bg.Ag_len(band_base + "geometry.in"))
+            L_diffs.append(bg.L_diff(band_base + "geometry.in"))
             # print(f'{all_splits[0][-1]} {all_splits[1][-1]} {all_splits[2][-1]} {all_splits[3][-1]}')
             # mulliken_plot(f'{band_base}settings_final.in', quiet=True)
 
@@ -1705,6 +1718,7 @@ def get_random_data(folder):
              "dl_avg": [sum(data_set) / 4 for data_set in dls],
              "dl_max": [max(data_set) for data_set in dls],
              "L2": l2,
-             "Ag_len": ag_lens}
+             "Ag_len": ag_lens,
+             "L_diff": L_diffs}
 
     return all_x, all_splits

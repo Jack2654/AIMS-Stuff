@@ -159,52 +159,7 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
     print(str(final[0]) + " " + str(final[1]) + " " + str(final[2]))
     return final
 
-    # f = input("Enter filepath to desired geometry.in file: ")
-    # lattice_defined = input("Is target defined by lattice vectors (True) or cartesian coordinates (False)? ")
-    # if lattice_defined == "True":
-    # t1 = input("Enter target multiples of first lattice vector: ")
-    # t2 = input("Enter target multiples of second lattice vector: ")
-    # t3 = input("Enter target multiples of third lattice vector: ")
 
-
-base = "../../FHI-aims/Bi_substitution/Band_Inputs/"
 base = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/2D_theoretical"
-# base = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/n_2_experimental"
 f = base + "/geometry.in"
-points = [[0, 1, 0],  # used for 2D experimental, all lattice defined
-          [0, 0, 1],
-          [0, 1, 1],
-          [0, -1, 1],
-          [1, 0, 0]]
-
-# points = [[0, 0, 1],  # lattice defined
-#           [1.005351, -4.699185, -4.557428],  # NOT lat defined
-#           [1.005352, 4.699185, -4.55743],  # NOT lat defined
-#           [0, 1, 0],  # lattice defined
-#           [1, 0, 0]]  # lattice defined
-
-f = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/spin_textures/selwuf/geometry.in"
-points = [(0.5, -0.5, 0),
-(0.45, -0.5, 0),
-(0.4, -0.5, 0),
-(0.35, -0.5, 0),
-(0.3, -0.5, 0),
-(0.25, -0.5, 0),
-(0.2, -0.5, 0),
-(0.15, -0.5, 0),
-(0.1, -0.5, 0),
-(0.05, -0.5, 0),
-(0, -0.5, 0),
-(-0.05, -0.5, 0),
-(-0.1, -0.5, 0),
-(-0.15, -0.5, 0),
-(-0.2, -0.5, 0),
-(-0.25, -0.5, 0),
-(-0.3, -0.5, 0),
-(-0.35, -0.5, 0),
-(-0.4, -0.5, 0),
-(-0.45, -0.5, 0),
-(-0.5, -0.5, 0)]
-
-for point in points:
-    generate(f, point, lattice_defined=True, debug=False)
+generate(f, [0, 1, 0], lattice_defined=True, debug=True)

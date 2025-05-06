@@ -850,8 +850,55 @@ def Delta_L(readfile, mode="Delta", bonds="", flag=""):
         avg_len = np.average(lengths)
         L_vals = []
         for leng in lengths:
-            L_vals.append((leng - avg_len)**2)
+            L_vals.append((leng - avg_len) ** 2)
     return L_vals
+
+
+# computes the L_diff descriptor for AgBi structures
+def L_diff(readfile, bonds="", mode="", frac=False):
+    if bonds == "":
+        point_sets = [(4, 7, 1), (4, 10, 1), (4, 8, 1), (4, 9, 1)]
+        shiftmaps = [[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 0, 0]],
+                     [[0, 0, 0], [0, 0, 0], [0, 1, 0]],
+                     [[0, 0, 0], [0, 0, 0], [1, 1, 0]]]
+    else:
+        point_sets = [[atom[0] for atom in bond] for bond in bonds]
+        shiftmaps = [[[0, 0, 0] if len(atom) == 1 else [int(x) for x in list(atom[1])] for atom in bond] for bond in
+                     bonds]
+
+    Ag_lens = []
+    Bi_lens = []
+    lv = lattice_vectors(readfile)
+    for count, points in enumerate(point_sets):
+        at = atoms_trimmed(readfile)
+        pts = [at[points[0] - 1], at[points[1] - 1], at[points[2] - 1]]
+        if frac:
+            for i in range(3):
+                for j in range(3):
+                    pts[i][j] = pts[i][0] * lv[0][j] + pts[i][1] * lv[1][j] + pts[i][2] * lv[2][j]
+
+        # moves points so they are positioned adequately
+        for i in range(3):
+            for j in range(3):
+                pts[i][0] += shiftmaps[count][i][j] * lv[j][0]
+                pts[i][1] += shiftmaps[count][i][j] * lv[j][1]
+                pts[i][2] += shiftmaps[count][i][j] * lv[j][2]
+        p1, p2, p3 = pts
+        Ag_lens.append(np.linalg.norm([p1[i] - p2[i] for i in range(3)]))
+        Bi_lens.append(np.linalg.norm([p2[i] - p3[i] for i in range(3)]))
+
+    if mode == "all":
+        avg_len = np.average(Ag_lens + Bi_lens)
+        result = np.average([abs((elem - avg_len) / avg_len) for elem in Ag_lens + Bi_lens])
+        return result
+
+    Ag_avg = np.average(Ag_lens)
+    Bi_avg = np.average(Bi_lens)
+    Ag_diff = sum([abs((Ag_l - Ag_avg) / Ag_avg) for Ag_l in Ag_lens])
+    Bi_diff = sum([abs((Bi_l - Bi_avg) / Bi_avg) for Bi_l in Bi_lens])
+    result = (Ag_diff + Bi_diff) / 8
+    return result
 
 
 # computes the average in-plane Ag-halide length for AgBi-I model structures
