@@ -65,6 +65,7 @@ def plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_sh
     plt.xlim(-xrange, xrange)
     plt.ylim(-yrange, yrange)
     plt.title(title)
+    plt.tight_layout()
     if save:
         plt.savefig(filename, dpi=1000, bbox_inches='tight', format="png")
     else:
@@ -83,15 +84,18 @@ def extra_states(full_file, write_file, state):
         f.writelines(res)
 
 
-base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/spin_textures/"
-structure = base + "selwoz/"
-states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
+base = "../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/spin_textures/"
+# structure = base + "selwoz/"
+# states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
 
 # structure = base + "selwuf/"
 # states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
 
 # structure = base + "ijayuq/" # limits 0.40, 0.225
 # states = [1707, 1708, 1709, 1710]  # VBM lower and upper, CBM lower and upper
+
+structure = base + "voxkif/"
+states = [709, 710, 711, 712]  # VBM lower and upper, CBM lower and upper
 
 for state in states:
     # continue
@@ -101,7 +105,7 @@ for state in states:
 
     k_points_1_read, energy_1_read, spins_1_read = read_state(output)
     energy_shift = min(energy_1_read)
-    title = "SELWOZ "
+    title = "VOXKIF "
     if state % 2 == 0:
         title += "Upper "
     else:
@@ -115,9 +119,9 @@ for state in states:
     plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_shift, cur_state + ".png", title=title,
                          save=False)
 
-base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/"
-options = ['experimental-bs-selwoz/', 'experimental-bs-selwuf/', 'ijayuq/']
-for opt in options:
-    print(opt)
-    for i in range(1, 2):
-        print(bbo.band_info(base + opt, f'band100{i}.out', band_gap=True, spin_splitting=True, verbose=False))
+# base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/"
+# options = ['experimental-bs-selwoz/', 'experimental-bs-selwuf/', 'ijayuq/']
+# for opt in options:
+#     print(opt)
+#     for i in range(1, 2):
+#         print(bbo.band_info(base + opt, f'band100{i}.out', band_gap=True, spin_splitting=True, verbose=False))

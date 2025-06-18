@@ -160,6 +160,7 @@ def generate(filename, target, lattice_defined=True, debug=False, mag=0):
     return final
 
 
-base = "../../FHI-aims/Yi/Yi_1_5_D/band_plotting_folder/2D_theoretical"
-f = base + "/geometry.in"
-generate(f, [0, 1, 0], lattice_defined=True, debug=True)
+base_path = "../../FHI-aims/Double_Perovskites/Real_Structures/input_geos/VOXKIF"
+f = base_path + "/geometry.in"
+
+generate(f, [-1, 0, 0], lattice_defined=True, debug=False)

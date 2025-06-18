@@ -40,6 +40,7 @@ from ase.io import read, write
 import VectorToolkit as vt
 import numpy as np
 from numpy import pi
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # functions:
@@ -378,6 +379,8 @@ def sigma_squared_old(filename, center, edges, debug=False):
     return result
 
 
+# returns angle in degrees
+# can work for nD points
 def angle(pt1, center, pt2):
     a = np.array(pt1)
     b = np.array(center)
@@ -913,3 +916,192 @@ def Ag_len(readfile):
         current = at[point - 1]
         Ag_lens.append((np.linalg.norm([center[i] - current[i] for i in range(3)]) - 2.890625) ** 2)
     return sum(Ag_lens)
+
+
+def dict_to_in(input_dict):
+    for atom in input_dict.keys():
+        temp = input_dict[atom]
+        print(f'atom {temp[0]} {temp[1]} {temp[2]} Bi')
+
+
+def pull_data(readfile, bonds, shiftmap):
+    # pulls lattice vectors and atoms from the geometry.in file
+    lv = lattice_vectors(readfile)
+    at = atoms_trimmed(readfile)
+    atom_dict = {}
+    for count, atom in enumerate(at):
+        atom_dict[count + 1] = atom
+
+    # shifts the atoms as necessary
+    if shiftmap is not None:
+        for shift_index in shiftmap.keys():
+            current = atom_dict[shift_index]
+            shifts = [int(x) for x in shiftmap[shift_index].split(",")]
+            # iterate through x,y,z coordinates (i) and for each iterate through lattice vectors (j)
+            for i in range(3):
+                for j in range(3):
+                    current[i] += shifts[j] * lv[j][i]
+            atom_dict[shift_index] = current
+
+    # recenters the atoms about the first B-site
+    recenter = np.array(atom_dict[bonds[0][0]])
+    for atom in atom_dict.keys():
+        atom_dict[atom] = np.array(atom_dict[atom]) - recenter
+
+    return atom_dict
+
+    # rotates the atoms so the third B-site is also at z=0
+    axis = atom_dict[bonds[0][2]] - atom_dict[bonds[2][2]]
+    axis = axis / np.linalg.norm(axis)
+    cur_flat_dist = math.sqrt(atom_dict[bonds[1][2]][0] ** 2 + atom_dict[bonds[1][2]][1] ** 2)
+    cur_vert_dist = atom_dict[bonds[1][2]][2]
+    cur_angle = np.arctan(cur_vert_dist / cur_flat_dist)
+    rotation = R.from_rotvec(-1 * cur_angle * axis)  # -1 to "undo" the current rotation
+
+    # Apply the rotation to all points
+    for atom in atom_dict.keys():
+        atom_dict[atom] = rotation.apply(atom_dict[atom])
+
+    # rotates the atoms to minimize the height of the remaining 2 B-sites
+    axis = atom_dict[bonds[1][2]] - atom_dict[bonds[0][0]]
+    axis = axis / np.linalg.norm(axis)
+    cur_flat_dist_1 = math.sqrt(atom_dict[bonds[1][2]][0] ** 2 + atom_dict[bonds[1][2]][1] ** 2)
+    cur_vert_dist_1 = atom_dict[bonds[1][2]][2]
+    cur_flat_dist_2 = math.sqrt(atom_dict[bonds[1][2]][0] ** 2 + atom_dict[bonds[1][2]][1] ** 2)
+    cur_vert_dist_2 = atom_dict[bonds[1][2]][2]
+    cur_angle = np.arctan(cur_vert_dist / cur_flat_dist)
+
+    # not completed
+    return atom_dict
+
+
+def find_db_in(bond_coords):
+    # first flatten all angles
+    flat_coords = [[np.array([atom[0], atom[1], 0]) for atom in bond] for bond in bond_coords]
+    # next compute the 'centroid' of metal B-sites
+    centroid = np.array([0.0, 0.0, 0.0])
+    for i in range(4):
+        centroid += bond_coords[i][0]
+    centroid = [centroid[i] / 4 for i in range(len(centroid))]
+    plt.scatter(centroid[0], centroid[1], color='silver')
+    beta_in = []
+    # deal with each angle separately
+    for count, bond in enumerate(flat_coords):
+        # compute equation connecting metal B-sites
+        m = (bond[0][1] - bond[2][1]) / (bond[0][0] - bond[2][0])
+        b = bond[0][1] - m * bond[0][0]
+        plt.scatter([bond[0][0], bond[2][0]], [bond[0][1], bond[2][1]], color='k')
+        plt.plot([bond[0][0], bond[2][0]], [m * bond[0][0] + b, m * bond[2][0] + b], color='k')
+        # project the halide onto the segment
+        x_proj = (bond[1][0] + m * bond[1][1] - m * b) / (1 + m * m)
+        y_proj = m * x_proj + b
+        dist_actual = np.linalg.norm(bond[1] - centroid)
+        dist_proj = np.linalg.norm(np.array([x_proj, y_proj, 0]) - centroid)
+        # frame of reference has even bonds (0 and 2) inside and
+        # odd bonds (1 and 3) outside
+        cur_angle = angle(*bond)
+        if dist_actual <= dist_proj:
+            plt.scatter(bond[1][0], bond[1][1], color='green')
+            beta_in.append(cur_angle if (count % 2) == 0 else 360 - cur_angle)
+        else:
+            plt.scatter(bond[1][0], bond[1][1], color='red')
+            beta_in.append(cur_angle if (count % 2) == 1 else 360 - cur_angle)
+    # plt.show()
+    return beta_in
+
+
+def find_db_out(bond_coords):
+    # construct a plane connecting endpoints and parallel to (0, 0, 1)
+    def construct_plane_normal(p1, p2):
+        v1 = np.array(p2) - np.array(p1)
+        v2 = np.array([0, 0, 1])
+        n = np.cross(v1, v2)
+        return n
+
+    # project a point onto a given plane
+    def project_point_to_plane(p, p0, n):
+        w = np.array(p) - np.array(p0)
+        scalar = np.dot(n, w) / np.dot(n, n)
+        proj = np.array(p) - scalar * n
+        return proj
+
+    # project the point on the plane onto the line connecting endpoints, this helps with the frame of reference
+    def project_point_onto_line(p1, p2, center):
+        d = p1 - p2  # Direction vector
+        AP = center - p1  # Vector from A to P
+        time = np.dot(AP, d) / np.dot(d, d)  # Scalar projection
+        proj = p1 + time * d  # Projected point
+        return proj
+
+    beta_out = []
+    polarity = [0, 0, 0, 0]  # 1 = above, -1 = below
+    for count, bond in enumerate(bond_coords):
+        p1 = bond[0]
+        p2 = bond[2]
+        p_to_project = bond[1]
+        normal = construct_plane_normal(p1, p2)
+        p_proj = project_point_to_plane(p_to_project, p1, normal)
+        beta_out.append(angle(p1, p_proj, p2))
+        polarity[count] = 1 if p_proj[2] > project_point_onto_line(p1, p2, p_proj)[2] else -1
+
+    if polarity[0] == polarity[1]:
+        beta_out[2] = beta_out[2] if polarity[2] != polarity[0] else 360 - beta_out[2]
+        beta_out[3] = beta_out[3] if polarity[3] != polarity[0] else 360 - beta_out[3]
+    elif polarity[1] == polarity[2]:
+        beta_out[0] = beta_out[0] if polarity[0] != polarity[1] else 360 - beta_out[0]
+        beta_out[3] = beta_out[3] if polarity[3] != polarity[1] else 360 - beta_out[3]
+    elif polarity[2] == polarity[3]:
+        beta_out[0] = beta_out[0] if polarity[0] != polarity[2] else 360 - beta_out[0]
+        beta_out[1] = beta_out[1] if polarity[1] != polarity[2] else 360 - beta_out[1]
+    elif polarity[3] == polarity[0]:
+        beta_out[1] = beta_out[1] if polarity[1] != polarity[0] else 360 - beta_out[1]
+        beta_out[2] = beta_out[2] if polarity[2] != polarity[0] else 360 - beta_out[2]
+    else:
+        beta_out[0] = 360 - beta_out[0]
+        beta_out[1] = 360 - beta_out[0]
+
+    return beta_out
+
+
+# computes:
+#  - raw delta beta: raw difference in angles
+# XXX - delta beta: only defined for roughly co-planar atoms (z=constant for all atoms) necessary for frame of reference
+# can fix the problem with coplanar atoms by setting one corner to the origin, rotating all points so a second corner
+# is also at z=0 and then rotating so the other two corners are equally close to z=0
+#  - beta_in: all atoms flattened to z=0 and then the same delta beta computation takes place
+#  - beta_out:
+# the points should be input with their indices (1-indexed) just following adjacent angles
+# i.e.
+# 1-Ag  --  5-I  --  3-Bi
+#  |                  |
+# 6-I                7-I
+#  |                  |
+# 4-Bi  --  8-I  --  2-Ag
+# bond=[(4, 8, 2), (2, 7, 3), (3, 5, 1), (1, 6, 4)]
+# a shiftmap can also be defined, in this case:
+# shiftmap = {1: '0,0,0', 2: '0,0,0', 3: '0,0,0', 4: '0,0,0', 5: '0,0,0', 6: '0,0,0', 7: '0,0,0', 8: '0,0,0'}
+def new_robust_delta_beta(readfile, bonds, shiftmap=None):
+    # NOTE: no reference frame is applied for raw angles at the moment
+
+    atom_dict = pull_data(readfile, bonds, shiftmap)
+
+    # computes the four raw angles
+    bond_coords = [[np.array(atom_dict[x]) for x in bond] for bond in bonds]
+    beta = [angle(*bond) for bond in bond_coords]
+
+    # computes four beta-in angles
+    beta_in = find_db_in(bond_coords)
+
+    # computes four beta-out angles
+    beta_out = find_db_out(bond_coords)
+    print(beta_out)
+
+    db_1 = np.abs(beta[0] + beta[1] - beta[2] - beta[3]) / 2
+    db_2 = np.abs(beta[0] + beta[3] - beta[2] - beta[1]) / 2
+    db_in_1 = np.abs(beta_in[0] + beta_in[1] - beta_in[2] - beta_in[3]) / 2
+    db_in_2 = np.abs(beta_in[0] + beta_in[3] - beta_in[2] - beta_in[1]) / 2
+    db_out_1 = np.abs(beta_out[0] + beta_out[1] - beta_out[2] - beta_out[3]) / 2
+    db_out_2 = np.abs(beta_out[0] + beta_out[3] - beta_out[2] - beta_out[1]) / 2
+    print(db_out_1)
+    print(db_out_2)
+    print()

@@ -77,15 +77,17 @@ def cq_to_aims(base, write, frac=False):
         f.write(f'lattice_vector %s' % lines[0])
         f.write(f'lattice_vector %s' % lines[1])
         f.write(f'lattice_vector %s' % lines[2])
-        for line in lines[4:-1]:
+        for line in lines[4:-2]:
             temp = line.split()
             # if temp[3] == "1":
             #     f.write(f'atom{extra} %s\t\t Pd\n' % " ".join(temp[:3]))
             # else:
             #     f.write(f'atom{extra} %s\t\t Ag\n' % " ".join(temp[:3]))
             f.write(f'atom{extra} %s\t\t Ag\n' % " ".join(temp[:3]))
+        temp = lines[-2].split()
+        f.write(f'atom{extra} %s\t\t H\n' % " ".join(temp[:3]))
         temp = lines[-1].split()
-        f.write(f'atom{extra} %s\t\t O\n' % " ".join(temp[:3]))
+        f.write(f'atom{extra} %s\t\t H\n' % " ".join(temp[:3]))
 
     print(f'Transformed Input File: {base}')
     print(f'Into aims file: {write}')
@@ -132,14 +134,57 @@ def a_to_bohr(base, write):
             counter += 1
 
 
-base = f'../../Documents/NIMS/Scripts/adsorbates/Pd_Ag/Pd5Ag1.dat'
-write = f'../../Documents/NIMS/Scripts/adsorbates/Pd5Ag1.in'
+path = "../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/Ag6/"
 
-path = "../../Documents/NIMS/Adsorbates_partial_results/coord_next/test/"
-files = ["top", "bridge", "hollow"]
+path = "/Users/jackmorgenstein/Documents/NIMS/new_calcs/geo_files/"
+for filename in os.listdir(path):
+    folder = os.path.join(path, filename)
+    for file in os.listdir(folder):
+        write_path = os.path.join(folder, "aims_") + file + ".in"
+        cq_to_aims(os.path.join(folder, file), write_path, frac="False")
+        bohr_to_a(write_path, frac="False")
+
+cur_path = f'{path}coord_AgNP_H2_100_top_c7_opt.in'
+write = f'{path}aims_coord_AgNP_H2_100_top_c7_opt.in'
+# cq_to_aims(cur_path, write, frac="True")
+# bohr_to_a(write, frac="True")
+# faces = ["100", "110", "111"]
+# locations = "hollow", "bridge", "top"
+
+# order of hollow, bridge, top for 100, 110, 111 for O adsorbate
+particle = "O"
+label_dict = [[[i for i in range(1, 7)], [i for i in range(1, 10)], [1, 5, 6, 7, 8, 9, 10]],
+              [[], [1, 3], [1, 2, 3]], # 110_bridge_b2 is missing from input files but should exist
+              [[i for i in range(1, 10)], [1, 2, 3, 4, 6, 7, 8, 9], [5, 6, 7]]] # 111_bridge_b5 should exist
+
+# order of hollow, bridge, top for 100, 110, 111 for H2 adsorbate
+particle = "H2"
+label_dict = [[[i for i in range(1, 7)], [i for i in range(1, 10)], [1, 5, 6, 7, 8, 9, 10]],
+              [[], [1, 2, 3], [1, 2, 3]],
+              [[i for i in range(1, 10)], [i for i in range(1, 10)], [5, 6, 7]]]
+
+# for i, set_o_labels in enumerate(label_dict):
+#     base_path = f'{path}coord_AgNP_{particle}_{faces[i]}_'
+#     for j, lbls in enumerate(set_o_labels):
+#         for index in lbls:
+#             cur_path = f'{base_path}{locations[j]}_c{str(index)}_opt.in'
+#             write = f'{path}aims_{faces[i]}_{locations[j]}_c{str(index)}.in'
+#             cq_to_aims(cur_path, write, frac="True")
+#             bohr_to_a(write, frac="True")
+
+
+type_dict = {"hollow": [6, 0, 9], "bridge": [9, 3, 9], "top": [10, ]}
+
+files = ["110_top_b1",
+         "110_bridge_b1",
+         "100_top_b10",
+         "100_hollow_b3",
+         "100_hollow_b5",
+         "100_hollow_b6"]
 for file in files:
-    base = f'{path}{file}.in'
-    write = f'{path}{file}.aims.in'
+    continue
+    base = f'{path}coord_AgNP_O_{file}_opt.in'
+    write = f'{path}aims_{file}.in'
     cq_to_aims(base, write, frac="True")
     bohr_to_a(write, frac="True")
 
@@ -152,7 +197,7 @@ plt.xlabel("Palladium Layers")
 plt.ylabel("Adsorption Energy (Ha)")
 plt.title("Adsorption Energy of Bridge Site 7")
 plt.tight_layout()
-plt.show()
+# plt.show()
 
 # xyz_to_cq(base, base, lattice=(40, 40, 40), move=True)
 # a_to_bohr(base, base)
