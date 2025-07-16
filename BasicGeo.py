@@ -929,8 +929,9 @@ def pull_data(readfile, bonds, shiftmap):
     lv = lattice_vectors(readfile)
     at = atoms_trimmed(readfile)
     atom_dict = {}
-    for count, atom in enumerate(at):
-        atom_dict[count + 1] = atom
+    for bond in bonds:
+        for atom in bond:
+            atom_dict[atom] = at[int(atom.split("_")[0]) - 1][:] if "_" in atom else at[int(atom) - 1][:]
 
     # shifts the atoms as necessary
     if shiftmap is not None:
@@ -1043,24 +1044,30 @@ def find_db_out(bond_coords):
         p_proj = project_point_to_plane(p_to_project, p1, normal)
         beta_out.append(angle(p1, p_proj, p2))
         polarity[count] = 1 if p_proj[2] > project_point_onto_line(p1, p2, p_proj)[2] else -1
+    untouched_beta = beta_out[:]
 
     if polarity[0] == polarity[1]:
         beta_out[2] = beta_out[2] if polarity[2] != polarity[0] else 360 - beta_out[2]
         beta_out[3] = beta_out[3] if polarity[3] != polarity[0] else 360 - beta_out[3]
+        db_out = (beta_out[0] + beta_out[3] - beta_out[2] - beta_out[1]) / 2
     elif polarity[1] == polarity[2]:
         beta_out[0] = beta_out[0] if polarity[0] != polarity[1] else 360 - beta_out[0]
         beta_out[3] = beta_out[3] if polarity[3] != polarity[1] else 360 - beta_out[3]
+        db_out = (beta_out[0] + beta_out[1] - beta_out[2] - beta_out[3]) / 2
     elif polarity[2] == polarity[3]:
         beta_out[0] = beta_out[0] if polarity[0] != polarity[2] else 360 - beta_out[0]
         beta_out[1] = beta_out[1] if polarity[1] != polarity[2] else 360 - beta_out[1]
+        db_out = (beta_out[1] + beta_out[2] - beta_out[0] - beta_out[3]) / 2
     elif polarity[3] == polarity[0]:
         beta_out[1] = beta_out[1] if polarity[1] != polarity[0] else 360 - beta_out[1]
         beta_out[2] = beta_out[2] if polarity[2] != polarity[0] else 360 - beta_out[2]
+        db_out = (beta_out[2] + beta_out[3] - beta_out[0] - beta_out[1]) / 2
     else:
         beta_out[0] = 360 - beta_out[0]
-        beta_out[1] = 360 - beta_out[0]
+        beta_out[1] = 360 - beta_out[1]
+        db_out = (beta_out[0] + beta_out[1] - beta_out[2] - beta_out[3]) / 2
 
-    return beta_out
+    return beta_out, abs(db_out), untouched_beta
 
 
 # computes:
@@ -1080,9 +1087,8 @@ def find_db_out(bond_coords):
 # bond=[(4, 8, 2), (2, 7, 3), (3, 5, 1), (1, 6, 4)]
 # a shiftmap can also be defined, in this case:
 # shiftmap = {1: '0,0,0', 2: '0,0,0', 3: '0,0,0', 4: '0,0,0', 5: '0,0,0', 6: '0,0,0', 7: '0,0,0', 8: '0,0,0'}
-def new_robust_delta_beta(readfile, bonds, shiftmap=None):
+def new_robust_delta_beta(readfile, bonds, shiftmap=None, method="old"):
     # NOTE: no reference frame is applied for raw angles at the moment
-
     atom_dict = pull_data(readfile, bonds, shiftmap)
 
     # computes the four raw angles
@@ -1093,8 +1099,8 @@ def new_robust_delta_beta(readfile, bonds, shiftmap=None):
     beta_in = find_db_in(bond_coords)
 
     # computes four beta-out angles
-    beta_out = find_db_out(bond_coords)
-    print(beta_out)
+    beta_out, db_out, untouched_beta = find_db_out(bond_coords)
+    # beta_out = untouched_beta
 
     db_1 = np.abs(beta[0] + beta[1] - beta[2] - beta[3]) / 2
     db_2 = np.abs(beta[0] + beta[3] - beta[2] - beta[1]) / 2
@@ -1102,6 +1108,24 @@ def new_robust_delta_beta(readfile, bonds, shiftmap=None):
     db_in_2 = np.abs(beta_in[0] + beta_in[3] - beta_in[2] - beta_in[1]) / 2
     db_out_1 = np.abs(beta_out[0] + beta_out[1] - beta_out[2] - beta_out[3]) / 2
     db_out_2 = np.abs(beta_out[0] + beta_out[3] - beta_out[2] - beta_out[1]) / 2
-    print(db_out_1)
-    print(db_out_2)
-    print()
+    if method == "old":
+        return max(db_1, db_2)
+    if method == "in":
+        return max(db_in_1, db_in_2)
+    if method == "out":
+        return db_out
+        # return max(db_out_1, db_out_2)
+    if method == "new":
+        if (max(db_in_1, db_in_2) + db_out) / 2 > 5 and False:
+            print(readfile)
+            print(beta_in)
+            print(beta_out)
+            print((max(db_in_1, db_in_2) + db_out) / 2)
+            print()
+        return max(db_in_1, db_in_2), db_out
+        # return (4 * max(db_in_1, db_in_2) + db_out) / 5
+        # return (max(db_in_1, db_in_2) + max(db_out_1, db_out_2)) / 2
+
+# 16 pos
+# flip 2 if: (1) all 4 up, (2) all 4 down, (3) opposites match 1 way, (4) opposites match the other way, (5)
+
