@@ -161,14 +161,14 @@ def nn_dist(base):
     return dist
 
 
-def gen_nn_dists():
-    base_path = "../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/"
-    read_folder = os.path.join(base_path, "Ag6")
-    files = [file for file in os.listdir(read_folder) if "opt" in file and "aims" not in file and "xyz" not in file]
+def gen_nn_dists(base_path, coord_folder="Ag6"):
+    read_folder = os.path.join(base_path, f'{coord_folder}')
+    all_geo_files = [geo_file for geo_file in os.listdir(read_folder) if "opt" in geo_file and "aims" not in geo_file
+                     and "xyz" not in geo_file]
     for adsorbate in ["H2", "OH", "_H_", "_O_"]:
-        base_files = [file for file in files if adsorbate in file and "fixed" not in file]
-        fixed_files = [file for file in files if adsorbate in file and "fixed" in file]
-        dest_base = os.path.join(base_path, "plotting/Ag6_base/")
+        base_files = [geo_file for geo_file in all_geo_files if adsorbate in geo_file and "fixed" not in geo_file]
+        fixed_files = [geo_file for geo_file in all_geo_files if adsorbate in geo_file and "fixed" in geo_file]
+        dest_base = os.path.join(base_path, f'plotting/{coord_folder}_base/')
         # copy over all OG geometry files
         for geo_file in base_files:
             os.system(f'cp {os.path.join(read_folder, geo_file)} {dest_base + geo_file}')
@@ -176,20 +176,20 @@ def gen_nn_dists():
         for geo_file in fixed_files:
             os.system(f'cp {os.path.join(read_folder, geo_file)} {dest_base + geo_file.replace("fixed_", "")}')
 
-    read_path = os.path.join(base_path, "plotting/Ag6_base")
-    write_path = os.path.join(base_path, "plotting/Ag6_aims")
+    read_path = os.path.join(base_path, f'plotting/{coord_folder}_base')
+    write_path = os.path.join(base_path, f'plotting/{coord_folder}_aims')
     coords = os.listdir(read_path)
     for adsorbate in ["H2", "OH", "_H_", "_O_"]:
-        cur_coords = [file for file in coords if adsorbate in file]
+        cur_coords = [geo_file for geo_file in coords if adsorbate in geo_file]
         cur_coords.sort()
-        for file in cur_coords:
-            cq_to_aims(os.path.join(read_path, file), os.path.join(write_path, "aims_" + file), frac=True)
-            bohr_to_a(os.path.join(write_path, "aims_" + file), frac=True, convert=True)
-            dist = nn_dist(os.path.join(write_path, "aims_" + file))
-            print(f'{file.replace("coord_AgNP_", "").replace("_opt.in", "")}: {dist}')
+        for geo_file in cur_coords:
+            cq_to_aims(os.path.join(read_path, geo_file), os.path.join(write_path, "aims_" + geo_file), frac=True)
+            bohr_to_a(os.path.join(write_path, "aims_" + geo_file), frac=True, convert=True)
+            dist = nn_dist(os.path.join(write_path, "aims_" + geo_file))
+            print(f'{geo_file.replace("coord_PdNP_", "").replace("_opt.in", "")}: {dist}')
 
 
-def adsorbate_plot(data_file):
+def adsorbate_plot(data_file, NP_name="Ag6"):
     with open(data_file, "r") as f:
         lines = f.readlines()
     colors = {'H': 'r', 'OH': 'lightblue', 'H2': 'g', 'O': 'y'}
@@ -209,26 +209,46 @@ def adsorbate_plot(data_file):
     plt.scatter(0, 0, marker='o', color='k', label='Bridge')
     plt.scatter(0, 0, marker='D', color='k', label='Hollow')
     plt.scatter(0, 0, marker='s', color='k', label='On-top')
-    plt.xlim([1.5, 3.7])
+    if NP_name == "Ag6":
+        plt.xlim([1.6, 3.7])
+    if NP_name == "Pd6":
+        plt.xlim([1.5, 2.5])
+        plt.ylim([-0.25, 0.01])
     plt.xlabel("Nearest Neighbor Distance (Å)")
     plt.ylabel("Adsorption Energy (Ha)")
-    plt.title("Adsorbates on Ag6 NP")
+    plt.title(f'Adsorbates on {NP_name} NP')
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 
-adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/plotting/data.in")
+# generate nearest neighbor distances
+# gen_nn_dists(base_path="/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_08_18/", coord_folder="Pd6")
 
-path = "/Users/jackmorgenstein/Documents/NIMS/new_calcs/geo_files/"
-for filename in os.listdir(path):
-    # for filename in ["6L"]:
-    continue
-    folder = os.path.join(path, filename)
-    for file in os.listdir(folder):
-        write_path = os.path.join(folder, "aims_") + file + ".in"
-        cq_to_aims(os.path.join(folder, file), write_path, frac="False")
-        bohr_to_a(write_path, frac=False)
+# plot two axes of nearest neighbor distance and adsorption energy
+adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/plotting/data.in", NP_name="Ag6")
+adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_08_18/plotting/data.in", NP_name="Pd6")
+
+
+
+
+
+
+# turn conquest input geometry into aims geometry.in format
+path = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_08_18/Pd6_coords"
+geom_file = f'{path}/coord_PdNP_H2_111_hollow_c9_opt.in'
+write_file = f'{path}/coord_PdNP_H2_111_hollow_c9_opt.aims.in'
+# cq_to_aims(geom_file, write_file, frac="False")
+# bohr_to_a(write_file, frac=True)
+
+# for filename in os.listdir(path):
+#     for filename in ["6L"]:
+#     continue
+#     folder = os.path.join(path, filename)
+#     for file in os.listdir(folder):
+#         write_path = os.path.join(folder, "aims_") + file + ".in"
+#         cq_to_aims(os.path.join(folder, file), write_path, frac="False")
+#         bohr_to_a(write_path, frac=False)
 
 cur_path = f'{path}coord_AgNP_H2_100_top_c7_opt.in'
 write = f'{path}aims_coord_AgNP_H2_100_top_c7_opt.in'

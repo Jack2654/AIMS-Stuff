@@ -198,6 +198,9 @@ d = [214, 6, 19]
 shiftmap = {4: '-1,0,-1', 6: '-1,0,-1', 20: '-1,0,-1'}
 # bg.new_robust_delta_beta(path, bonds=[a, b, c, d], shiftmap=shiftmap)
 
+
+# RECHECK WHAT DELTA BETA OUT IS BEING COMPUTED IN BasicGeo.py
+
 # Random structures:
 a = ['4', '9', '1']
 b = ['1', '10', '4_2']
