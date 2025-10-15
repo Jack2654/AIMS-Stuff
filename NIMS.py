@@ -1,6 +1,8 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
 
 
 def make_calc(base, dest, cutoff=100, kpt=(1, 1, 1), lattice=None):
@@ -96,7 +98,7 @@ def cq_to_aims(base, write, frac=False):
     # print(f'Into aims file: {write}')
 
 
-def bohr_to_a(base, frac=False, convert=True):
+def bohr_to_a(base, frac=False, convert=True, move=False):
     extra = "_frac" if frac and not convert else ""
     with open(base, "r") as f:
         lines = f.readlines()
@@ -113,6 +115,10 @@ def bohr_to_a(base, frac=False, convert=True):
                     val[0] *= lat
                     val[1] *= lat
                     val[2] *= lat
+                if move:
+                    for count, value in enumerate(val):
+                        if value > lat / 2:
+                            val[count] -= lat
                 # for elem in range(len(val)):
                 #     if val[elem] > lat / 2:
                 #         val[elem] = val[elem] - lat
@@ -222,24 +228,141 @@ def adsorbate_plot(data_file, NP_name="Ag6"):
     plt.show()
 
 
+def PdAg_data():
+    adsorbates = ["H", "O", "OH"]
+    base_path = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_09_16/"
+    list_100 = ['hollow_b6', 'top_b1_']
+    list_110 = ['bridge_b1_', 'bridge_b2', 'bridge_b3', 'top_b1_', 'top_b2', 'top_b3']
+    list_111 = ['hollow_b9']
+    all_sites = ['100_' + x for x in list_100] + ['110_' + x for x in list_110] + ['111_' + x for x in list_111]
+
+    write_path = os.path.join(base_path, "PdAg/PdAg_base/")
+    for folder in ["Pd6", "Pd5Ag1", "Pd4Ag2", "Pd3Ag3", "Pd2Ag4", "Pd1Ag5", "Ag6"]:
+        cur_folder = os.path.join(base_path, f'coord_next/{folder}')
+        all_geo_files = [geo_file for geo_file in os.listdir(cur_folder) if "opt" in geo_file
+                         and "aims" not in geo_file and "xyz" not in geo_file]
+        all_geo_files = [geo_file for geo_file in all_geo_files if sum([site in geo_file for site in all_sites])]
+
+        base_files = [geo_file for geo_file in all_geo_files if "fixed" not in geo_file]
+        fixed_files = [geo_file for geo_file in all_geo_files if "fixed" in geo_file]
+        for geo_file in base_files:
+            temp = geo_file.replace("Pd", "").replace("Ag", "").replace("NP", "").replace("__", f'_{folder}_')
+            os.system(f'cp {os.path.join(cur_folder, geo_file)} {os.path.join(write_path, temp)}')
+        for geo_file in fixed_files:
+            temp = geo_file.replace("Pd", "").replace("Ag", "").replace("NP", "").replace("__", f'_{folder}_')
+            os.system(f'cp {os.path.join(cur_folder, geo_file)} {os.path.join(write_path, temp.replace("fixed_", ""))}')
+
+    read_path = write_path + ""
+    write_path = os.path.join(base_path, "PdAg/PdAg_aims/")
+    coords = os.listdir(read_path)
+    coords.sort()
+    geo_dict = {}
+    for geo_file in coords:
+        cq_to_aims(os.path.join(read_path, geo_file), os.path.join(write_path, "aims_" + geo_file), frac=True)
+        bohr_to_a(os.path.join(write_path, "aims_" + geo_file), frac=True, convert=True)
+        geo_dict[geo_file.replace("coord_", "").replace("_opt.in", "")] = nn_dist(
+            os.path.join(write_path, "aims_" + geo_file))
+
+    nps = ["Pd6", "Pd5Ag1", "Pd4Ag2", "Pd3Ag3", "Pd2Ag4", "Pd1Ag5", "Ag6"]
+    nps.reverse()
+    for np in nps:
+        for adsorbate in ["H", "OH", "O"]:
+            order = ["100_top_b1", "110_top_b1", "110_top_b2", "110_top_b3",
+                     "110_bridge_b1", "110_bridge_b2", "110_bridge_b2", "100_hollow_b6", "111_hollow_b9"]
+            for k in order:
+                cur = f'{np}_{adsorbate}_{k}'
+                print(f'{cur} {geo_dict[cur]}')
+
+
+def plot_PdAg(plot_method="plotly"):
+    base_path = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_09_16/PdAg/data.in"
+    with open(base_path, "r") as f:
+        data = f.readlines()
+    data_dict = {"Pd6": {"O": {}, "OH": {}, "H": {}}, "Pd5Ag1": {"O": {}, "OH": {}, "H": {}},
+                 "Pd4Ag2": {"O": {}, "OH": {}, "H": {}}, "Pd3Ag3": {"O": {}, "OH": {}, "H": {}},
+                 "Pd2Ag4": {"O": {}, "OH": {}, "H": {}}, "Pd1Ag5": {"O": {}, "OH": {}, "H": {}},
+                 "Ag6": {"O": {}, "OH": {}, "H": {}}}
+    for datum in data:
+        cur = datum.split()
+        dist = float(cur[1])
+        e_ads = float(cur[2]) * 27.2114079527  # Ha to eV conversion
+        temp = cur[0].split("_")
+        np = temp[0]
+        ads = temp[1]
+        location = cur[0].replace(f'{np}_', "").replace(f'{ads}_', "")
+
+        data_dict[np][ads][location] = [dist, e_ads]
+
+    color_dict = {"Pd6": 'red', "Pd5Ag1": 'orange',
+                  "Pd4Ag2": 'yellow', "Pd3Ag3": 'green',
+                  "Pd2Ag4": 'blue', "Pd1Ag5": 'purple',
+                  "Ag6": 'pink'}
+    # plot each type of adsorbate
+    np_types = ["Pd6", "Pd5Ag1", "Pd4Ag2", "Pd3Ag3", "Pd2Ag4", "Pd1Ag5", "Ag6"]
+    order = ["100_top_b1", "110_top_b1", "110_top_b2", "110_top_b3",
+             "110_bridge_b1", "110_bridge_b2", "110_bridge_b2", "100_hollow_b6", "111_hollow_b9"]
+    for ads in ["H", "OH", "O"]:
+        for np_type in np_types:
+            if plot_method == "matplotlib":
+                plt.plot(0, 0, color=color_dict[np_type], label=np_type)
+
+            dist_data = {'top': [], 'bridge': [], 'hollow': []}
+            energy_data = {'top': [], 'bridge': [], 'hollow': []}
+            for location in order:
+                loc = location.split("_")[1]
+                dist_data[loc].append(data_dict[np_type][ads][location][0])
+                energy_data[loc].append(data_dict[np_type][ads][location][1])
+
+            if plot_method == "matplotlib":
+                plt.scatter(dist_data['bridge'], energy_data['bridge'], s=25, facecolors=color_dict[np_type],
+                            marker='o',
+                            edgecolors='black', linewidths=1.5)
+                plt.scatter(dist_data['hollow'], energy_data['hollow'], s=25, facecolors=color_dict[np_type],
+                            marker='D',
+                            edgecolors='black', linewidths=1.5)
+                plt.scatter(dist_data['top'], energy_data['top'], s=25, facecolors=color_dict[np_type], marker='s',
+                            edgecolors='black', linewidths=1.5)
+            if plot_method == "plotly":
+                fig = px.scatter(x=dist_data['top'], y=energy_data['top'])
+                # not finished
+
+        plt.scatter(0, 0, marker='o', color='k', label='Bridge')
+        plt.scatter(0, 0, marker='D', color='k', label='Hollow')
+        plt.scatter(0, 0, marker='s', color='k', label='On-top')
+        plt.xlabel("Nearest Neighbor Distance (Å)")
+        plt.ylabel("Adsorption Energy (eV)")
+        # plt.legend(framealpha=1)
+        plt.title(f'{ads} adsorption')
+        if ads == "H":
+            plt.xlim([1.5, 2.15])
+            plt.ylim([-2.95, -1.4])
+        elif ads == "OH":
+            plt.xlim([1.91, 2.45])
+            plt.ylim([-4, -2.6])
+        elif ads == "O":
+            plt.xlim([1.75, 2.3])
+            plt.ylim([-6.5, -3.5])
+
+        plt.tight_layout()
+        plt.show()
+
+
+# PdAg_data()
+plot_PdAg(plot_method="matplotlib") # plotly implementation not complete
+
 # generate nearest neighbor distances
-# gen_nn_dists(base_path="/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_08_18/", coord_folder="Pd6")
+# gen_nn_dists(base_path="/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_09_16/", coord_folder="Pd6")
 
 # plot two axes of nearest neighbor distance and adsorption energy
-adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/plotting/data.in", NP_name="Ag6")
-adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_08_18/plotting/data.in", NP_name="Pd6")
-
-
-
-
-
+# adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_06_03/coord_next/plotting/data.in", NP_name="Ag6")
+# adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_09_16/plotting/data.in", NP_name="Pd6")
 
 # turn conquest input geometry into aims geometry.in format
-path = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_08_18/Pd6_coords"
-geom_file = f'{path}/coord_PdNP_H2_111_hollow_c9_opt.in'
-write_file = f'{path}/coord_PdNP_H2_111_hollow_c9_opt.aims.in'
-# cq_to_aims(geom_file, write_file, frac="False")
-# bohr_to_a(write_file, frac=True)
+path = "/Users/jackmorgenstein/Documents/NIMS/nano/5L"
+geom_file = f'{path}/Ag5.in'
+write_file = f'{path}/Ag5.aims.in'
+# cq_to_aims(geom_file, write_file, frac=False)
+# bohr_to_a(write_file, frac=False, convert=False, move=True)
 
 # for filename in os.listdir(path):
 #     for filename in ["6L"]:
