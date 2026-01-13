@@ -15,10 +15,19 @@ import Methods2024 as M24
 import scipy
 import math
 
-base_path = "../../FHI-aims/Double_Perovskites/old/AgBi-Perovskites/ideal/out/final_OOP/test_ref_frames/"
-# pt.mulliken_plot(f'{base_path}base/settings.in', save=False)
-# pt.mulliken_plot(f'{base_path}inverted/settings.in', save=False)
+base_path_1 = "../../FHI-aims/Double_Perovskites/New_Structures/Delta_Beta/AgBi/bands/180/10.0/"
+base_path_2 = "../../FHI-aims/Double_Perovskites/New_Structures/Delta_Beta/AgBi/bands/180/10.0_hse_test/"
+systems = [base_path_1, base_path_2]
 
+base = "/Users/jackmorgenstein/FHI-aims/Double_Perovskites/New_Structures/Delta_Beta/AgBi/test_ref_frame/OOP/"
+systems = ["inverted_2/"]
+for system in systems:
+    continue
+    folder = base + system
+    pt.mulliken_plot(f'{folder}settings.in', save=False)
+    for i in range(1, 6):
+        print(bbo.band_info(f'{folder}', f'band100{i}.out', band_gap=False, spin_splitting=True, verbose=False))
+    print()
 
 if False:
     def rotate_points(points, axis, angle):
@@ -95,10 +104,13 @@ base_path = "../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs
 systems = ["voxkif/", "selwoz/", "selwuf/", "ijayuq/"]
 for system in systems:
     continue
-    print(system)
-    # print(bbo.band_info(f'{base_path}{system}', "band1001.out", band_gap=True, spin_splitting=True, verbose=False))
-    # pt.mulliken_plot(f'{base_path}{system}settings_zoomed.in', save=False)
-    bg.random_angle_info(f'{base_path}{system}/geometry.in', method="flat", bonds=[])
+    # for i in range(1, 6):
+    #     print(f'{system} {i}')
+    #     print(bbo.band_info(f'{base_path}{system}', f'band100{i}.out', band_gap=False, spin_splitting=True, verbose=False))
+    pt.mulliken_plot(f'{base_path}{system}settings.in', save=False)
+    # bg.random_angle_info(f'{base_path}{system}/geometry.in', method="flat", bonds=[])
+
+raise ValueError("ve")
 
 
 def plot_data(cur_x, cur_y, x_label):
@@ -110,10 +122,11 @@ def plot_data(cur_x, cur_y, x_label):
     ss_tot = np.sum((cur_y - np.mean(cur_y)) ** 2)
     r_squared = 1 - (ss_res / ss_tot)
     plt.scatter(cur_x, cur_y, color='r')
-    plt.plot(cur_x, y_pred, 'k', label=f'$R$ = {math.sqrt(r_squared):.3f}')
+    plt.plot(cur_x, y_pred, 'k', label=f"$R^2$ = {r_squared:.3f}")
     plt.xlabel(x_label)
-    plt.ylabel(r'$\Delta E\pm$')
+    plt.ylabel(r'$\Delta E^\pm$')
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
@@ -132,16 +145,16 @@ db_new = []
 de = []
 
 # VOXKIF
-path = "../../FHI-aims/Double_Perovskites/Real_Structures/input_geos/VOXKIF/geo_plus.in"
-a = ['1', '5', '2']
-b = ['2', '6', '3']
-c = ['3', '7', '4']
-d = ['4', '8', '1']
-de.append(find_max_delta_e("../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/bands/voxkif/", 4))
-db_old.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="old"))
-db_in.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="in"))
-db_out.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="out"))
-db_new.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="new"))
+# path = "../../FHI-aims/Double_Perovskites/Real_Structures/input_geos/VOXKIF/geo_plus.in"
+# a = ['1', '5', '2']
+# b = ['2', '6', '3']
+# c = ['3', '7', '4']
+# d = ['4', '8', '1']
+# de.append(find_max_delta_e("../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/bands/voxkif/", 4))
+# db_old.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="old"))
+# db_in.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="in"))
+# db_out.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="out"))
+# db_new.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], method="new"))
 
 # SELWOZ
 path = "../../FHI-aims/Double_Perovskites/Real_Structures/input_geos/SELWOZ/geo_plus.in"
@@ -180,15 +193,19 @@ db_in.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], shiftmap=shiftma
 db_out.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], shiftmap=shiftmap, method="out"))
 db_new.append(bg.new_robust_delta_beta(path, bonds=[a, b, c, d], shiftmap=shiftmap, method="new"))
 
-if False:
-    plot_data(np.array(db_old), np.array(de), r'$\Delta\beta_\text{old}$')
-    plot_data(np.array(db_in), np.array(de), r'$\Delta\beta_\text{in}$')
-    plot_data(np.array(db_out), np.array(de), r'$\Delta\beta_\text{out}$')
-    plot_data(np.array([(elem[0] + elem[1]) / 2 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
-    plot_data(np.array([(2 * elem[0] + elem[1]) / 3 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
-    plot_data(np.array([(3 * elem[0] + elem[1]) / 4 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
-    plot_data(np.array([(4 * elem[0] + elem[1]) / 5 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
-    plot_data(np.array([(5 * elem[0] + elem[1]) / 6 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
+# note IJAYUQ actually has 2 inequivalent cells, I still need to fix this as of 01/09/2026
+# also I'm pretty sure my db_out calculations are wrong, need to do both db_out and then avg/max
+if True:
+    plot_data(np.array(db_old), np.array(de), r'max($\Delta\beta_\text{old}$)')
+    # plot_data(np.array(db_in), np.array(de), r'$\Delta\beta_\text{in}$')
+    # plot_data(np.array(db_out), np.array(de), r'$\Delta\beta_\text{out}$')
+    plot_data(np.array([(elem[0] + elem[1]) / 2 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{avg}$')
+    # plot_data(np.array([(2 * elem[0] + elem[1]) / 3 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
+    # plot_data(np.array([(3 * elem[0] + elem[1]) / 4 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
+    # plot_data(np.array([(4 * elem[0] + elem[1]) / 5 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
+    # plot_data(np.array([(5 * elem[0] + elem[1]) / 6 for elem in db_new]), np.array(de), r'$\Delta\beta_\text{new}$')
+
+raise ValueError("ve")
 
 # IDK:
 a = [19, 10, 2]
@@ -197,7 +214,6 @@ c = [20, 4, 214]
 d = [214, 6, 19]
 shiftmap = {4: '-1,0,-1', 6: '-1,0,-1', 20: '-1,0,-1'}
 # bg.new_robust_delta_beta(path, bonds=[a, b, c, d], shiftmap=shiftmap)
-
 
 # RECHECK WHAT DELTA BETA OUT IS BEING COMPUTED IN BasicGeo.py
 

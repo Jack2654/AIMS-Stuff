@@ -73,6 +73,9 @@ def plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_sh
     plt.clf()
 
 
+# plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_shift, cur_state + ".png", title=title, save=False)
+
+
 def extra_states(full_file, write_file, state):
     res = []
     with open(full_file, "r") as f:
@@ -84,44 +87,61 @@ def extra_states(full_file, write_file, state):
         f.writelines(res)
 
 
+def plot_all(x_loc, y_loc, x_spin, y_spin, z_spin):
+    nrows, ncols = 2, 4
+    fig, axes = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(16, 8))
+    axes = axes.flatten()
+    norm = colors.Normalize(vmin=min([min(sv) for sv in z_spin]), vmax=max([max(sv) for sv in z_spin]))
+
+    for ax, x, y, a, b, c in zip(axes, x_loc, y_loc, x_spin, y_spin, z_spin):
+        for i in range(len(x)):
+            color = plt.cm.coolwarm(norm(c[i]))
+            ax.quiver(x[i], y[i], a[i], b[i], color=color, zorder=1)
+        ax.set_xlabel(r"$k_x$")
+        ax.axvline(x=0, linestyle="--", color="k", linewidth=0.8)
+        ax.axhline(y=0, linestyle="--", color="k", linewidth=0.8)
+    axes[0].set_ylabel(r"$k_y$")
+    axes[4].set_ylabel(r"$k_y$")
+    titles = [r"(OCA)$_4$AgBiBr$_8$", r"(R-3AP)$_4$AgBiBr$_8$", r"(S-3AP)$_4$AgBiBr$_8$",
+              r"(R-$\beta$-MPA)$_4$AgBiI$_8$"]
+
+    for col, title in enumerate(titles):
+        axes[col].set_title(title, pad=10)
+
+    for title, y in zip(["Lower CBM", "Upper CBM"], [0.28, 0.68]):
+        fig.text(0.02, y, title, va="center", ha="center", fontsize=12, rotation="vertical")
+
+    for i, ax in enumerate(axes):
+        col = i % ncols
+        if col != 0:
+            ax.tick_params(left=False, labelleft=False)
+    fig.subplots_adjust(left=0.08, right=0.88, bottom=0.08, top=0.88, wspace=0.0, hspace=0.0)
+    cax = fig.add_axes([0.90, 0.08, 0.02, 0.80])
+    sc = plt.cm.ScalarMappable(cmap=plt.cm.coolwarm, norm=norm)
+    sc.set_array([])
+    cbar = fig.colorbar(sc, cax=cax)
+    cbar.set_label(r"$\sigma_z$")
+    plt.show()
+
+
 base = "../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/spin_textures/"
-# structure = base + "selwoz/"
-# states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
+structures = ["voxkif", "selwoz", "selwuf", "ijayuq"]
+vbms = [[709, 710], [749, 750], [749, 750], [1707, 1708]]
+cbms = [[712, 711], [752, 751], [752, 751], [1710, 1709]]
+x_loc, y_loc, x_spin, y_spin, z_spin = [], [], [], [], []
+for i in range(2):
+    for j in range(4):
+        cur_base = base + structures[j] + "/"
+        state = cbms[j][i]
+        cur_state = cur_base + "state" + str(state)
+        output = cur_state + ".dat"
+        extra_states(cur_base + "spin_texture.dat", output, state)
 
-# structure = base + "selwuf/"
-# states = [749, 750, 751, 752]  # VBM lower and upper, CBM lower and upper
+        k_points_1_read, energy_1_read, spins_1_read = read_state(output)
+        x_loc.append(k_points_1_read[:, 0])
+        y_loc.append(k_points_1_read[:, 1])
+        x_spin.append(spins_1_read.T[:, 0])
+        y_spin.append(spins_1_read.T[:, 1])
+        z_spin.append(spins_1_read.T[:, 2])
 
-# structure = base + "ijayuq/" # limits 0.40, 0.225
-# states = [1707, 1708, 1709, 1710]  # VBM lower and upper, CBM lower and upper
-
-structure = base + "voxkif/"
-states = [709, 710, 711, 712]  # VBM lower and upper, CBM lower and upper
-
-for state in states:
-    # continue
-    cur_state = structure + "state" + str(state)
-    output = cur_state + ".dat"
-    extra_states(structure + "spin_texture.dat", output, state)
-
-    k_points_1_read, energy_1_read, spins_1_read = read_state(output)
-    energy_shift = min(energy_1_read)
-    title = "VOXKIF "
-    if state % 2 == 0:
-        title += "Upper "
-    else:
-        title += "Lower "
-    if state < sum(states)/4:
-        title += "VBM "
-    else:
-        title += "CBM "
-    title += f'(%s)' % state
-
-    plot_2D_spin_texture(k_points_1_read, energy_1_read, spins_1_read, energy_shift, cur_state + ".png", title=title,
-                         save=False)
-
-# base = "../../FHI-aims/Double_Perovskites/Real_Structures/real-systems/"
-# options = ['experimental-bs-selwoz/', 'experimental-bs-selwuf/', 'ijayuq/']
-# for opt in options:
-#     print(opt)
-#     for i in range(1, 2):
-#         print(bbo.band_info(base + opt, f'band100{i}.out', band_gap=True, spin_splitting=True, verbose=False))
+plot_all(x_loc, y_loc, x_spin, y_spin, z_spin)

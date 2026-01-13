@@ -1109,6 +1109,8 @@ def new_robust_delta_beta(readfile, bonds, shiftmap=None, method="old"):
     db_out_1 = np.abs(beta_out[0] + beta_out[1] - beta_out[2] - beta_out[3]) / 2
     db_out_2 = np.abs(beta_out[0] + beta_out[3] - beta_out[2] - beta_out[1]) / 2
     if method == "old":
+        print(db_1, db_2)
+        # return (db_1 + db_2) / 2
         return max(db_1, db_2)
     if method == "in":
         return max(db_in_1, db_in_2)
@@ -1122,7 +1124,10 @@ def new_robust_delta_beta(readfile, bonds, shiftmap=None, method="old"):
             print(beta_out)
             print((max(db_in_1, db_in_2) + db_out) / 2)
             print()
-        return max(db_in_1, db_in_2), db_out
+        # return max(db_in_1, db_in_2), db_out
+        return (db_in_1 + db_in_2)/2, db_out
+
+
         # return (4 * max(db_in_1, db_in_2) + db_out) / 5
         # return (max(db_in_1, db_in_2) + max(db_out_1, db_out_2)) / 2
 
