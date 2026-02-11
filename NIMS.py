@@ -384,7 +384,8 @@ def site_comparison():
 # adsorbate_plot("../../Documents/NIMS/Adsorbate_Results/Info_09_16/plotting/data.in", NP_name="Pd6")
 
 # turn conquest input geometry into aims geometry.in format
-geom_file = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_09_16/coord_next/Ag6/coord_AgNP_H_100_bridge_b9_opt.in"
+# geom_file = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info_09_16/coord_next/Ag6/coord_AgNP_H_100_bridge_b9_opt.in"
+geom_file = "/Users/jackmorgenstein/Documents/NIMS/Adsorbate_Results/Info26_01_08/coord_next/D2/Pd5Ag1/coord_PdAg_OH_111_hollow_b9_d2_opt.in"
 write_file = geom_file + ".aims.in"
 cq_to_aims(geom_file, write_file, frac=True)
 bohr_to_a(write_file, frac=True, convert=False, move=True)

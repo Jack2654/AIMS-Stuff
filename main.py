@@ -100,14 +100,20 @@ if False:
     for atom in rotated:
         print(f'atom {atom[0] - 6 + 3.445 - 2.654 + 10} {atom[1] - 0.919 + 0.885 + 10} {atom[2] + 0.04} I')
 
-base_path = "../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/bands/"
-systems = ["voxkif/", "selwoz/", "selwuf/", "ijayuq/"]
+# base_path = "../../FHI-aims/Double_Perovskites/Real_Structures/calcs_and_outputs/bands/"
+# systems = ["voxkif/", "selwoz/", "selwuf/", "ijayuq/"]
+
+# base_path = "../../FHI-aims/Double_Perovskites/New_Structures/Ref_frame_test/OOP/"
+# systems = ["base_bands/", "0_db_out/", "40_db_out/"]
+
+base_path = "../../FHI-aims/Double_Perovskites/New_Structures/Ref_frame_test/beta_avg_test/"
+systems = ["base/", "155/", "165/"]
+
 for system in systems:
-    continue
-    # for i in range(1, 6):
-    #     print(f'{system} {i}')
-    #     print(bbo.band_info(f'{base_path}{system}', f'band100{i}.out', band_gap=False, spin_splitting=True, verbose=False))
-    pt.mulliken_plot(f'{base_path}{system}settings.in', save=False)
+    for i in range(1, 6):
+        print(f'{system} {i}')
+        print(bbo.band_info(f'{base_path}{system}', f'band100{i}.out', band_gap=False, spin_splitting=True, verbose=False))
+    # pt.mulliken_plot(f'{base_path}{system}settings.in', save=False)
     # bg.random_angle_info(f'{base_path}{system}/geometry.in', method="flat", bonds=[])
 
 raise ValueError("ve")

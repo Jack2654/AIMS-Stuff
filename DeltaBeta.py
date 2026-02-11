@@ -29,12 +29,12 @@ def lattice_vectors(file):
 
 
 # computes angle in degrees, assumes np.array() inputs
-def angle(pt1, center, pt2):
+def angle(pt1, center, pt2, units="degrees"):
     ba = pt1 - center
     bc = pt2 - center
     cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
     result = np.arccos(cosine_angle)
-    return np.degrees(result)
+    return np.degrees(result) if units == "degrees" else result
 
 
 # returns shifted set of separate bonds as defined by input parameters
@@ -201,7 +201,7 @@ def new_delta_beta(readfile, atom_idxs, shiftmap):
     beta_ins = compute_beta_ins(bonds)
     beta_outs = compute_beta_outs(bonds)
 
-    print(betas)
+    # print(betas)
 
     delta_betas = compute_delta_betas(betas)
     delta_beta_ins = compute_delta_betas(beta_ins)
@@ -319,30 +319,22 @@ def set_Pb_data(structures):
     the_shifts[structures[1]] = [None, None, None, [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 1, 0], [0, 1, 0]]
     the_idxs[structures[2]] = [2, 6, 1, 5, 2, 9, 1, 10]
     the_shifts[structures[2]] = [None, None, None, [0, 0, 1], [0, 0, 1], [0, -1, 1], [0, -1, 0], None]
-
     the_idxs[structures[3]] = [1, 6, 2, 3, 1, 4, 2, 5]
     the_shifts[structures[3]] = [None, None, None, [0, 0, 1], [0, 0, 1], None, [0, -1, 0], [0, -1, 0]]
-
     the_idxs[structures[4]] = [1, 5, 2, 6, 1, 18, 2, 17]
     the_shifts[structures[4]] = [None, None, None, None, [0, 0, 1], [0, 1, 1], [0, 1, 0], None]
-
     the_idxs[structures[5]] = [4, 19, 3, 15, 2, 14, 3, 20]
     the_shifts[structures[5]] = [None, None, None, None, None, None, [0, 0, 1], None]
-
-    the_idxs[structures[6]] = [4, 7, 3, 11, 4, 10, 3, 6]
-    the_shifts[structures[6]] = [None, None, None, [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 0, -1], None]
-
+    the_idxs[structures[6]] = [3, 7, 2, 6, 3, 10, 2, 11]
+    the_shifts[structures[6]] = [None, None, None, [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, -1, 0], None]
     the_idxs[structures[7]] = [2, 10, 4, 12, 2, 8, 4, 6]
     the_shifts[structures[7]] = [None, None, None, None, [0, 0, 1], None, [0, 1, 0], [0, 1, 0]]
-
-    the_idxs[structures[8]] = [1, 6, 2, 5, 1, 3, 2, 4]
-    the_shifts[structures[8]] = [None, None, None, None, [0, 0, 1], [0, 1, 0], [0, 1, 0], [0, 1, 0]]
-
+    the_idxs[structures[8]] = [2, 8, 1, 5, 2, 3, 1, 6]
+    the_shifts[structures[8]] = [[-1, 0, 0], None, None, [-1, 0, -1], [-1, 0, -1], [-1, 0, -1], [0, -1, 0], None]
     the_idxs[structures[9]] = [1, 5, 3, 15, 1, 13, 3, 7]
     the_shifts[structures[9]] = [None, None, None, [0, 1, 0], [0, 1, 0], None, [0, 0, -1], None]
-
-    the_idxs[structures[10]] = [3, 8, 4, 7, 3, 19, 4, 20]
-    the_shifts[structures[10]] = [None, None, None, None, [0, 0, 1], [0, 1, 0], [0, 1, 0], None]
+    the_idxs[structures[10]] = [3, 15, 4, 17, 3, 140, 4, 14]
+    the_shifts[structures[10]] = [None, None, None, [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 0, -1], None]
 
     return exp_idxs, exp_shifts, the_idxs, the_shifts
 
@@ -363,13 +355,10 @@ def Pb_plots():
         the_file = base_path + structure + "_the.in"
 
         db_exp.append(new_delta_beta(exp_file, exp_idxs[structure], exp_shifts[structure]))
+        db_the.append(new_delta_beta(the_file, the_idxs[structure], the_shifts[structure]))
 
-        # print(the_file)
-        # db_the.append(new_delta_beta(the_file, the_idxs[structure], the_shifts[structure]))
-        # print(db_the[-1])
-
-    db_res = db_exp  # + db_the
-    E_spin_splitting = E_exp  # + E_the
+    db_res = db_exp + db_the
+    E_spin_splitting = E_exp + E_the
 
     db_old_max = [max(structure[0]) for structure in db_res]
     db_old_avg = [sum(structure[0]) / len(structure[0]) for structure in db_res]
@@ -378,24 +367,78 @@ def Pb_plots():
     db_out_max = [max(structure[2]) for structure in db_res]
     db_out_avg = [sum(structure[2]) / len(structure[2]) for structure in db_res]
 
-    db_new_max = [(db_in_max[i] + db_out_max[i]) / 2 for i in range(len(structures))]
-    db_new_avg = [(db_in_avg[i] + db_out_avg[i]) / 2 for i in range(len(structures))]
-    db_new_full_max = [max([db_in_max[i], db_out_max[i]]) for i in range(len(structures))]
+    db_new_max = [(db_in_max[i] + db_out_max[i]) / 2 for i in range(2 * len(structures))]
+    db_new_avg = [(db_in_avg[i] + db_out_avg[i]) / 2 for i in range(2 * len(structures))]
+    db_new_full_max = [max([db_in_max[i], db_out_max[i]]) for i in range(2 * len(structures))]
 
     # correlations are experimental, theoretical, combined
 
-    plot_data(db_old_max, E_spin_splitting, "DB old max")        # 0.710, 0.
-    plot_data(db_old_avg, E_spin_splitting, "DB old avg")        # 0.683, 0.
+    plot_data(db_old_max, E_spin_splitting, "DB old max")  # 0.710, 0.812, 0.769
+    plot_data(db_old_avg, E_spin_splitting, "DB old avg")  # 0.683, 0.812, 0.757
 
-    plot_data(db_in_max, E_spin_splitting, "DB in max")          # 0.829, 0.
-    plot_data(db_in_avg, E_spin_splitting, "DB in avg")          # 0.814, 0.
+    plot_data(db_in_max, E_spin_splitting, "DB in max")  # 0.829, 0.935, 0.889
+    plot_data(db_in_avg, E_spin_splitting, "DB in avg")  # 0.814, 0.933, 0.882
 
-    plot_data(db_out_max, E_spin_splitting, "DB out max")        # 0.076, 0.
-    plot_data(db_out_avg, E_spin_splitting, "DB out avg")        # 0.071, 0.
+    plot_data(db_out_max, E_spin_splitting, "DB out max")  # 0.076, 0.088, 0.076
+    plot_data(db_out_avg, E_spin_splitting, "DB out avg")  # 0.071, 0.092, 0.076
 
-    plot_data(db_new_max, E_spin_splitting, "DB new max")        # 0.606, 0.
-    plot_data(db_new_avg, E_spin_splitting, "DB new avg")        # 0.581, 0.
-    plot_data(db_new_full_max, E_spin_splitting, "DB full max")  # 0.834, 0.
+    plot_data(db_new_max, E_spin_splitting, "DB new max")  # 0.606, 0.713, 0.650
+    plot_data(db_new_avg, E_spin_splitting, "DB new avg")  # 0.581, 0.715, 0.644
+    plot_data(db_new_full_max, E_spin_splitting, "DB full max")  # 0.834, 0.944, 0.891
+
+
+def Random_plots():
+    # setup experimental data
+    db_res = []
+    descr_res = []
+    E_spin_splitting = []
+    folders = ["05", "10", "15", "20"]
+    structures = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
+    model_idxs = [1, 7, 4, 10, 1, 9, 4, 8]
+    model_shifts = [None, None, None, None, [1, 0, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0]]
+    new_model_idxs = [1, 7, 9, 8, 10]
+    new_model_shifts = [None, None, [-1, -1, 0], [0, -1, 0], [-1, 0, 0]]
+    base_path = "../../FHI-aims/Double_Perovskites/New_Structures/Random/AgBi_static_Cs"
+
+    for folder in folders:
+        for structure in structures:
+            cur_dir = f'{base_path}/{folder}/{structure}/'
+            splits = [band_info(cur_dir, f'band100{i}.out', band_gap=False, spin_splitting=True, verbose=False)
+                      for i in range(1, 5)]
+            E_spin_splitting.append(max([float(x) for x in splits]))
+
+            geo_file = f'{cur_dir}geometry.in'
+            db_res.append(new_delta_beta(geo_file, model_idxs, model_shifts))
+            descr_res.append(new_descriptor(geo_file, new_model_idxs, new_model_shifts))
+
+    db_old_max = [max(structure[0]) for structure in db_res]
+    db_old_avg = [sum(structure[0]) / len(structure[0]) for structure in db_res]
+    db_in_max = [max(structure[1]) for structure in db_res]
+    db_in_avg = [sum(structure[1]) / len(structure[1]) for structure in db_res]
+    db_out_max = [max(structure[2]) for structure in db_res]
+    db_out_avg = [sum(structure[2]) / len(structure[2]) for structure in db_res]
+
+    db_new_max = [(db_in_max[i] + db_out_max[i]) / 2 for i in range(len(db_in_max))]
+    db_new_avg = [(db_in_avg[i] + db_out_avg[i]) / 2 for i in range(len(db_in_max))]
+    db_new_full_max = [max([db_in_max[i], db_out_max[i]]) for i in range(len(db_in_max))]
+
+    # correlations are all folders
+    plot_data(db_old_max, E_spin_splitting, "DB old max")  # 0.059
+    plot_data(db_old_avg, E_spin_splitting, "DB old avg")  # 0.064
+
+    plot_data(db_in_max, E_spin_splitting, "DB in max")  # 0.674
+    plot_data(db_in_avg, E_spin_splitting, "DB in avg")  # 0.661
+
+    plot_data(db_out_max, E_spin_splitting, "DB out max")  # 0.206
+    plot_data(db_out_avg, E_spin_splitting, "DB out avg")  # 0.278
+
+    plot_data(db_new_max, E_spin_splitting, "DB new max")  # 0.575
+    plot_data(db_new_avg, E_spin_splitting, "DB new avg")  # 0.624
+    plot_data(db_new_full_max, E_spin_splitting, "DB full max")  # 0.658
+
+    plot_data(descr_res, E_spin_splitting, "new descriptor")  # 0.587
+
+    plot_data(np.array([descr_res[i] + db_new_full_max[i] for i in range(len(descr_res))]), E_spin_splitting, "combo")
 
 
 def set_AgBi_new():
@@ -411,6 +454,59 @@ def set_AgBi_new():
     all_idxs[structures[3]] = [2, 12, 6, 10, 4]
     all_shifts[structures[3]] = [None, None, [0, 0, -1], None, [0, 0, -1]]
     return all_idxs, all_shifts
+
+
+def set_Pb_new():
+    exp_idxs, exp_shifts, the_idxs, the_shifts = {}, {}, {}, {}
+    structures = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11"]
+    # order is center (Pb) then endpoints of IP bond 1, then endpoints of IP bond 2
+    exp_idxs[structures[0]] = [3, 7, 9, 11, 5]
+    exp_shifts[structures[0]] = [None, None, None, None, [0, -1, 0]]
+    exp_idxs[structures[1]] = [2, 8, 9, 7, 10]
+    exp_shifts[structures[1]] = [None, None, None, None, [0, 1, 0]]
+    exp_idxs[structures[2]] = [2, 10, 5, 6, 9]
+    exp_shifts[structures[2]] = [None, None, None, None, [0, -1, 0]]
+    exp_idxs[structures[3]] = [1, 6, 4, 3, 5]
+    exp_shifts[structures[3]] = [None, None, [0, 0, -1], None, [0, -1, 0]]
+    exp_idxs[structures[4]] = [2, 6, 17, 5, 18]
+    exp_shifts[structures[4]] = [None, None, [0, -1, 0], None, [0, 0, 1]]
+    exp_idxs[structures[5]] = [4, 16, 19, 13, 20]
+    exp_shifts[structures[5]] = [None, None, None, None, None]
+    exp_idxs[structures[6]] = [4, 10, 7, 6, 11]
+    exp_shifts[structures[6]] = [None, None, None, None, None]
+    exp_idxs[structures[7]] = [3, 5, 11, 7, 9]
+    exp_shifts[structures[7]] = [None, None, None, None, [0, -1, 0]]
+    exp_idxs[structures[8]] = [2, 6, 3, 4, 5]
+    exp_shifts[structures[8]] = [None, None, None, None, None]
+    exp_idxs[structures[9]] = [1, 7, 15, 5, 13]
+    exp_shifts[structures[9]] = [None, None, None, None, [0, -1, 0]]
+    exp_idxs[structures[10]] = [4, 19, 8, 7, 20]
+    exp_shifts[structures[10]] = [None, None, None, None, [0, -1, 0]]
+
+    the_idxs[structures[0]] = [3, 7, 9, 11, 5]
+    the_shifts[structures[0]] = [None, None, None, None, [0, -1, 0]]
+    the_idxs[structures[1]] = [2, 9, 8, 7, 10]
+    the_shifts[structures[1]] = [None, None, None, None, [0, 1, 0]]
+    the_idxs[structures[2]] = [2, 10, 5, 6, 9]
+    the_shifts[structures[2]] = [None, None, None, None, [0, -1, 0]]
+    the_idxs[structures[3]] = [1, 6, 4, 3, 5]
+    the_shifts[structures[3]] = [None, None, [0, 0, -1], None, [0, -1, 0]]
+    the_idxs[structures[4]] = [2, 5, 18, 6, 17]
+    the_shifts[structures[4]] = [None, None, [0, 0, 1], None, [0, -1, 0]]
+    the_idxs[structures[5]] = [4, 16, 19, 13, 20]
+    the_shifts[structures[5]] = [None, None, None, None, None]
+    the_idxs[structures[6]] = [3, 10, 7, 6, 11]
+    the_shifts[structures[6]] = [None, None, None, None, None]
+    the_idxs[structures[7]] = [3, 5, 11, 7, 9]
+    the_shifts[structures[7]] = [None, None, None, None, [0, -1, 0]]
+    the_idxs[structures[8]] = [2, 3, 8, 5, 6]
+    the_shifts[structures[8]] = [None, None, [1, 0, 0], None, [1, 0, 0]]
+    the_idxs[structures[9]] = [1, 15, 7, 5, 13]
+    the_shifts[structures[9]] = [None, None, None, None, [0, -1, 0]]
+    the_idxs[structures[10]] = [3, 17, 14, 15, 140]
+    the_shifts[structures[10]] = [None, None, None, None, None]
+
+    return exp_idxs, exp_shifts, the_idxs, the_shifts
 
 
 def AgBi_new_descriptor():
@@ -431,8 +527,71 @@ def AgBi_new_descriptor():
     plot_data(new_descr, E_spin_splitting, "new descriptor")  # 0.988!!!!!!!!!!!!!!
 
 
+def Pb_new_descriptor():
+    # setup data
+    exp_idxs, exp_shifts, the_idxs, the_shifts = set_Pb_new()
+    structures = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11"]
+    E_exp = [0.044, 0.108, 0.137, 0.000, 0.082, 0.140, 0.033, 0.009, 0.012, 0.000, 0.092]
+    E_the = [0.062, 0.185, 0.060, 0.000, 0.075, 0.142, 0.030, 0.002, 0.000, 0.003, 0.110]
+    base_path = "../../FHI-aims/Double_Perovskites/New_Structures/Experimental/"
+    descr_exp = []
+    descr_the = []
+    for structure in structures:
+        exp_file = base_path + structure + "_exp.in"
+        the_file = base_path + structure + "_the.in"
+
+        descr_exp.append(new_descriptor(exp_file, exp_idxs[structure], exp_shifts[structure]))
+        descr_the.append(new_descriptor(the_file, the_idxs[structure], the_shifts[structure]))
+
+    descr_res = descr_exp + descr_the
+    E_spin_splitting = E_exp + E_the
+
+    plot_data(descr_res, E_spin_splitting, "new descriptor")  # 0.670, 0.632, 0.611
+
+
+def rot_new(atom_pos):
+    # recenter around metal site (atom 0)
+    center = np.array(atom_pos[0])
+    shifted_pos = [np.array(atom) - center for atom in atom_pos]
+
+    # rotate for atoms 1/2 to be near y-axis
+    rot_axis = np.array([0, 0, 1])
+    flat1 = np.array([shifted_pos[1][0], shifted_pos[1][1], 0])
+    flat2 = np.array([shifted_pos[2][0], shifted_pos[2][1], 0])
+    angle1 = angle(flat1, shifted_pos[0], np.array([0, -1, 0]), units='rad')
+    angle1 *= -1 if shifted_pos[1][0] > 0 else 1
+    angle2 = angle(flat2, shifted_pos[0], np.array([0, 1, 0]), units='rad')
+    angle2 *= -1 if shifted_pos[2][0] < 0 else 1
+    rotation_1 = R.from_rotvec((angle1 + angle2) * 0.5 * rot_axis)
+    rotated_pos = [rotation_1.apply(atom) for atom in shifted_pos]
+
+    # rotate to minimize height of atoms 1/2
+    rot_axis = np.array([1, 0, 0])
+    angle1 = angle(rotated_pos[1], shifted_pos[0], np.array([0, -1, 0]), units='rad')
+    angle1 *= -1 if rotated_pos[1][2] < 0 else 1
+    angle2 = angle(rotated_pos[2], shifted_pos[0], np.array([0, 1, 0]), units='rad')
+    angle2 *= -1 if rotated_pos[2][2] > 0 else 1
+    rotation_2 = R.from_rotvec((angle1 + angle2) * 0.5 * rot_axis)
+    rotated_pos = [rotation_2.apply(atom) for atom in rotated_pos]
+
+    # rotate to minimize height of atoms 3/4
+    rot_axis = np.array([0, -1, 0])
+    angle1 = angle(rotated_pos[3], shifted_pos[0], np.array([-1, 0, 0]), units='rad')
+    angle1 *= -1 if rotated_pos[3][2] < 0 else 1
+    angle2 = angle(rotated_pos[4], shifted_pos[0], np.array([1, 0, 0]), units='rad')
+    angle2 *= -1 if rotated_pos[4][2] > 0 else 1
+    rotation_3 = R.from_rotvec((angle1 + angle2) * 0.5 * rot_axis)
+    rotated_pos = [rotation_3.apply(atom) for atom in rotated_pos]
+
+    return rotated_pos
+
+
+# this descriptor takes the two in-plane H-M-H angles and computes
+# sum_i (alpha_i - 180)**2
 def new_descriptor(readfile, atom_idxs, shiftmap):
     atom_pos = pull_data(readfile, atom_idxs, shiftmap)
+    atom_pos = rot_new(atom_pos)
+    atom_pos = [[atom[0], atom[1], 0] for atom in atom_pos]
     bond1 = [np.array(atom_pos[1]), np.array(atom_pos[0]), np.array(atom_pos[2])]
     bond2 = [np.array(atom_pos[3]), np.array(atom_pos[0]), np.array(atom_pos[4])]
     angle1 = angle(*bond1)
@@ -444,7 +603,24 @@ def new_descriptor(readfile, atom_idxs, shiftmap):
     return descriptor
 
 
+def new_descriptor_v2(readfile, atom_idxs, shiftmap):
+    atom_pos = pull_data(readfile, atom_idxs, shiftmap)
+    return 0
+
+
 # AgBi_plots()
 Pb_plots()
+# Random_plots()
 # AgBi_new_descriptor()
-# Pb_new_descriptor()
+Pb_new_descriptor()
+
+
+geo_file = "../../FHI-aims/Double_Perovskites/New_Structures/Ref_frame_test/beta_avg_test/165/geometry.in"
+idxs = [1, 8, 4]
+shifts = [None, [0, -1, 0], [0, -1, 0]]
+ats = [np.array(pos) for pos in pull_data(geo_file, idxs, shifts)]
+
+# ats = [np.array([0.0, 0.0, 0.0]), np.array([0.7773258870546955, 2.959127, 0.0]), np.array([0.0, 5.804133, 0.0])]
+
+# print(angle(*ats))
+
